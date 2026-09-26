@@ -9,6 +9,10 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.util.UUID;
 
+import java.util.Set;
+import java.util.HashSet;
+import java.util.Collections;
+
 @Entity
 @Table(name = "operationele_afspraken")
 @Inheritance(strategy = InheritanceType.JOINED)
@@ -61,6 +65,20 @@ public class OperationeleAfspraak {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "initiatiefnemer_id", nullable = false)
     private Gebruiker initiatiefnemer;
+
+
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "afspraak_afdelingen",
+            joinColumns = @JoinColumn(name = "afspraak_id"),
+            inverseJoinColumns = @JoinColumn(name = "afdeling_id"),
+            uniqueConstraints = @UniqueConstraint(
+                    name = "uk_afspraak_afdeling",
+                    columnNames = {"afspraak_id", "afdeling_id"}
+            )
+    )
+    private Set<Afdeling> betrokkenAfdelingen = new HashSet<>();
+
 
     protected OperationeleAfspraak() {
         // Vereist door JPA
@@ -182,5 +200,21 @@ public class OperationeleAfspraak {
 
     public Gebruiker getInitiatiefnemer() {
         return initiatiefnemer;
+    }
+
+    public Set<Afdeling> getBetrokkenAfdelingen() {
+        return Collections.unmodifiableSet(betrokkenAfdelingen);
+    }
+
+    public void voegAfdelingToe(Afdeling afdeling) {
+        if (afdeling == null) {
+            throw new IllegalArgumentException("Afdeling mag niet null zijn");
+        }
+
+        betrokkenAfdelingen.add(afdeling);
+    }
+
+    public void verwijderAfdeling(Afdeling afdeling) {
+        betrokkenAfdelingen.remove(afdeling);
     }
 }
