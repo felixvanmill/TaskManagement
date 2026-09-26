@@ -115,6 +115,15 @@ public class OperationeleAfspraak {
     private List<Bevestiging> bevestigingen = new ArrayList<>();
 
 
+    @OneToMany(
+            mappedBy = "afspraak",
+            cascade = CascadeType.PERSIST
+    )
+    @OrderBy("gewijzigdOp ASC")
+    private List<Wijziging> wijzigingen = new ArrayList<>();
+
+
+
 
     protected OperationeleAfspraak() {
         // Vereist door JPA
@@ -397,6 +406,49 @@ public class OperationeleAfspraak {
 
         return bevestiging;
     }
+
+
+    public List<Wijziging> getWijzigingen() {
+        return Collections.unmodifiableList(wijzigingen);
+    }
+
+    public Wijziging registreerWijziging(
+            Gebruiker gewijzigdDoor,
+            String onderdeel,
+            String oudeWaarde,
+            String nieuweWaarde
+    ) {
+        if (gewijzigdDoor == null) {
+            throw new IllegalArgumentException(
+                    "De gebruiker die de wijziging uitvoert is verplicht"
+            );
+        }
+
+        if (onderdeel == null || onderdeel.isBlank()) {
+            throw new IllegalArgumentException(
+                    "Het gewijzigde onderdeel is verplicht"
+            );
+        }
+
+        if (java.util.Objects.equals(oudeWaarde, nieuweWaarde)) {
+            throw new IllegalArgumentException(
+                    "De oude en nieuwe waarde mogen niet gelijk zijn"
+            );
+        }
+
+        Wijziging wijziging = new Wijziging(
+                this,
+                gewijzigdDoor,
+                onderdeel,
+                oudeWaarde,
+                nieuweWaarde
+        );
+
+        wijzigingen.add(wijziging);
+
+        return wijziging;
+    }
+
 
 
 
