@@ -105,6 +105,17 @@ public class OperationeleAfspraak {
     private List<Processtap> processtappen = new ArrayList<>();
 
 
+    @OneToMany(
+            mappedBy = "afspraak",
+            cascade = {
+                    CascadeType.PERSIST,
+                    CascadeType.MERGE
+            }
+    )
+    private List<Bevestiging> bevestigingen = new ArrayList<>();
+
+
+
     protected OperationeleAfspraak() {
         // Vereist door JPA
     }
@@ -349,6 +360,44 @@ public class OperationeleAfspraak {
 
         return processtap;
     }
+
+
+    public List<Bevestiging> getBevestigingen() {
+        return Collections.unmodifiableList(bevestigingen);
+    }
+
+    public Bevestiging voegBevestigingToe(Gebruiker gebruiker) {
+
+        if (gebruiker == null) {
+            throw new IllegalArgumentException(
+                    "Gebruiker mag niet null zijn"
+            );
+        }
+
+        boolean bestaatAl = bevestigingen.stream().anyMatch(b ->
+                b.getGebruiker() == gebruiker ||
+                        (
+                                gebruiker.getId() != null &&
+                                        gebruiker.getId().equals(b.getGebruiker().getId())
+                        )
+        );
+
+        if (bestaatAl) {
+            throw new IllegalArgumentException(
+                    "Voor deze gebruiker bestaat al een bevestiging"
+            );
+        }
+
+        Bevestiging bevestiging = new Bevestiging(
+                this,
+                gebruiker
+        );
+
+        bevestigingen.add(bevestiging);
+
+        return bevestiging;
+    }
+
 
 
 
