@@ -17,6 +17,7 @@ import nl.outokumpu.afspraken.enums.BetrokkenRol;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Comparator;
 
 @Entity
 @Table(name = "operationele_afspraken")
@@ -92,6 +93,16 @@ public class OperationeleAfspraak {
     )
     private List<Betrokkenheid> betrokkenheden = new ArrayList<>();
 
+
+    @OneToMany(
+            mappedBy = "afspraak",
+            cascade = {
+                    CascadeType.PERSIST,
+                    CascadeType.MERGE
+            }
+    )
+    @OrderBy("volgorde ASC")
+    private List<Processtap> processtappen = new ArrayList<>();
 
 
     protected OperationeleAfspraak() {
@@ -277,6 +288,66 @@ public class OperationeleAfspraak {
                     "Betrokkenheid hoort niet bij deze afspraak"
             );
         }
+    }
+
+
+    public List<Processtap> getProcesstappen() {
+        return processtappen.stream()
+                .sorted(Comparator.comparingInt(Processtap::getVolgorde))
+                .toList();
+    }
+
+    public Processtap voegProcesstapToe(
+            String naam,
+            int volgorde,
+            LocalDate deadline,
+            Gebruiker verantwoordelijke
+    ) {
+
+        if (naam == null || naam.isBlank()) {
+            throw new IllegalArgumentException(
+                    "Naam van de processtap is verplicht"
+            );
+        }
+
+        if (volgorde < 1) {
+            throw new IllegalArgumentException(
+                    "Volgorde moet minimaal 1 zijn"
+            );
+        }
+
+        if (deadline == null) {
+            throw new IllegalArgumentException(
+                    "Deadline is verplicht"
+            );
+        }
+
+        if (verantwoordelijke == null) {
+            throw new IllegalArgumentException(
+                    "Verantwoordelijke is verplicht"
+            );
+        }
+
+        boolean volgordeBestaat = processtappen.stream()
+                .anyMatch(stap -> stap.getVolgorde() == volgorde);
+
+        if (volgordeBestaat) {
+            throw new IllegalArgumentException(
+                    "Er bestaat al een processtap met deze volgorde"
+            );
+        }
+
+        Processtap processtap = new Processtap(
+                naam,
+                volgorde,
+                deadline,
+                this,
+                verantwoordelijke
+        );
+
+        processtappen.add(processtap);
+
+        return processtap;
     }
 
 
