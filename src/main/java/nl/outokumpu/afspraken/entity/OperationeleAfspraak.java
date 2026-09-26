@@ -13,6 +13,11 @@ import java.util.Set;
 import java.util.HashSet;
 import java.util.Collections;
 
+import nl.outokumpu.afspraken.enums.BetrokkenRol;
+
+import java.util.ArrayList;
+import java.util.List;
+
 @Entity
 @Table(name = "operationele_afspraken")
 @Inheritance(strategy = InheritanceType.JOINED)
@@ -78,6 +83,15 @@ public class OperationeleAfspraak {
             )
     )
     private Set<Afdeling> betrokkenAfdelingen = new HashSet<>();
+
+
+    @OneToMany(
+            mappedBy = "afspraak",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true
+    )
+    private List<Betrokkenheid> betrokkenheden = new ArrayList<>();
+
 
 
     protected OperationeleAfspraak() {
@@ -217,4 +231,54 @@ public class OperationeleAfspraak {
     public void verwijderAfdeling(Afdeling afdeling) {
         betrokkenAfdelingen.remove(afdeling);
     }
+
+
+    public List<Betrokkenheid> getBetrokkenheden() {
+        return Collections.unmodifiableList(betrokkenheden);
+    }
+
+    public void voegBetrokkenheidToe(Gebruiker gebruiker, BetrokkenRol rol) {
+
+        if (gebruiker == null || rol == null) {
+            throw new IllegalArgumentException(
+                    "Gebruiker en rol mogen niet null zijn"
+            );
+        }
+
+        boolean bestaatAl = betrokkenheden.stream().anyMatch(b ->
+                b.getRol() == rol &&
+                        (
+                                b.getGebruiker() == gebruiker ||
+                                        (
+                                                gebruiker.getId() != null &&
+                                                        gebruiker.getId().equals(b.getGebruiker().getId())
+                                        )
+                        )
+        );
+
+        if (bestaatAl) {
+            throw new IllegalArgumentException(
+                    "Gebruiker heeft deze rol al binnen de afspraak"
+            );
+        }
+
+        Betrokkenheid betrokkenheid =
+                new Betrokkenheid(this, gebruiker, rol);
+
+        betrokkenheden.add(betrokkenheid);
+    }
+
+    public void verwijderBetrokkenheid(Betrokkenheid betrokkenheid) {
+
+        if (betrokkenheid == null ||
+                !betrokkenheden.remove(betrokkenheid)) {
+
+            throw new IllegalArgumentException(
+                    "Betrokkenheid hoort niet bij deze afspraak"
+            );
+        }
+    }
+
+
+
 }
