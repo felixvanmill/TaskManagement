@@ -27,6 +27,17 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import nl.outokumpu.afspraken.entity.Processtap;
+import nl.outokumpu.afspraken.enums.ProcesstapStatus;
+import nl.outokumpu.afspraken.repository.ProcesstapRepository;
+
+import nl.outokumpu.afspraken.entity.Bevestiging;
+import nl.outokumpu.afspraken.enums.Beslissing;
+import nl.outokumpu.afspraken.repository.BevestigingRepository;
+
+import nl.outokumpu.afspraken.entity.Wijziging;
+import nl.outokumpu.afspraken.repository.WijzigingRepository;
+
 @SpringBootTest
 @ActiveProfiles("test")
 @Transactional
@@ -43,6 +54,15 @@ class RepositoryIntegratieTest {
 
     @PersistenceContext
     private EntityManager entityManager;
+
+    @Autowired
+    private ProcesstapRepository processtapRepository;
+
+    @Autowired
+    private BevestigingRepository bevestigingRepository;
+
+    @Autowired
+    private WijzigingRepository wijzigingRepository;
 
     @Test
     void slaatAfdelingOpEnHaaltDezeOpViaRepository() {
@@ -175,6 +195,229 @@ class RepositoryIntegratieTest {
         assertEquals(
                 "Fabriek A",
                 opgehaaldeWissel.getFabriek()
+        );
+    }
+
+    @Test
+    void slaatProcesstapOpEnHaaltDezeOpViaRepository() {
+
+        // 1. Afdeling aanmaken
+        Afdeling afdeling = new Afdeling("Planning");
+        afdelingRepository.saveAndFlush(afdeling);
+
+        // 2. Gebruiker aanmaken
+        Gebruiker gebruiker = new Gebruiker(
+                "Workflow Planner",
+                "workflow.repository@example.com",
+                afdeling
+        );
+
+        gebruikerRepository.saveAndFlush(gebruiker);
+
+        // 3. Afspraak aanmaken
+        OperationeleAfspraak afspraak = new OperationeleAfspraak(
+                "Workflow repositorytest",
+                "Afspraak voor het testen van ProcesstapRepository",
+                "Repositorylaag controleren",
+                null,
+                null,
+                LocalDate.of(2026, 10, 1),
+                LocalDate.of(2026, 10, 31),
+                gebruiker
+        );
+
+        operationeleAfspraakRepository.saveAndFlush(afspraak);
+
+        // 4. Processtap aanmaken
+        Processtap processtap = new Processtap(
+                "Impact beoordelen",
+                1,
+                LocalDate.of(2026, 10, 10),
+                afspraak,
+                gebruiker
+        );
+
+        Processtap opgeslagenProcesstap =
+                processtapRepository.saveAndFlush(processtap);
+
+        UUID id = opgeslagenProcesstap.getId();
+
+        assertNotNull(id);
+
+        // 5. Persistence context leegmaken
+        entityManager.clear();
+
+        // 6. Processtap opnieuw ophalen
+        Processtap opgehaaldeProcesstap =
+                processtapRepository.findById(id)
+                        .orElseThrow();
+
+        // 7. Gegevens controleren
+        assertEquals(
+                "Impact beoordelen",
+                opgehaaldeProcesstap.getNaam()
+        );
+
+        assertEquals(
+                1,
+                opgehaaldeProcesstap.getVolgorde()
+        );
+
+        assertEquals(
+                ProcesstapStatus.NIET_GESTART,
+                opgehaaldeProcesstap.getStatus()
+        );
+
+        assertEquals(
+                "Workflow repositorytest",
+                opgehaaldeProcesstap.getAfspraak().getTitel()
+        );
+
+        assertEquals(
+                "Workflow Planner",
+                opgehaaldeProcesstap.getVerantwoordelijke().getNaam()
+        );
+    }
+
+    @Test
+    void slaatBevestigingOpEnHaaltDezeOpViaRepository() {
+
+        Afdeling afdeling = new Afdeling("Planning");
+        afdelingRepository.saveAndFlush(afdeling);
+
+        Gebruiker gebruiker = new Gebruiker(
+                "Test Goedkeurder",
+                "bevestiging.repository@example.com",
+                afdeling
+        );
+
+        gebruikerRepository.saveAndFlush(gebruiker);
+
+        OperationeleAfspraak afspraak = new OperationeleAfspraak(
+                "Bevestiging repositorytest",
+                "Afspraak voor het testen van BevestigingRepository",
+                "Repositorylaag controleren",
+                null,
+                null,
+                LocalDate.of(2026, 10, 1),
+                LocalDate.of(2026, 10, 31),
+                gebruiker
+        );
+
+        operationeleAfspraakRepository.saveAndFlush(afspraak);
+
+        Bevestiging bevestiging = new Bevestiging(
+                afspraak,
+                gebruiker
+        );
+
+        Bevestiging opgeslagenBevestiging =
+                bevestigingRepository.saveAndFlush(bevestiging);
+
+        UUID id = opgeslagenBevestiging.getId();
+
+        assertNotNull(id);
+
+        entityManager.clear();
+
+        Bevestiging opgehaaldeBevestiging =
+                bevestigingRepository.findById(id)
+                        .orElseThrow();
+
+        assertFalse(opgehaaldeBevestiging.isGezien());
+
+        assertEquals(
+                Beslissing.GEEN,
+                opgehaaldeBevestiging.getBeslissing()
+        );
+
+        assertEquals(
+                "Bevestiging repositorytest",
+                opgehaaldeBevestiging.getAfspraak().getTitel()
+        );
+
+        assertEquals(
+                "Test Goedkeurder",
+                opgehaaldeBevestiging.getGebruiker().getNaam()
+        );
+    }
+
+    @Test
+    void slaatWijzigingOpEnHaaltDezeOpViaRepository() {
+
+        Afdeling afdeling = new Afdeling("Planning");
+        afdelingRepository.saveAndFlush(afdeling);
+
+        Gebruiker gebruiker = new Gebruiker(
+                "Test Planner",
+                "wijziging.repository@example.com",
+                afdeling
+        );
+
+        gebruikerRepository.saveAndFlush(gebruiker);
+
+        OperationeleAfspraak afspraak = new OperationeleAfspraak(
+                "Wijziging repositorytest",
+                "Afspraak voor het testen van WijzigingRepository",
+                "Repositorylaag controleren",
+                null,
+                null,
+                LocalDate.of(2026, 10, 1),
+                LocalDate.of(2026, 10, 31),
+                gebruiker
+        );
+
+        operationeleAfspraakRepository.saveAndFlush(afspraak);
+
+        Wijziging wijziging = new Wijziging(
+                afspraak,
+                gebruiker,
+                "deadline",
+                "2026-10-20",
+                "2026-10-31"
+        );
+
+        Wijziging opgeslagenWijziging =
+                wijzigingRepository.saveAndFlush(wijziging);
+
+        UUID id = opgeslagenWijziging.getId();
+
+        assertNotNull(id);
+        assertNotNull(opgeslagenWijziging.getGewijzigdOp());
+
+        entityManager.clear();
+
+        Wijziging opgehaaldeWijziging =
+                wijzigingRepository.findById(id)
+                        .orElseThrow();
+
+        assertEquals(
+                "deadline",
+                opgehaaldeWijziging.getOnderdeel()
+        );
+
+        assertEquals(
+                "2026-10-20",
+                opgehaaldeWijziging.getOudeWaarde()
+        );
+
+        assertEquals(
+                "2026-10-31",
+                opgehaaldeWijziging.getNieuweWaarde()
+        );
+
+        assertNotNull(
+                opgehaaldeWijziging.getGewijzigdOp()
+        );
+
+        assertEquals(
+                "Wijziging repositorytest",
+                opgehaaldeWijziging.getAfspraak().getTitel()
+        );
+
+        assertEquals(
+                "Test Planner",
+                opgehaaldeWijziging.getGewijzigdDoor().getNaam()
         );
     }
 
