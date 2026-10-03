@@ -25,6 +25,10 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
+import nl.outokumpu.afspraken.dto.data.OrderverplaatsingData;
+import nl.outokumpu.afspraken.entity.Orderverplaatsing;
+import nl.outokumpu.afspraken.enums.UitvoeringsStatus;
+
 class AfspraakServiceTest {
 
     private OperationeleAfspraakRepository afspraakRepository;
@@ -408,4 +412,125 @@ class AfspraakServiceTest {
         verify(afspraakRepository)
                 .save(any(Capaciteitswissel.class));
     }
+
+    @Test
+    void maaktOrderverplaatsingAan() {
+
+        UUID initiatiefnemerId = UUID.randomUUID();
+        UUID verantwoordelijkeId = UUID.randomUUID();
+
+        Gebruiker initiatiefnemer = mock(Gebruiker.class);
+        Gebruiker verantwoordelijke = mock(Gebruiker.class);
+
+        when(gebruikerRepository.findById(initiatiefnemerId))
+                .thenReturn(Optional.of(initiatiefnemer));
+
+        when(gebruikerRepository.findById(verantwoordelijkeId))
+                .thenReturn(Optional.of(verantwoordelijke));
+
+        when(gebruikerRepository.findAllById(List.of()))
+                .thenReturn(List.of());
+
+        when(afdelingRepository.findAllById(List.of()))
+                .thenReturn(List.of());
+
+        when(afspraakRepository.save(any(OperationeleAfspraak.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        OrderverplaatsingData orderverplaatsingData =
+                new OrderverplaatsingData(
+                        "Tornio",
+                        "Avesta",
+                        "2B",
+                        new BigDecimal("250.000"),
+                        LocalDate.of(2026, 10, 20),
+                        null
+                );
+
+        CreateAfspraakRequest request =
+                new CreateAfspraakRequest(
+                        "Order verplaatsen",
+                        "Order wordt naar andere fabriek verplaatst",
+                        "Capaciteit beter benutten",
+                        null,
+                        null,
+                        AfspraakType.ORDERVERPLAATSING,
+                        LocalDate.of(2026, 10, 3),
+                        LocalDate.of(2026, 10, 31),
+                        verantwoordelijkeId,
+                        "Orderverplaatsing uitvoeren",
+                        LocalDate.of(2026, 10, 20),
+                        List.of(),
+                        List.of(),
+                        List.of(),
+                        null,
+                        orderverplaatsingData
+                );
+
+        OperationeleAfspraak resultaat =
+                afspraakService.createAfspraak(
+                        request,
+                        initiatiefnemerId
+                );
+
+        assertInstanceOf(
+                Orderverplaatsing.class,
+                resultaat
+        );
+
+        Orderverplaatsing orderverplaatsing =
+                (Orderverplaatsing) resultaat;
+
+        assertEquals(
+                AfspraakType.ORDERVERPLAATSING,
+                orderverplaatsing.getType()
+        );
+
+        assertEquals(
+                "Tornio",
+                orderverplaatsing.getVanFabriek()
+        );
+
+        assertEquals(
+                "Avesta",
+                orderverplaatsing.getNaarFabriek()
+        );
+
+        assertEquals(
+                "2B",
+                orderverplaatsing.getFinishType()
+        );
+
+        assertEquals(
+                new BigDecimal("250.000"),
+                orderverplaatsing.getTotaalVolumeTons()
+        );
+
+        assertEquals(
+                LocalDate.of(2026, 10, 20),
+                orderverplaatsing.getGewensteVerplaatsingsdatum()
+        );
+
+        assertEquals(
+                UitvoeringsStatus.NIET_UITGEVOERD,
+                orderverplaatsing.getUitvoeringsstatus()
+        );
+
+        assertEquals(
+                1,
+                orderverplaatsing.getProcesstappen().size()
+        );
+
+        assertSame(
+                verantwoordelijke,
+                orderverplaatsing
+                        .getProcesstappen()
+                        .get(0)
+                        .getVerantwoordelijke()
+        );
+
+        verify(afspraakRepository)
+                .save(any(Orderverplaatsing.class));
+    }
+
 }

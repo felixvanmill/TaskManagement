@@ -1,11 +1,13 @@
 package nl.outokumpu.afspraken.service;
 
 import nl.outokumpu.afspraken.dto.data.CapaciteitswisselData;
+import nl.outokumpu.afspraken.dto.data.OrderverplaatsingData;
 import nl.outokumpu.afspraken.dto.request.CreateAfspraakRequest;
 import nl.outokumpu.afspraken.entity.Afdeling;
 import nl.outokumpu.afspraken.entity.Capaciteitswissel;
 import nl.outokumpu.afspraken.entity.Gebruiker;
 import nl.outokumpu.afspraken.entity.OperationeleAfspraak;
+import nl.outokumpu.afspraken.entity.Orderverplaatsing;
 import nl.outokumpu.afspraken.enums.BetrokkenRol;
 import nl.outokumpu.afspraken.repository.AfdelingRepository;
 import nl.outokumpu.afspraken.repository.GebruikerRepository;
@@ -194,10 +196,39 @@ public class AfspraakService {
                 );
             }
 
-            case ORDERVERPLAATSING ->
+            case ORDERVERPLAATSING -> {
+
+                OrderverplaatsingData data =
+                        request.orderverplaatsing();
+
+                if (data == null) {
                     throw new IllegalArgumentException(
-                            "Orderverplaatsing wordt in deze stap nog niet ondersteund"
+                            "Gegevens voor orderverplaatsing zijn verplicht"
                     );
+                }
+
+                if (request.capaciteitswissel() != null) {
+                    throw new IllegalArgumentException(
+                            "Een orderverplaatsing mag geen capaciteitswisselgegevens bevatten"
+                    );
+                }
+
+                yield new Orderverplaatsing(
+                        request.titel(),
+                        request.beschrijving(),
+                        request.reden(),
+                        request.achtergrond(),
+                        request.aannames(),
+                        request.ingangsdatum(),
+                        request.deadline(),
+                        initiatiefnemer,
+                        data.vanFabriek(),
+                        data.naarFabriek(),
+                        data.finishType(),
+                        data.totaalVolumeTons(),
+                        data.gewensteVerplaatsingsdatum()
+                );
+            }
         };
     }
 
