@@ -1,4 +1,3 @@
-
 package nl.outokumpu.afspraken.entity;
 
 import jakarta.persistence.*;
@@ -68,7 +67,28 @@ public class Orderverplaatsing extends OperationeleAfspraak {
         this.finishType = finishType;
         this.totaalVolumeTons = totaalVolumeTons;
         this.gewensteVerplaatsingsdatum = gewensteVerplaatsingsdatum;
-        this.uitvoeringsstatus = UitvoeringsStatus.NIET_UITGEVOERD;
+        this.uitvoeringsstatus =
+                UitvoeringsStatus.NIET_UITGEVOERD;
+    }
+
+    public void wijzigUitvoeringsstatus(
+            UitvoeringsStatus nieuweStatus
+    ) {
+
+        if (nieuweStatus == null) {
+            throw new IllegalArgumentException(
+                    "Nieuwe uitvoeringsstatus is verplicht"
+            );
+        }
+
+        if (this.uitvoeringsstatus == nieuweStatus) {
+            throw new IllegalArgumentException(
+                    "Nieuwe uitvoeringsstatus moet verschillen van de huidige status"
+            );
+        }
+
+        this.uitvoeringsstatus =
+                nieuweStatus;
     }
 
     public String getVanFabriek() {

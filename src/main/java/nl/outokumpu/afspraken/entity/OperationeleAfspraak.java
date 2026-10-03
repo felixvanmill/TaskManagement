@@ -1,9 +1,9 @@
-
 package nl.outokumpu.afspraken.entity;
 
 import jakarta.persistence.*;
 import nl.outokumpu.afspraken.enums.AfspraakStatus;
 import nl.outokumpu.afspraken.enums.AfspraakType;
+import nl.outokumpu.afspraken.enums.BetrokkenRol;
 
 import java.time.Instant;
 import java.time.LocalDate;
@@ -12,8 +12,6 @@ import java.util.UUID;
 import java.util.Set;
 import java.util.HashSet;
 import java.util.Collections;
-
-import nl.outokumpu.afspraken.enums.BetrokkenRol;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -72,7 +70,6 @@ public class OperationeleAfspraak {
     @JoinColumn(name = "initiatiefnemer_id", nullable = false)
     private Gebruiker initiatiefnemer;
 
-
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
             name = "afspraak_afdelingen",
@@ -85,14 +82,12 @@ public class OperationeleAfspraak {
     )
     private Set<Afdeling> betrokkenAfdelingen = new HashSet<>();
 
-
     @OneToMany(
             mappedBy = "afspraak",
             cascade = CascadeType.ALL,
             orphanRemoval = true
     )
     private List<Betrokkenheid> betrokkenheden = new ArrayList<>();
-
 
     @OneToMany(
             mappedBy = "afspraak",
@@ -104,7 +99,6 @@ public class OperationeleAfspraak {
     @OrderBy("volgorde ASC")
     private List<Processtap> processtappen = new ArrayList<>();
 
-
     @OneToMany(
             mappedBy = "afspraak",
             cascade = {
@@ -114,16 +108,12 @@ public class OperationeleAfspraak {
     )
     private List<Bevestiging> bevestigingen = new ArrayList<>();
 
-
     @OneToMany(
             mappedBy = "afspraak",
             cascade = CascadeType.PERSIST
     )
     @OrderBy("gewijzigdOp ASC")
     private List<Wijziging> wijzigingen = new ArrayList<>();
-
-
-
 
     protected OperationeleAfspraak() {
         // Vereist door JPA
@@ -185,6 +175,29 @@ public class OperationeleAfspraak {
     @PreUpdate
     protected void bijWijzigen() {
         this.laatstGewijzigdOp = Instant.now();
+    }
+
+    public void wijzigStatus(AfspraakStatus nieuweStatus) {
+
+        if (nieuweStatus == null) {
+            throw new IllegalArgumentException(
+                    "Nieuwe afspraakstatus is verplicht"
+            );
+        }
+
+        if (this.status == nieuweStatus) {
+            throw new IllegalArgumentException(
+                    "Nieuwe afspraakstatus moet verschillen van de huidige status"
+            );
+        }
+
+        this.status = nieuweStatus;
+
+        if (nieuweStatus == AfspraakStatus.AFGEROND) {
+            this.afgerondOp = Instant.now();
+        } else {
+            this.afgerondOp = null;
+        }
     }
 
     public UUID getId() {
@@ -252,8 +265,11 @@ public class OperationeleAfspraak {
     }
 
     public void voegAfdelingToe(Afdeling afdeling) {
+
         if (afdeling == null) {
-            throw new IllegalArgumentException("Afdeling mag niet null zijn");
+            throw new IllegalArgumentException(
+                    "Afdeling mag niet null zijn"
+            );
         }
 
         betrokkenAfdelingen.add(afdeling);
@@ -263,12 +279,14 @@ public class OperationeleAfspraak {
         betrokkenAfdelingen.remove(afdeling);
     }
 
-
     public List<Betrokkenheid> getBetrokkenheden() {
         return Collections.unmodifiableList(betrokkenheden);
     }
 
-    public void voegBetrokkenheidToe(Gebruiker gebruiker, BetrokkenRol rol) {
+    public void voegBetrokkenheidToe(
+            Gebruiker gebruiker,
+            BetrokkenRol rol
+    ) {
 
         if (gebruiker == null || rol == null) {
             throw new IllegalArgumentException(
@@ -282,7 +300,9 @@ public class OperationeleAfspraak {
                                 b.getGebruiker() == gebruiker ||
                                         (
                                                 gebruiker.getId() != null &&
-                                                        gebruiker.getId().equals(b.getGebruiker().getId())
+                                                        gebruiker.getId().equals(
+                                                                b.getGebruiker().getId()
+                                                        )
                                         )
                         )
         );
@@ -294,12 +314,20 @@ public class OperationeleAfspraak {
         }
 
         Betrokkenheid betrokkenheid =
-                new Betrokkenheid(this, gebruiker, rol);
+                new Betrokkenheid(
+                        this,
+                        gebruiker,
+                        rol
+                );
 
-        betrokkenheden.add(betrokkenheid);
+        betrokkenheden.add(
+                betrokkenheid
+        );
     }
 
-    public void verwijderBetrokkenheid(Betrokkenheid betrokkenheid) {
+    public void verwijderBetrokkenheid(
+            Betrokkenheid betrokkenheid
+    ) {
 
         if (betrokkenheid == null ||
                 !betrokkenheden.remove(betrokkenheid)) {
@@ -310,10 +338,14 @@ public class OperationeleAfspraak {
         }
     }
 
-
     public List<Processtap> getProcesstappen() {
+
         return processtappen.stream()
-                .sorted(Comparator.comparingInt(Processtap::getVolgorde))
+                .sorted(
+                        Comparator.comparingInt(
+                                Processtap::getVolgorde
+                        )
+                )
                 .toList();
     }
 
@@ -348,8 +380,13 @@ public class OperationeleAfspraak {
             );
         }
 
-        boolean volgordeBestaat = processtappen.stream()
-                .anyMatch(stap -> stap.getVolgorde() == volgorde);
+        boolean volgordeBestaat =
+                processtappen.stream()
+                        .anyMatch(
+                                stap ->
+                                        stap.getVolgorde()
+                                                == volgorde
+                        );
 
         if (volgordeBestaat) {
             throw new IllegalArgumentException(
@@ -357,25 +394,29 @@ public class OperationeleAfspraak {
             );
         }
 
-        Processtap processtap = new Processtap(
-                naam,
-                volgorde,
-                deadline,
-                this,
-                verantwoordelijke
-        );
+        Processtap processtap =
+                new Processtap(
+                        naam,
+                        volgorde,
+                        deadline,
+                        this,
+                        verantwoordelijke
+                );
 
-        processtappen.add(processtap);
+        processtappen.add(
+                processtap
+        );
 
         return processtap;
     }
-
 
     public List<Bevestiging> getBevestigingen() {
         return Collections.unmodifiableList(bevestigingen);
     }
 
-    public Bevestiging voegBevestigingToe(Gebruiker gebruiker) {
+    public Bevestiging voegBevestigingToe(
+            Gebruiker gebruiker
+    ) {
 
         if (gebruiker == null) {
             throw new IllegalArgumentException(
@@ -383,13 +424,16 @@ public class OperationeleAfspraak {
             );
         }
 
-        boolean bestaatAl = bevestigingen.stream().anyMatch(b ->
-                b.getGebruiker() == gebruiker ||
-                        (
-                                gebruiker.getId() != null &&
-                                        gebruiker.getId().equals(b.getGebruiker().getId())
-                        )
-        );
+        boolean bestaatAl =
+                bevestigingen.stream().anyMatch(b ->
+                        b.getGebruiker() == gebruiker ||
+                                (
+                                        gebruiker.getId() != null &&
+                                                gebruiker.getId().equals(
+                                                        b.getGebruiker().getId()
+                                                )
+                                )
+                );
 
         if (bestaatAl) {
             throw new IllegalArgumentException(
@@ -397,16 +441,18 @@ public class OperationeleAfspraak {
             );
         }
 
-        Bevestiging bevestiging = new Bevestiging(
-                this,
-                gebruiker
-        );
+        Bevestiging bevestiging =
+                new Bevestiging(
+                        this,
+                        gebruiker
+                );
 
-        bevestigingen.add(bevestiging);
+        bevestigingen.add(
+                bevestiging
+        );
 
         return bevestiging;
     }
-
 
     public List<Wijziging> getWijzigingen() {
         return Collections.unmodifiableList(wijzigingen);
@@ -418,6 +464,7 @@ public class OperationeleAfspraak {
             String oudeWaarde,
             String nieuweWaarde
     ) {
+
         if (gewijzigdDoor == null) {
             throw new IllegalArgumentException(
                     "De gebruiker die de wijziging uitvoert is verplicht"
@@ -430,27 +477,28 @@ public class OperationeleAfspraak {
             );
         }
 
-        if (java.util.Objects.equals(oudeWaarde, nieuweWaarde)) {
+        if (java.util.Objects.equals(
+                oudeWaarde,
+                nieuweWaarde
+        )) {
             throw new IllegalArgumentException(
                     "De oude en nieuwe waarde mogen niet gelijk zijn"
             );
         }
 
-        Wijziging wijziging = new Wijziging(
-                this,
-                gewijzigdDoor,
-                onderdeel,
-                oudeWaarde,
-                nieuweWaarde
-        );
+        Wijziging wijziging =
+                new Wijziging(
+                        this,
+                        gewijzigdDoor,
+                        onderdeel,
+                        oudeWaarde,
+                        nieuweWaarde
+                );
 
-        wijzigingen.add(wijziging);
+        wijzigingen.add(
+                wijziging
+        );
 
         return wijziging;
     }
-
-
-
-
-
 }
