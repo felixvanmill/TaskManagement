@@ -26,6 +26,7 @@ public record AfspraakDetailResponse(
         Instant afgerondOp,
         GebruikerResponse initiatiefnemer,
         List<AfdelingResponse> betrokkenAfdelingen,
+        List<GebruikerResponse> betrokkenGebruikers,
         List<ProcesstapResponse> processtappen,
         List<BevestigingResponse> bevestigingen,
         List<WijzigingResponse> wijzigingen,
