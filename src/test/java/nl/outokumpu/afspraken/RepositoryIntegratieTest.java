@@ -8,6 +8,8 @@ import nl.outokumpu.afspraken.entity.Capaciteitswissel;
 import nl.outokumpu.afspraken.entity.Gebruiker;
 import nl.outokumpu.afspraken.entity.OperationeleAfspraak;
 
+import java.util.List;
+
 import nl.outokumpu.afspraken.enums.AfspraakType;
 
 import nl.outokumpu.afspraken.repository.AfdelingRepository;
@@ -418,6 +420,280 @@ class RepositoryIntegratieTest {
         assertEquals(
                 "Test Planner",
                 opgehaaldeWijziging.getGewijzigdDoor().getNaam()
+        );
+    }
+
+    @Test
+    void vindtGebruikerOpEmailOngeachtHoofdletters() {
+
+        Afdeling afdeling = new Afdeling("Planning");
+        afdelingRepository.saveAndFlush(afdeling);
+
+        Gebruiker gebruiker = new Gebruiker(
+                "Email Test",
+                "planner@example.com",
+                afdeling
+        );
+
+        gebruikerRepository.saveAndFlush(gebruiker);
+
+        entityManager.clear();
+
+        Gebruiker gevondenGebruiker =
+                gebruikerRepository
+                        .findByEmailIgnoreCase("PLANNER@EXAMPLE.COM")
+                        .orElseThrow();
+
+        assertEquals(
+                "Email Test",
+                gevondenGebruiker.getNaam()
+        );
+
+        assertEquals(
+                "planner@example.com",
+                gevondenGebruiker.getEmail()
+        );
+    }
+
+    @Test
+    void vindtProcesstappenPerAfspraakInJuisteVolgorde() {
+
+        Afdeling afdeling = new Afdeling("Planning");
+        afdelingRepository.saveAndFlush(afdeling);
+
+        Gebruiker gebruiker = new Gebruiker(
+                "Proces Planner",
+                "procesvolgorde.repository@example.com",
+                afdeling
+        );
+
+        gebruikerRepository.saveAndFlush(gebruiker);
+
+        OperationeleAfspraak afspraak = new OperationeleAfspraak(
+                "Procesvolgorde repositorytest",
+                "Testen van processtappen per afspraak",
+                "Volgorde van workflow controleren",
+                null,
+                null,
+                LocalDate.of(2026, 10, 1),
+                LocalDate.of(2026, 10, 31),
+                gebruiker
+        );
+
+        operationeleAfspraakRepository.saveAndFlush(afspraak);
+
+        Processtap tweedeStap = new Processtap(
+                "Goedkeuren",
+                2,
+                LocalDate.of(2026, 10, 15),
+                afspraak,
+                gebruiker
+        );
+
+        Processtap eersteStap = new Processtap(
+                "Beoordelen",
+                1,
+                LocalDate.of(2026, 10, 10),
+                afspraak,
+                gebruiker
+        );
+
+        // Bewust in omgekeerde volgorde opslaan
+        processtapRepository.save(tweedeStap);
+        processtapRepository.saveAndFlush(eersteStap);
+
+        UUID afspraakId = afspraak.getId();
+
+        entityManager.clear();
+
+        List<Processtap> processtappen =
+                processtapRepository
+                        .findByAfspraakIdOrderByVolgordeAsc(afspraakId);
+
+        assertEquals(2, processtappen.size());
+
+        assertEquals(
+                1,
+                processtappen.get(0).getVolgorde()
+        );
+
+        assertEquals(
+                "Beoordelen",
+                processtappen.get(0).getNaam()
+        );
+
+        assertEquals(
+                2,
+                processtappen.get(1).getVolgorde()
+        );
+
+        assertEquals(
+                "Goedkeuren",
+                processtappen.get(1).getNaam()
+        );
+    }
+
+    @Test
+    void vindtAlleBevestigingenVanEenAfspraak() {
+
+        Afdeling afdeling = new Afdeling("Planning");
+        afdelingRepository.saveAndFlush(afdeling);
+
+        Gebruiker initiatiefnemer = new Gebruiker(
+                "Initiatiefnemer",
+                "initiatiefnemer.bevestiging@example.com",
+                afdeling
+        );
+
+        Gebruiker eersteGoedkeurder = new Gebruiker(
+                "Eerste Goedkeurder",
+                "goedkeurder1@example.com",
+                afdeling
+        );
+
+        Gebruiker tweedeGoedkeurder = new Gebruiker(
+                "Tweede Goedkeurder",
+                "goedkeurder2@example.com",
+                afdeling
+        );
+
+        gebruikerRepository.save(initiatiefnemer);
+        gebruikerRepository.save(eersteGoedkeurder);
+        gebruikerRepository.saveAndFlush(tweedeGoedkeurder);
+
+        OperationeleAfspraak afspraak = new OperationeleAfspraak(
+                "Bevestigingen repositorytest",
+                "Testen van meerdere bevestigingen per afspraak",
+                "Goedkeuringsproces controleren",
+                null,
+                null,
+                LocalDate.of(2026, 10, 1),
+                LocalDate.of(2026, 10, 31),
+                initiatiefnemer
+        );
+
+        operationeleAfspraakRepository.saveAndFlush(afspraak);
+
+        Bevestiging eersteBevestiging = new Bevestiging(
+                afspraak,
+                eersteGoedkeurder
+        );
+
+        Bevestiging tweedeBevestiging = new Bevestiging(
+                afspraak,
+                tweedeGoedkeurder
+        );
+
+        bevestigingRepository.save(eersteBevestiging);
+        bevestigingRepository.saveAndFlush(tweedeBevestiging);
+
+        UUID afspraakId = afspraak.getId();
+
+        entityManager.clear();
+
+        List<Bevestiging> bevestigingen =
+                bevestigingRepository.findByAfspraakId(afspraakId);
+
+        assertEquals(2, bevestigingen.size());
+
+        assertTrue(
+                bevestigingen.stream()
+                        .anyMatch(bevestiging ->
+                                bevestiging.getGebruiker()
+                                        .getEmail()
+                                        .equals("goedkeurder1@example.com"))
+        );
+
+        assertTrue(
+                bevestigingen.stream()
+                        .anyMatch(bevestiging ->
+                                bevestiging.getGebruiker()
+                                        .getEmail()
+                                        .equals("goedkeurder2@example.com"))
+        );
+    }
+
+    @Test
+    void vindtWijzigingenVanEenAfspraakInChronologischeVolgorde() {
+
+        Afdeling afdeling = new Afdeling("Planning");
+        afdelingRepository.saveAndFlush(afdeling);
+
+        Gebruiker gebruiker = new Gebruiker(
+                "Historie Planner",
+                "historie.repository@example.com",
+                afdeling
+        );
+
+        gebruikerRepository.saveAndFlush(gebruiker);
+
+        OperationeleAfspraak afspraak = new OperationeleAfspraak(
+                "Historie repositorytest",
+                "Testen van wijzigingshistorie per afspraak",
+                "Chronologische historie controleren",
+                null,
+                null,
+                LocalDate.of(2026, 10, 1),
+                LocalDate.of(2026, 10, 31),
+                gebruiker
+        );
+
+        operationeleAfspraakRepository.saveAndFlush(afspraak);
+
+        Wijziging eersteWijziging = new Wijziging(
+                afspraak,
+                gebruiker,
+                "deadline",
+                "2026-10-20",
+                "2026-10-25"
+        );
+
+        wijzigingRepository.saveAndFlush(eersteWijziging);
+
+        Wijziging tweedeWijziging = new Wijziging(
+                afspraak,
+                gebruiker,
+                "deadline",
+                "2026-10-25",
+                "2026-10-31"
+        );
+
+        wijzigingRepository.saveAndFlush(tweedeWijziging);
+
+        UUID afspraakId = afspraak.getId();
+
+        entityManager.clear();
+
+        List<Wijziging> wijzigingen =
+                wijzigingRepository
+                        .findByAfspraakIdOrderByGewijzigdOpAsc(afspraakId);
+
+        assertEquals(2, wijzigingen.size());
+
+        assertEquals(
+                "2026-10-20",
+                wijzigingen.get(0).getOudeWaarde()
+        );
+
+        assertEquals(
+                "2026-10-25",
+                wijzigingen.get(0).getNieuweWaarde()
+        );
+
+        assertEquals(
+                "2026-10-25",
+                wijzigingen.get(1).getOudeWaarde()
+        );
+
+        assertEquals(
+                "2026-10-31",
+                wijzigingen.get(1).getNieuweWaarde()
+        );
+
+        assertFalse(
+                wijzigingen.get(0)
+                        .getGewijzigdOp()
+                        .isAfter(wijzigingen.get(1).getGewijzigdOp())
         );
     }
 
