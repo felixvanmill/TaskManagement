@@ -45,8 +45,18 @@ public record CreateAfspraakRequest(
         @NotNull
         UUID verantwoordelijkeId,
 
+        @NotBlank
+        @Size(max = 255)
+        String eersteProcesstapNaam,
+
+        @NotNull
+        LocalDate eersteProcesstapDeadline,
+
         @NotNull
         List<UUID> betrokkeneIds,
+
+        @NotNull
+        List<UUID> goedkeurderIds,
 
         @NotNull
         List<UUID> afdelingIds,

@@ -34,8 +34,11 @@ class DtoValidatieTest {
                 LocalDate.of(2026, 10, 3),
                 LocalDate.of(2026, 10, 31),
                 UUID.randomUUID(),
-                List.of(),
-                List.of(),
+                "Eerste beoordeling",
+                LocalDate.of(2026, 10, 15),
+                List.of(), // betrokkeneIds
+                List.of(), // goedkeurderIds
+                List.of(), // afdelingIds
                 null,
                 null
         );
@@ -65,8 +68,11 @@ class DtoValidatieTest {
                 LocalDate.of(2026, 10, 3),
                 LocalDate.of(2026, 10, 31),
                 UUID.randomUUID(),
-                List.of(),
-                List.of(),
+                "Eerste beoordeling",
+                LocalDate.of(2026, 10, 15),
+                List.of(), // betrokkeneIds
+                List.of(), // goedkeurderIds
+                List.of(), // afdelingIds
                 null,
                 null
         );
@@ -90,8 +96,11 @@ class DtoValidatieTest {
                 LocalDate.of(2026, 10, 3),
                 LocalDate.of(2026, 10, 31),
                 UUID.randomUUID(),
-                List.of(),
-                List.of(),
+                "Eerste beoordeling",
+                LocalDate.of(2026, 10, 15),
+                List.of(), // betrokkeneIds
+                List.of(), // goedkeurderIds
+                List.of(), // afdelingIds
                 null,
                 null
         );
@@ -107,6 +116,4 @@ class DtoValidatieTest {
                                         .equals("type"))
         );
     }
-
-
 }
