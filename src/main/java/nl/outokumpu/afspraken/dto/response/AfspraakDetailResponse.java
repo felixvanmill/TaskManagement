@@ -1,5 +1,7 @@
 package nl.outokumpu.afspraken.dto.response;
 
+import nl.outokumpu.afspraken.dto.data.CapaciteitswisselData;
+import nl.outokumpu.afspraken.dto.data.OrderverplaatsingData;
 import nl.outokumpu.afspraken.enums.AfspraakStatus;
 import nl.outokumpu.afspraken.enums.AfspraakType;
 
@@ -26,6 +28,8 @@ public record AfspraakDetailResponse(
         List<AfdelingResponse> betrokkenAfdelingen,
         List<ProcesstapResponse> processtappen,
         List<BevestigingResponse> bevestigingen,
-        List<WijzigingResponse> wijzigingen
+        List<WijzigingResponse> wijzigingen,
+        CapaciteitswisselData capaciteitswissel,
+        OrderverplaatsingData orderverplaatsing
 ) {
 }
