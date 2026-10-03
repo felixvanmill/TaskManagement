@@ -21,6 +21,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.UUID;
 
+import nl.outokumpu.afspraken.dto.response.AfspraakSummaryResponse;
+
 @Service
 @Transactional
 public class AfspraakService {
@@ -138,6 +140,31 @@ public class AfspraakService {
         return afspraakMapper.naarDetailResponse(
                 opgeslagenAfspraak
         );
+    }
+
+    @Transactional(readOnly = true)
+    public AfspraakDetailResponse vindAfspraak(UUID afspraakId) {
+
+        OperationeleAfspraak afspraak =
+                afspraakRepository.findById(afspraakId)
+                        .orElseThrow(() ->
+                                new IllegalArgumentException(
+                                        "Afspraak niet gevonden"
+                                )
+                        );
+
+        return afspraakMapper.naarDetailResponse(
+                afspraak
+        );
+    }
+
+    @Transactional(readOnly = true)
+    public List<AfspraakSummaryResponse> vindAlleAfspraken() {
+
+        return afspraakRepository.findAll()
+                .stream()
+                .map(afspraakMapper::naarSummaryResponse)
+                .toList();
     }
 
     private OperationeleAfspraak maakAfspraakOpBasisVanType(

@@ -18,6 +18,8 @@ import nl.outokumpu.afspraken.repository.AfdelingRepository;
 import nl.outokumpu.afspraken.repository.GebruikerRepository;
 import nl.outokumpu.afspraken.repository.OperationeleAfspraakRepository;
 
+import nl.outokumpu.afspraken.dto.response.AfspraakSummaryResponse;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -687,4 +689,114 @@ class AfspraakServiceTest {
                 null
         );
     }
+
+    @Test
+    void vindtAfspraakOpId() {
+
+        UUID afspraakId = UUID.randomUUID();
+
+        OperationeleAfspraak afspraak =
+                mock(OperationeleAfspraak.class);
+
+        AfspraakDetailResponse response =
+                maakResponse(
+                        "Bestaande afspraak",
+                        AfspraakType.ALGEMEEN
+                );
+
+        when(afspraakRepository.findById(afspraakId))
+                .thenReturn(Optional.of(afspraak));
+
+        when(afspraakMapper.naarDetailResponse(afspraak))
+                .thenReturn(response);
+
+        AfspraakDetailResponse resultaat =
+                afspraakService.vindAfspraak(afspraakId);
+
+        assertSame(
+                response,
+                resultaat
+        );
+
+        verify(afspraakRepository)
+                .findById(afspraakId);
+
+        verify(afspraakMapper)
+                .naarDetailResponse(afspraak);
+    }
+
+    @Test
+    void weigertWanneerAfspraakNietBestaat() {
+
+        UUID afspraakId = UUID.randomUUID();
+
+        when(afspraakRepository.findById(afspraakId))
+                .thenReturn(Optional.empty());
+
+        IllegalArgumentException exception =
+                assertThrows(
+                        IllegalArgumentException.class,
+                        () -> afspraakService.vindAfspraak(afspraakId)
+                );
+
+        assertEquals(
+                "Afspraak niet gevonden",
+                exception.getMessage()
+        );
+
+        verify(afspraakRepository)
+                .findById(afspraakId);
+
+        verifyNoInteractions(
+                afspraakMapper
+        );
+    }
+
+    @Test
+    void vindtAlleAfspraken() {
+
+        OperationeleAfspraak afspraak1 =
+                mock(OperationeleAfspraak.class);
+
+        OperationeleAfspraak afspraak2 =
+                mock(OperationeleAfspraak.class);
+
+        AfspraakSummaryResponse response1 =
+                mock(AfspraakSummaryResponse.class);
+
+        AfspraakSummaryResponse response2 =
+                mock(AfspraakSummaryResponse.class);
+
+        when(afspraakRepository.findAll())
+                .thenReturn(
+                        List.of(
+                                afspraak1,
+                                afspraak2
+                        )
+                );
+
+        when(afspraakMapper.naarSummaryResponse(afspraak1))
+                .thenReturn(response1);
+
+        when(afspraakMapper.naarSummaryResponse(afspraak2))
+                .thenReturn(response2);
+
+        List<AfspraakSummaryResponse> resultaat =
+                afspraakService.vindAlleAfspraken();
+
+        assertEquals(
+                List.of(response1, response2),
+                resultaat
+        );
+
+        verify(afspraakRepository)
+                .findAll();
+
+        verify(afspraakMapper)
+                .naarSummaryResponse(afspraak1);
+
+        verify(afspraakMapper)
+                .naarSummaryResponse(afspraak2);
+    }
+
 }

@@ -143,6 +143,23 @@ public class AfspraakMapper {
         );
     }
 
+    public AfspraakSummaryResponse naarSummaryResponse(
+            OperationeleAfspraak afspraak
+    ) {
+        return new AfspraakSummaryResponse(
+                afspraak.getId(),
+                afspraak.getTitel(),
+                afspraak.getType(),
+                afspraak.getStatus(),
+                afspraak.getIngangsdatum(),
+                afspraak.getDeadline(),
+                naarGebruikerResponse(
+                        afspraak.getInitiatiefnemer()
+                ),
+                afspraak.getLaatstGewijzigdOp()
+        );
+    }
+
     private GebruikerResponse naarGebruikerResponse(
             Gebruiker gebruiker
     ) {
