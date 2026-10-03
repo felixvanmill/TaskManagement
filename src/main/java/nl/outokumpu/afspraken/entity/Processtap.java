@@ -70,6 +70,30 @@ public class Processtap {
         this.status = ProcesstapStatus.NIET_GESTART;
     }
 
+    public void start() {
+
+        if (this.status != ProcesstapStatus.NIET_GESTART) {
+            throw new IllegalStateException(
+                    "Processtap kan alleen worden gestart vanuit NIET_GESTART"
+            );
+        }
+
+        this.status = ProcesstapStatus.IN_UITVOERING;
+        this.gestartOp = Instant.now();
+    }
+
+    public void rondAf() {
+
+        if (this.status != ProcesstapStatus.IN_UITVOERING) {
+            throw new IllegalStateException(
+                    "Processtap kan alleen worden afgerond vanuit IN_UITVOERING"
+            );
+        }
+
+        this.status = ProcesstapStatus.AFGEROND;
+        this.afgerondOp = Instant.now();
+    }
+
     public UUID getId() {
         return id;
     }
