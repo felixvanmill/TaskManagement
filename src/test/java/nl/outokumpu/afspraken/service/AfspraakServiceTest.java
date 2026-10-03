@@ -1,19 +1,26 @@
 package nl.outokumpu.afspraken.service;
 
 import nl.outokumpu.afspraken.dto.data.CapaciteitswisselData;
+import nl.outokumpu.afspraken.dto.data.OrderverplaatsingData;
 import nl.outokumpu.afspraken.dto.request.CreateAfspraakRequest;
+import nl.outokumpu.afspraken.dto.response.AfspraakDetailResponse;
 import nl.outokumpu.afspraken.entity.Afdeling;
 import nl.outokumpu.afspraken.entity.Capaciteitswissel;
 import nl.outokumpu.afspraken.entity.Gebruiker;
 import nl.outokumpu.afspraken.entity.OperationeleAfspraak;
+import nl.outokumpu.afspraken.entity.Orderverplaatsing;
+import nl.outokumpu.afspraken.enums.AfspraakStatus;
 import nl.outokumpu.afspraken.enums.AfspraakType;
 import nl.outokumpu.afspraken.enums.BetrokkenRol;
+import nl.outokumpu.afspraken.enums.UitvoeringsStatus;
+import nl.outokumpu.afspraken.mapper.AfspraakMapper;
 import nl.outokumpu.afspraken.repository.AfdelingRepository;
 import nl.outokumpu.afspraken.repository.GebruikerRepository;
 import nl.outokumpu.afspraken.repository.OperationeleAfspraakRepository;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -25,20 +32,18 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-import nl.outokumpu.afspraken.dto.data.OrderverplaatsingData;
-import nl.outokumpu.afspraken.entity.Orderverplaatsing;
-import nl.outokumpu.afspraken.enums.UitvoeringsStatus;
-
 class AfspraakServiceTest {
 
     private OperationeleAfspraakRepository afspraakRepository;
     private GebruikerRepository gebruikerRepository;
     private AfdelingRepository afdelingRepository;
+    private AfspraakMapper afspraakMapper;
 
     private AfspraakService afspraakService;
 
     @BeforeEach
     void setUp() {
+
         afspraakRepository =
                 mock(OperationeleAfspraakRepository.class);
 
@@ -48,11 +53,16 @@ class AfspraakServiceTest {
         afdelingRepository =
                 mock(AfdelingRepository.class);
 
-        afspraakService = new AfspraakService(
-                afspraakRepository,
-                gebruikerRepository,
-                afdelingRepository
-        );
+        afspraakMapper =
+                mock(AfspraakMapper.class);
+
+        afspraakService =
+                new AfspraakService(
+                        afspraakRepository,
+                        gebruikerRepository,
+                        afdelingRepository,
+                        afspraakMapper
+                );
     }
 
     @Test
@@ -70,9 +80,14 @@ class AfspraakServiceTest {
         Gebruiker goedkeurder = mock(Gebruiker.class);
         Afdeling afdeling = mock(Afdeling.class);
 
-        List<UUID> betrokkeneIds = List.of(betrokkeneId);
-        List<UUID> goedkeurderIds = List.of(goedkeurderId);
-        List<UUID> afdelingIds = List.of(afdelingId);
+        List<UUID> betrokkeneIds =
+                List.of(betrokkeneId);
+
+        List<UUID> goedkeurderIds =
+                List.of(goedkeurderId);
+
+        List<UUID> afdelingIds =
+                List.of(afdelingId);
 
         when(gebruikerRepository.findById(initiatiefnemerId))
                 .thenReturn(Optional.of(initiatiefnemer));
@@ -91,6 +106,16 @@ class AfspraakServiceTest {
 
         when(afspraakRepository.save(any(OperationeleAfspraak.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
+
+        AfspraakDetailResponse response =
+                maakResponse(
+                        "Nieuwe afspraak",
+                        AfspraakType.ALGEMEEN
+                );
+
+        when(afspraakMapper.naarDetailResponse(
+                any(OperationeleAfspraak.class)
+        )).thenReturn(response);
 
         CreateAfspraakRequest request =
                 new CreateAfspraakRequest(
@@ -112,113 +137,151 @@ class AfspraakServiceTest {
                         null
                 );
 
-        OperationeleAfspraak resultaat =
+        AfspraakDetailResponse resultaat =
                 afspraakService.createAfspraak(
                         request,
                         initiatiefnemerId
                 );
 
+        assertSame(
+                response,
+                resultaat
+        );
+
+        ArgumentCaptor<OperationeleAfspraak> captor =
+                ArgumentCaptor.forClass(
+                        OperationeleAfspraak.class
+                );
+
+        verify(afspraakRepository)
+                .save(captor.capture());
+
+        OperationeleAfspraak opgeslagenAfspraak =
+                captor.getValue();
+
         assertEquals(
                 "Nieuwe afspraak",
-                resultaat.getTitel()
+                opgeslagenAfspraak.getTitel()
         );
 
         assertEquals(
                 AfspraakType.ALGEMEEN,
-                resultaat.getType()
+                opgeslagenAfspraak.getType()
         );
 
         assertSame(
                 initiatiefnemer,
-                resultaat.getInitiatiefnemer()
+                opgeslagenAfspraak.getInitiatiefnemer()
         );
 
         assertEquals(
                 1,
-                resultaat.getProcesstappen().size()
+                opgeslagenAfspraak.getProcesstappen().size()
         );
 
         assertEquals(
                 "Eerste beoordeling",
-                resultaat.getProcesstappen().get(0).getNaam()
+                opgeslagenAfspraak
+                        .getProcesstappen()
+                        .get(0)
+                        .getNaam()
         );
 
         assertEquals(
                 1,
-                resultaat.getProcesstappen().get(0).getVolgorde()
+                opgeslagenAfspraak
+                        .getProcesstappen()
+                        .get(0)
+                        .getVolgorde()
         );
 
         assertEquals(
                 LocalDate.of(2026, 10, 15),
-                resultaat.getProcesstappen().get(0).getDeadline()
+                opgeslagenAfspraak
+                        .getProcesstappen()
+                        .get(0)
+                        .getDeadline()
         );
 
         assertSame(
                 verantwoordelijke,
-                resultaat.getProcesstappen().get(0).getVerantwoordelijke()
+                opgeslagenAfspraak
+                        .getProcesstappen()
+                        .get(0)
+                        .getVerantwoordelijke()
         );
 
         assertEquals(
                 2,
-                resultaat.getBetrokkenheden().size()
+                opgeslagenAfspraak
+                        .getBetrokkenheden()
+                        .size()
         );
 
         assertSame(
                 betrokkene,
-                resultaat.getBetrokkenheden().get(0).getGebruiker()
+                opgeslagenAfspraak
+                        .getBetrokkenheden()
+                        .get(0)
+                        .getGebruiker()
         );
 
         assertEquals(
                 BetrokkenRol.BETROKKENE,
-                resultaat.getBetrokkenheden().get(0).getRol()
+                opgeslagenAfspraak
+                        .getBetrokkenheden()
+                        .get(0)
+                        .getRol()
         );
 
         assertSame(
                 goedkeurder,
-                resultaat.getBetrokkenheden().get(1).getGebruiker()
+                opgeslagenAfspraak
+                        .getBetrokkenheden()
+                        .get(1)
+                        .getGebruiker()
         );
 
         assertEquals(
                 BetrokkenRol.GOEDKEURDER,
-                resultaat.getBetrokkenheden().get(1).getRol()
+                opgeslagenAfspraak
+                        .getBetrokkenheden()
+                        .get(1)
+                        .getRol()
         );
 
         assertEquals(
                 1,
-                resultaat.getBevestigingen().size()
+                opgeslagenAfspraak
+                        .getBevestigingen()
+                        .size()
         );
 
         assertSame(
                 goedkeurder,
-                resultaat.getBevestigingen().get(0).getGebruiker()
+                opgeslagenAfspraak
+                        .getBevestigingen()
+                        .get(0)
+                        .getGebruiker()
         );
 
         assertEquals(
                 1,
-                resultaat.getBetrokkenAfdelingen().size()
+                opgeslagenAfspraak
+                        .getBetrokkenAfdelingen()
+                        .size()
         );
 
         assertTrue(
-                resultaat.getBetrokkenAfdelingen().contains(afdeling)
+                opgeslagenAfspraak
+                        .getBetrokkenAfdelingen()
+                        .contains(afdeling)
         );
 
-        verify(gebruikerRepository)
-                .findById(initiatiefnemerId);
-
-        verify(gebruikerRepository)
-                .findById(verantwoordelijkeId);
-
-        verify(gebruikerRepository)
-                .findAllById(betrokkeneIds);
-
-        verify(gebruikerRepository)
-                .findAllById(goedkeurderIds);
-
-        verify(afdelingRepository)
-                .findAllById(afdelingIds);
-
-        verify(afspraakRepository)
-                .save(any(OperationeleAfspraak.class));
+        verify(afspraakMapper)
+                .naarDetailResponse(
+                        opgeslagenAfspraak
+                );
     }
 
     @Test
@@ -277,8 +340,16 @@ class AfspraakServiceTest {
                 exception.getMessage()
         );
 
-        verify(afspraakRepository, never())
-                .save(any(OperationeleAfspraak.class));
+        verify(
+                afspraakRepository,
+                never()
+        ).save(
+                any(OperationeleAfspraak.class)
+        );
+
+        verifyNoInteractions(
+                afspraakMapper
+        );
     }
 
     @Test
@@ -304,6 +375,16 @@ class AfspraakServiceTest {
 
         when(afspraakRepository.save(any(OperationeleAfspraak.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
+
+        AfspraakDetailResponse response =
+                maakResponse(
+                        "Capaciteit aanpassen",
+                        AfspraakType.CAPACITEITSWISSEL
+                );
+
+        when(afspraakMapper.naarDetailResponse(
+                any(OperationeleAfspraak.class)
+        )).thenReturn(response);
 
         CapaciteitswisselData capaciteitswisselData =
                 new CapaciteitswisselData(
@@ -337,19 +418,32 @@ class AfspraakServiceTest {
                         null
                 );
 
-        OperationeleAfspraak resultaat =
+        AfspraakDetailResponse resultaat =
                 afspraakService.createAfspraak(
                         request,
                         initiatiefnemerId
                 );
 
-        assertInstanceOf(
-                Capaciteitswissel.class,
+        assertSame(
+                response,
                 resultaat
         );
 
+        ArgumentCaptor<OperationeleAfspraak> captor =
+                ArgumentCaptor.forClass(
+                        OperationeleAfspraak.class
+                );
+
+        verify(afspraakRepository)
+                .save(captor.capture());
+
+        assertInstanceOf(
+                Capaciteitswissel.class,
+                captor.getValue()
+        );
+
         Capaciteitswissel capaciteitswissel =
-                (Capaciteitswissel) resultaat;
+                (Capaciteitswissel) captor.getValue();
 
         assertEquals(
                 AfspraakType.CAPACITEITSWISSEL,
@@ -398,7 +492,9 @@ class AfspraakServiceTest {
 
         assertEquals(
                 1,
-                capaciteitswissel.getProcesstappen().size()
+                capaciteitswissel
+                        .getProcesstappen()
+                        .size()
         );
 
         assertSame(
@@ -409,8 +505,10 @@ class AfspraakServiceTest {
                         .getVerantwoordelijke()
         );
 
-        verify(afspraakRepository)
-                .save(any(Capaciteitswissel.class));
+        verify(afspraakMapper)
+                .naarDetailResponse(
+                        capaciteitswissel
+                );
     }
 
     @Test
@@ -436,6 +534,16 @@ class AfspraakServiceTest {
 
         when(afspraakRepository.save(any(OperationeleAfspraak.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
+
+        AfspraakDetailResponse response =
+                maakResponse(
+                        "Order verplaatsen",
+                        AfspraakType.ORDERVERPLAATSING
+                );
+
+        when(afspraakMapper.naarDetailResponse(
+                any(OperationeleAfspraak.class)
+        )).thenReturn(response);
 
         OrderverplaatsingData orderverplaatsingData =
                 new OrderverplaatsingData(
@@ -467,19 +575,32 @@ class AfspraakServiceTest {
                         orderverplaatsingData
                 );
 
-        OperationeleAfspraak resultaat =
+        AfspraakDetailResponse resultaat =
                 afspraakService.createAfspraak(
                         request,
                         initiatiefnemerId
                 );
 
-        assertInstanceOf(
-                Orderverplaatsing.class,
+        assertSame(
+                response,
                 resultaat
         );
 
+        ArgumentCaptor<OperationeleAfspraak> captor =
+                ArgumentCaptor.forClass(
+                        OperationeleAfspraak.class
+                );
+
+        verify(afspraakRepository)
+                .save(captor.capture());
+
+        assertInstanceOf(
+                Orderverplaatsing.class,
+                captor.getValue()
+        );
+
         Orderverplaatsing orderverplaatsing =
-                (Orderverplaatsing) resultaat;
+                (Orderverplaatsing) captor.getValue();
 
         assertEquals(
                 AfspraakType.ORDERVERPLAATSING,
@@ -518,7 +639,9 @@ class AfspraakServiceTest {
 
         assertEquals(
                 1,
-                orderverplaatsing.getProcesstappen().size()
+                orderverplaatsing
+                        .getProcesstappen()
+                        .size()
         );
 
         assertSame(
@@ -529,8 +652,39 @@ class AfspraakServiceTest {
                         .getVerantwoordelijke()
         );
 
-        verify(afspraakRepository)
-                .save(any(Orderverplaatsing.class));
+        verify(afspraakMapper)
+                .naarDetailResponse(
+                        orderverplaatsing
+                );
     }
 
+    private AfspraakDetailResponse maakResponse(
+            String titel,
+            AfspraakType type
+    ) {
+
+        return new AfspraakDetailResponse(
+                null,
+                titel,
+                null,
+                null,
+                null,
+                null,
+                type,
+                AfspraakStatus.OPEN,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                List.of(),
+                List.of(),
+                List.of(),
+                List.of(),
+                List.of(),
+                null,
+                null
+        );
+    }
 }

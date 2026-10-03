@@ -3,12 +3,14 @@ package nl.outokumpu.afspraken.service;
 import nl.outokumpu.afspraken.dto.data.CapaciteitswisselData;
 import nl.outokumpu.afspraken.dto.data.OrderverplaatsingData;
 import nl.outokumpu.afspraken.dto.request.CreateAfspraakRequest;
+import nl.outokumpu.afspraken.dto.response.AfspraakDetailResponse;
 import nl.outokumpu.afspraken.entity.Afdeling;
 import nl.outokumpu.afspraken.entity.Capaciteitswissel;
 import nl.outokumpu.afspraken.entity.Gebruiker;
 import nl.outokumpu.afspraken.entity.OperationeleAfspraak;
 import nl.outokumpu.afspraken.entity.Orderverplaatsing;
 import nl.outokumpu.afspraken.enums.BetrokkenRol;
+import nl.outokumpu.afspraken.mapper.AfspraakMapper;
 import nl.outokumpu.afspraken.repository.AfdelingRepository;
 import nl.outokumpu.afspraken.repository.GebruikerRepository;
 import nl.outokumpu.afspraken.repository.OperationeleAfspraakRepository;
@@ -26,18 +28,21 @@ public class AfspraakService {
     private final OperationeleAfspraakRepository afspraakRepository;
     private final GebruikerRepository gebruikerRepository;
     private final AfdelingRepository afdelingRepository;
+    private final AfspraakMapper afspraakMapper;
 
     public AfspraakService(
             OperationeleAfspraakRepository afspraakRepository,
             GebruikerRepository gebruikerRepository,
-            AfdelingRepository afdelingRepository
+            AfdelingRepository afdelingRepository,
+            AfspraakMapper afspraakMapper
     ) {
         this.afspraakRepository = afspraakRepository;
         this.gebruikerRepository = gebruikerRepository;
         this.afdelingRepository = afdelingRepository;
+        this.afspraakMapper = afspraakMapper;
     }
 
-    public OperationeleAfspraak createAfspraak(
+    public AfspraakDetailResponse createAfspraak(
             CreateAfspraakRequest request,
             UUID initiatiefnemerId
     ) {
@@ -127,7 +132,12 @@ public class AfspraakService {
             afspraak.voegAfdelingToe(afdeling);
         }
 
-        return afspraakRepository.save(afspraak);
+        OperationeleAfspraak opgeslagenAfspraak =
+                afspraakRepository.save(afspraak);
+
+        return afspraakMapper.naarDetailResponse(
+                opgeslagenAfspraak
+        );
     }
 
     private OperationeleAfspraak maakAfspraakOpBasisVanType(
