@@ -456,4 +456,138 @@ class SecurityIntegratieTest {
                         gebruiker
                 );
     }
+
+    @Test
+    void gedeactiveerdeGebruikerVerliestBestaandeSessie()
+            throws Exception {
+
+        Gebruiker gebruiker =
+                maakGebruiker(
+                        "Actieve Gebruiker",
+                        "deactiveren@example.com",
+                        "SterkWachtwoord123!",
+                        GebruikersRol.GEBRUIKER,
+                        true
+                );
+
+        MockHttpSession session =
+                login(
+                        "deactiveren@example.com",
+                        "SterkWachtwoord123!"
+                );
+
+        gebruiker.wijzigToegang(
+                false
+        );
+
+        gebruikerRepository.saveAndFlush(
+                gebruiker
+        );
+
+        mockMvc.perform(
+                        get("/api/auth/me")
+                                .session(session)
+                )
+                .andExpect(
+                        status().isUnauthorized()
+                );
+
+        assertTrue(
+                session.isInvalid()
+        );
+    }
+
+    @Test
+    void ingetrokkenBeheerderRolGeldtDirectVoorBestaandeSessie()
+            throws Exception {
+
+        Gebruiker gebruiker =
+                maakGebruiker(
+                        "Beheerder",
+                        "demotie@example.com",
+                        "SterkWachtwoord123!",
+                        GebruikersRol.BEHEERDER,
+                        true
+                );
+
+        MockHttpSession session =
+                login(
+                        "demotie@example.com",
+                        "SterkWachtwoord123!"
+                );
+
+        /*
+         * Voor de wijziging heeft deze sessie
+         * daadwerkelijk beheerrechten.
+         */
+        mockMvc.perform(
+                        get("/api/gebruikers/beheer")
+                                .session(session)
+                )
+                .andExpect(
+                        status().isOk()
+                );
+
+        gebruiker.wijzigRol(
+                GebruikersRol.GEBRUIKER
+        );
+
+        gebruikerRepository.saveAndFlush(
+                gebruiker
+        );
+
+        /*
+         * Dezelfde sessie mag nu geen
+         * beheerendpoint meer gebruiken.
+         */
+        mockMvc.perform(
+                        get("/api/gebruikers/beheer")
+                                .session(session)
+                )
+                .andExpect(
+                        status().isForbidden()
+                );
+    }
+
+    @Test
+    void gewijzigdWachtwoordTrektBestaandeSessieIn()
+            throws Exception {
+
+        Gebruiker gebruiker =
+                maakGebruiker(
+                        "Gebruiker",
+                        "wachtwoord@example.com",
+                        "OudWachtwoord123!",
+                        GebruikersRol.GEBRUIKER,
+                        true
+                );
+
+        MockHttpSession session =
+                login(
+                        "wachtwoord@example.com",
+                        "OudWachtwoord123!"
+                );
+
+        gebruiker.wijzigWachtwoordHash(
+                passwordEncoder.encode(
+                        "NieuwWachtwoord123!"
+                )
+        );
+
+        gebruikerRepository.saveAndFlush(
+                gebruiker
+        );
+
+        mockMvc.perform(
+                        get("/api/auth/me")
+                                .session(session)
+                )
+                .andExpect(
+                        status().isUnauthorized()
+                );
+
+        assertTrue(
+                session.isInvalid()
+        );
+    }
 }
