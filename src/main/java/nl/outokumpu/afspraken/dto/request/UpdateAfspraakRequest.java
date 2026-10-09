@@ -7,13 +7,10 @@ import jakarta.validation.constraints.Size;
 
 import nl.outokumpu.afspraken.dto.data.CapaciteitswisselData;
 import nl.outokumpu.afspraken.dto.data.OrderverplaatsingData;
-import nl.outokumpu.afspraken.enums.AfspraakType;
 
 import java.time.LocalDate;
-import java.util.List;
-import java.util.UUID;
 
-public record CreateAfspraakRequest(
+public record UpdateAfspraakRequest(
 
         @NotBlank
         @Size(max = 255)
@@ -34,32 +31,10 @@ public record CreateAfspraakRequest(
         String aannames,
 
         @NotNull
-        AfspraakType type,
-
-        @NotNull
         LocalDate ingangsdatum,
 
         @NotNull
         LocalDate deadline,
-
-        @NotNull
-        UUID verantwoordelijkeId,
-
-        @NotBlank
-        @Size(max = 255)
-        String eersteProcesstapNaam,
-
-        @NotNull
-        LocalDate eersteProcesstapDeadline,
-
-        @NotNull
-        List<UUID> betrokkeneIds,
-
-        @NotNull
-        List<UUID> goedkeurderIds,
-
-        @NotNull
-        List<UUID> afdelingIds,
 
         @Valid
         CapaciteitswisselData capaciteitswissel,

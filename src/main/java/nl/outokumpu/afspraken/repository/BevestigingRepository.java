@@ -4,9 +4,18 @@ import nl.outokumpu.afspraken.entity.Bevestiging;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
-public interface BevestigingRepository extends JpaRepository<Bevestiging, UUID> {
+public interface BevestigingRepository
+        extends JpaRepository<Bevestiging, UUID> {
 
-    List<Bevestiging> findByAfspraakId(UUID afspraakId);
+    List<Bevestiging> findByAfspraakId(
+            UUID afspraakId
+    );
+
+    Optional<Bevestiging> findByAfspraakIdAndGebruikerId(
+            UUID afspraakId,
+            UUID gebruikerId
+    );
 }

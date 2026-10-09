@@ -1,4 +1,3 @@
-
 package nl.outokumpu.afspraken.entity;
 
 import jakarta.persistence.*;
@@ -68,7 +67,74 @@ public class Orderverplaatsing extends OperationeleAfspraak {
         this.finishType = finishType;
         this.totaalVolumeTons = totaalVolumeTons;
         this.gewensteVerplaatsingsdatum = gewensteVerplaatsingsdatum;
-        this.uitvoeringsstatus = UitvoeringsStatus.NIET_UITGEVOERD;
+        this.uitvoeringsstatus =
+                UitvoeringsStatus.NIET_UITGEVOERD;
+    }
+
+    public void wijzigUitvoeringsstatus(
+            UitvoeringsStatus nieuweStatus
+    ) {
+
+        if (nieuweStatus == null) {
+            throw new IllegalArgumentException(
+                    "Nieuwe uitvoeringsstatus is verplicht"
+            );
+        }
+
+        if (this.uitvoeringsstatus == nieuweStatus) {
+            throw new IllegalArgumentException(
+                    "Nieuwe uitvoeringsstatus moet verschillen van de huidige status"
+            );
+        }
+
+        this.uitvoeringsstatus =
+                nieuweStatus;
+    }
+
+    public void wijzigOrdergegevens(
+            String vanFabriek,
+            String naarFabriek,
+            String finishType,
+            BigDecimal totaalVolumeTons,
+            LocalDate gewensteVerplaatsingsdatum
+    ) {
+
+        if (vanFabriek == null || vanFabriek.isBlank()) {
+            throw new IllegalArgumentException(
+                    "Fabriek van herkomst is verplicht"
+            );
+        }
+
+        if (naarFabriek == null || naarFabriek.isBlank()) {
+            throw new IllegalArgumentException(
+                    "Bestemmingsfabriek is verplicht"
+            );
+        }
+
+        if (finishType == null || finishType.isBlank()) {
+            throw new IllegalArgumentException(
+                    "Finish type is verplicht"
+            );
+        }
+
+        if (totaalVolumeTons == null) {
+            throw new IllegalArgumentException(
+                    "Totaal volume is verplicht"
+            );
+        }
+
+        if (gewensteVerplaatsingsdatum == null) {
+            throw new IllegalArgumentException(
+                    "Gewenste verplaatsingsdatum is verplicht"
+            );
+        }
+
+        this.vanFabriek = vanFabriek;
+        this.naarFabriek = naarFabriek;
+        this.finishType = finishType;
+        this.totaalVolumeTons = totaalVolumeTons;
+        this.gewensteVerplaatsingsdatum =
+                gewensteVerplaatsingsdatum;
     }
 
     public String getVanFabriek() {

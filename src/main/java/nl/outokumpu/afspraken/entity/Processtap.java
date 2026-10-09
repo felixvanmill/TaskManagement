@@ -70,6 +70,64 @@ public class Processtap {
         this.status = ProcesstapStatus.NIET_GESTART;
     }
 
+    public void start() {
+
+        if (this.status != ProcesstapStatus.NIET_GESTART) {
+            throw new IllegalStateException(
+                    "Processtap kan alleen worden gestart vanuit NIET_GESTART"
+            );
+        }
+
+        this.status = ProcesstapStatus.IN_UITVOERING;
+        this.gestartOp = Instant.now();
+    }
+
+    public void rondAf() {
+
+        if (this.status != ProcesstapStatus.IN_UITVOERING) {
+            throw new IllegalStateException(
+                    "Processtap kan alleen worden afgerond vanuit IN_UITVOERING"
+            );
+        }
+
+        this.status = ProcesstapStatus.AFGEROND;
+        this.afgerondOp = Instant.now();
+    }
+
+    public void wijzigVerantwoordelijke(
+            Gebruiker nieuweVerantwoordelijke
+    ) {
+
+        if (nieuweVerantwoordelijke == null) {
+            throw new IllegalArgumentException(
+                    "Nieuwe verantwoordelijke is verplicht"
+            );
+        }
+
+        boolean zelfdeVerantwoordelijke =
+                this.verantwoordelijke == nieuweVerantwoordelijke
+                        ||
+                        (
+                                this.verantwoordelijke.getId() != null
+                                        &&
+                                        this.verantwoordelijke
+                                                .getId()
+                                                .equals(
+                                                        nieuweVerantwoordelijke
+                                                                .getId()
+                                                )
+                        );
+
+        if (zelfdeVerantwoordelijke) {
+            throw new IllegalArgumentException(
+                    "Nieuwe verantwoordelijke moet verschillen van de huidige verantwoordelijke"
+            );
+        }
+
+        this.verantwoordelijke =
+                nieuweVerantwoordelijke;
+    }
+
     public UUID getId() {
         return id;
     }
