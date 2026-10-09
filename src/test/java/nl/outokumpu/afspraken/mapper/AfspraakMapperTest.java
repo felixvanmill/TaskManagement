@@ -143,6 +143,18 @@ class AfspraakMapperTest {
 
         assertEquals(
                 1,
+                response.goedkeurders().size()
+        );
+
+        assertEquals(
+                "Goedkeurder",
+                response.goedkeurders()
+                        .get(0)
+                        .naam()
+        );
+
+        assertEquals(
+                1,
                 response.processtappen().size()
         );
 

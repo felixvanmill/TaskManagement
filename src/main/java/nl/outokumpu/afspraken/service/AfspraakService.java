@@ -1,5 +1,6 @@
 package nl.outokumpu.afspraken.service;
 
+import nl.outokumpu.afspraken.dto.request.UpdateGoedkeurdersRequest;
 import nl.outokumpu.afspraken.dto.data.CapaciteitswisselData;
 import nl.outokumpu.afspraken.dto.data.OrderverplaatsingData;
 import nl.outokumpu.afspraken.dto.request.CreateAfspraakRequest;
@@ -255,6 +256,134 @@ public class AfspraakService {
 
         wijzigingRepository.saveAll(
                 wijzigingen
+        );
+
+        return afspraakMapper.naarDetailResponse(
+                afspraak
+        );
+    }
+
+    public AfspraakDetailResponse wijzigGoedkeurders(
+            UUID afspraakId,
+            UpdateGoedkeurdersRequest request,
+            UUID gebruikerId
+    ) {
+
+        OperationeleAfspraak afspraak =
+                afspraakRepository.findById(
+                                afspraakId
+                        )
+                        .orElseThrow(() ->
+                                new IllegalArgumentException(
+                                        "Afspraak niet gevonden"
+                                )
+                        );
+
+        Gebruiker initiatiefnemer =
+                controleerInitiatiefnemerVoorGoedkeurders(
+                        afspraak,
+                        gebruikerId
+                );
+
+        List<Gebruiker> nieuweGoedkeurders =
+                gebruikerRepository.findAllById(
+                        request.goedkeurderIds()
+                );
+
+        controleerAlleIdsGevonden(
+                request.goedkeurderIds(),
+                nieuweGoedkeurders.size(),
+                "Een of meer goedkeurders zijn niet gevonden"
+        );
+
+        List<Gebruiker> huidigeGoedkeurders =
+                afspraak.getBetrokkenheden()
+                        .stream()
+                        .filter(betrokkenheid ->
+                                betrokkenheid.getRol()
+                                        == BetrokkenRol.GOEDKEURDER
+                        )
+                        .map(
+                                Betrokkenheid::getGebruiker
+                        )
+                        .toList();
+
+        List<UUID> huidigeIds =
+                gesorteerdeGebruikerIds(
+                        huidigeGoedkeurders
+                );
+
+        List<UUID> nieuweIds =
+                gesorteerdeGebruikerIds(
+                        nieuweGoedkeurders
+                );
+
+        /*
+         * PUT blijft idempotent:
+         * als precies dezelfde goedkeurders worden gestuurd,
+         * hoeven we niets te wijzigen of in de historie op te nemen.
+         */
+        if (huidigeIds.equals(
+                nieuweIds
+        )) {
+
+            return afspraakMapper.naarDetailResponse(
+                    afspraak
+            );
+        }
+
+        List<Betrokkenheid> huidigeBetrokkenheden =
+                new ArrayList<>(
+                        afspraak.getBetrokkenheden()
+                );
+
+        huidigeBetrokkenheden.stream()
+                .filter(betrokkenheid ->
+                        betrokkenheid.getRol()
+                                == BetrokkenRol.GOEDKEURDER
+                )
+                .forEach(
+                        afspraak::verwijderBetrokkenheid
+                );
+
+        for (Gebruiker goedkeurder : nieuweGoedkeurders) {
+
+            afspraak.voegBetrokkenheidToe(
+                    goedkeurder,
+                    BetrokkenRol.GOEDKEURDER
+            );
+
+            /*
+             * Een gebruiker kan al BETROKKENE zijn en daardoor
+             * al een bevestiging hebben.
+             *
+             * In dat geval maken we geen dubbele bevestiging.
+             */
+            if (!heeftBevestiging(
+                    afspraak,
+                    goedkeurder
+            )) {
+
+                afspraak.voegBevestigingToe(
+                        goedkeurder
+                );
+            }
+        }
+
+        Wijziging wijziging =
+                afspraak.registreerWijziging(
+                        initiatiefnemer,
+                        "Goedkeurders",
+                        huidigeIds.toString(),
+                        nieuweIds.toString()
+                );
+
+        afspraakRepository.save(
+                afspraak
+        );
+
+        wijzigingRepository.save(
+                wijziging
         );
 
         return afspraakMapper.naarDetailResponse(
@@ -538,6 +667,67 @@ public class AfspraakService {
         throw new IllegalArgumentException(
                 "Gebruiker is niet bevoegd om de afspraak te wijzigen"
         );
+    }
+
+    private Gebruiker controleerInitiatiefnemerVoorGoedkeurders(
+            OperationeleAfspraak afspraak,
+            UUID gebruikerId
+    ) {
+
+        Gebruiker initiatiefnemer =
+                afspraak.getInitiatiefnemer();
+
+        if (gebruikerId == null
+                || !gebruikerId.equals(
+                initiatiefnemer.getId()
+        )) {
+
+            throw new IllegalArgumentException(
+                    "Alleen de initiatiefnemer kan goedkeurders wijzigen"
+            );
+        }
+
+        return initiatiefnemer;
+    }
+
+    private boolean heeftBevestiging(
+            OperationeleAfspraak afspraak,
+            Gebruiker gebruiker
+    ) {
+
+        return afspraak.getBevestigingen()
+                .stream()
+                .anyMatch(bevestiging ->
+                        bevestiging.getGebruiker()
+                                == gebruiker
+                                ||
+                                (
+                                        gebruiker.getId() != null
+                                                &&
+                                                gebruiker.getId()
+                                                        .equals(
+                                                                bevestiging
+                                                                        .getGebruiker()
+                                                                        .getId()
+                                                        )
+                                )
+                );
+    }
+
+    private List<UUID> gesorteerdeGebruikerIds(
+            List<Gebruiker> gebruikers
+    ) {
+
+        return gebruikers.stream()
+                .map(
+                        Gebruiker::getId
+                )
+                .filter(
+                        Objects::nonNull
+                )
+                .distinct()
+                .sorted()
+                .toList();
     }
 
     private void controleerUpdateDataPastBijType(

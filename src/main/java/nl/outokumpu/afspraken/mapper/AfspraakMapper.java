@@ -63,6 +63,17 @@ public class AfspraakMapper {
                         .map(this::naarGebruikerResponse)
                         .toList();
 
+        List<GebruikerResponse> goedkeurders =
+                afspraak.getBetrokkenheden()
+                        .stream()
+                        .filter(betrokkenheid ->
+                                betrokkenheid.getRol()
+                                        == BetrokkenRol.GOEDKEURDER
+                        )
+                        .map(Betrokkenheid::getGebruiker)
+                        .map(this::naarGebruikerResponse)
+                        .toList();
+
         List<ProcesstapResponse> processtappen =
                 afspraak.getProcesstappen()
                         .stream()
@@ -135,6 +146,7 @@ public class AfspraakMapper {
                 ),
                 afdelingen,
                 betrokkenGebruikers,
+                goedkeurders,
                 processtappen,
                 bevestigingen,
                 wijzigingen,
