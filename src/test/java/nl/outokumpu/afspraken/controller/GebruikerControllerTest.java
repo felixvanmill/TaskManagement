@@ -6,7 +6,11 @@ import nl.outokumpu.afspraken.service.GebruikerService;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.http.MediaType;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
@@ -174,5 +178,71 @@ class GebruikerControllerTest {
         verify(
                 gebruikerService
         ).vindAlleGebruikers();
+    }
+
+    @Test
+    void haaltGebruikersVoorBeheerOp()
+            throws Exception {
+
+        when(
+                gebruikerService
+                        .vindAlleGebruikersVoorBeheer()
+        ).thenReturn(
+                List.of()
+        );
+
+        mockMvc.perform(
+                        get(
+                                "/api/gebruikers/beheer"
+                        )
+                )
+                .andExpect(
+                        status().isOk()
+                )
+                .andExpect(
+                        jsonPath("$")
+                                .isArray()
+                );
+
+        verify(
+                gebruikerService
+        ).vindAlleGebruikersVoorBeheer();
+    }
+
+    @Test
+    void wijzigtGebruikerToegang()
+            throws Exception {
+
+        UUID gebruikerId =
+                UUID.randomUUID();
+
+        String json = """
+            {
+              "rol": "BEHEERDER",
+              "actief": true,
+              "nieuwWachtwoord": "NieuwWachtwoord123!"
+            }
+            """;
+
+        mockMvc.perform(
+                        put(
+                                "/api/gebruikers/{id}/toegang",
+                                gebruikerId
+                        )
+                                .contentType(
+                                        MediaType.APPLICATION_JSON
+                                )
+                                .content(json)
+                )
+                .andExpect(
+                        status().isOk()
+                );
+
+        verify(
+                gebruikerService
+        ).wijzigToegang(
+                eq(gebruikerId),
+                any()
+        );
     }
 }

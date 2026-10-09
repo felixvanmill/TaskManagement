@@ -13,7 +13,7 @@ import nl.outokumpu.afspraken.repository.GebruikerRepository;
 import nl.outokumpu.afspraken.repository.OperationeleAfspraakRepository;
 import nl.outokumpu.afspraken.repository.ProcesstapRepository;
 import nl.outokumpu.afspraken.repository.WijzigingRepository;
-
+import nl.outokumpu.afspraken.exception.ForbiddenOperationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -449,7 +449,7 @@ public class WorkflowService {
     ) {
 
         if (gebruikerId == null) {
-            throw new IllegalArgumentException(
+            throw new ForbiddenOperationException(
                     "Gebruiker is niet bevoegd om de toewijzing te wijzigen"
             );
         }
@@ -474,7 +474,7 @@ public class WorkflowService {
             return huidigeVerantwoordelijke;
         }
 
-        throw new IllegalArgumentException(
+        throw new ForbiddenOperationException(
                 "Gebruiker is niet bevoegd om de toewijzing te wijzigen"
         );
     }
@@ -613,7 +613,7 @@ public class WorkflowService {
                 verantwoordelijke.getId()
         )) {
 
-            throw new IllegalArgumentException(
+            throw new ForbiddenOperationException(
                     foutmelding
             );
         }

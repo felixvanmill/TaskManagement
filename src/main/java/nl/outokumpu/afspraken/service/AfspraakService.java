@@ -18,7 +18,7 @@ import nl.outokumpu.afspraken.repository.OperationeleAfspraakRepository;
 import nl.outokumpu.afspraken.repository.WijzigingRepository;
 import nl.outokumpu.afspraken.dto.request.AfspraakFilterRequest;
 import nl.outokumpu.afspraken.repository.specification.AfspraakSpecificaties;
-
+import nl.outokumpu.afspraken.exception.ForbiddenOperationException;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -624,7 +624,7 @@ public class AfspraakService {
     ) {
 
         if (gebruikerId == null) {
-            throw new IllegalArgumentException(
+            throw new ForbiddenOperationException(
                     "Gebruiker is niet bevoegd om de afspraak te wijzigen"
             );
         }
@@ -664,7 +664,7 @@ public class AfspraakService {
             }
         }
 
-        throw new IllegalArgumentException(
+        throw new ForbiddenOperationException(
                 "Gebruiker is niet bevoegd om de afspraak te wijzigen"
         );
     }
@@ -682,7 +682,7 @@ public class AfspraakService {
                 initiatiefnemer.getId()
         )) {
 
-            throw new IllegalArgumentException(
+            throw new ForbiddenOperationException(
                     "Alleen de initiatiefnemer kan goedkeurders wijzigen"
             );
         }

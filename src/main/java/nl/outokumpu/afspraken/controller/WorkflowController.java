@@ -6,9 +6,13 @@ import nl.outokumpu.afspraken.dto.request.UpdateAfspraakStatusRequest;
 import nl.outokumpu.afspraken.dto.request.UpdateToewijzingRequest;
 import nl.outokumpu.afspraken.dto.request.UpdateUitvoeringsstatusRequest;
 import nl.outokumpu.afspraken.dto.response.AfspraakDetailResponse;
+import nl.outokumpu.afspraken.security.SecurityGebruiker;
 import nl.outokumpu.afspraken.service.WorkflowService;
 
 import org.springframework.http.ResponseEntity;
+
+import org.springframework.security.core.Authentication;
+
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
@@ -22,15 +26,21 @@ public class WorkflowController {
     public WorkflowController(
             WorkflowService workflowService
     ) {
-        this.workflowService = workflowService;
+        this.workflowService =
+                workflowService;
     }
 
     @PutMapping("/afspraken/{id}/toewijzing")
     public ResponseEntity<AfspraakDetailResponse> updateToewijzing(
             @PathVariable UUID id,
             @Valid @RequestBody UpdateToewijzingRequest request,
-            @RequestHeader("X-Gebruiker-Id") UUID gebruikerId
+            Authentication authentication
     ) {
+
+        UUID gebruikerId =
+                SecurityGebruiker.gebruikerId(
+                        authentication
+                );
 
         return ResponseEntity.ok(
                 workflowService.updateToewijzing(
@@ -44,8 +54,13 @@ public class WorkflowController {
     @PutMapping("/processtappen/{id}/starten")
     public ResponseEntity<AfspraakDetailResponse> startProcesstap(
             @PathVariable UUID id,
-            @RequestHeader("X-Gebruiker-Id") UUID gebruikerId
+            Authentication authentication
     ) {
+
+        UUID gebruikerId =
+                SecurityGebruiker.gebruikerId(
+                        authentication
+                );
 
         return ResponseEntity.ok(
                 workflowService.startProcesstap(
@@ -58,8 +73,13 @@ public class WorkflowController {
     @PutMapping("/processtappen/{id}/afronden")
     public ResponseEntity<AfspraakDetailResponse> rondProcesstapAf(
             @PathVariable UUID id,
-            @RequestHeader("X-Gebruiker-Id") UUID gebruikerId
+            Authentication authentication
     ) {
+
+        UUID gebruikerId =
+                SecurityGebruiker.gebruikerId(
+                        authentication
+                );
 
         return ResponseEntity.ok(
                 workflowService.rondProcesstapAf(
@@ -73,8 +93,13 @@ public class WorkflowController {
     public ResponseEntity<AfspraakDetailResponse> wijzigAfspraakStatus(
             @PathVariable UUID id,
             @Valid @RequestBody UpdateAfspraakStatusRequest request,
-            @RequestHeader("X-Gebruiker-Id") UUID gebruikerId
+            Authentication authentication
     ) {
+
+        UUID gebruikerId =
+                SecurityGebruiker.gebruikerId(
+                        authentication
+                );
 
         return ResponseEntity.ok(
                 workflowService.wijzigAfspraakStatus(
@@ -89,8 +114,13 @@ public class WorkflowController {
     public ResponseEntity<AfspraakDetailResponse> wijzigUitvoeringsstatus(
             @PathVariable UUID id,
             @Valid @RequestBody UpdateUitvoeringsstatusRequest request,
-            @RequestHeader("X-Gebruiker-Id") UUID gebruikerId
+            Authentication authentication
     ) {
+
+        UUID gebruikerId =
+                SecurityGebruiker.gebruikerId(
+                        authentication
+                );
 
         return ResponseEntity.ok(
                 workflowService.wijzigUitvoeringsstatus(

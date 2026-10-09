@@ -98,12 +98,6 @@ class GlobalExceptionHandlerTest {
     void geeftValidatiefoutenPerVeld()
             throws Exception {
 
-        UUID gebruikerId =
-                UUID.randomUUID();
-
-        /*
-         * Vrijwel alle verplichte velden ontbreken.
-         */
         String json = """
                 {
                   "titel": "",
@@ -114,10 +108,6 @@ class GlobalExceptionHandlerTest {
 
         mockMvc.perform(
                         post("/api/afspraken")
-                                .header(
-                                        "X-Gebruiker-Id",
-                                        gebruikerId
-                                )
                                 .contentType(
                                         MediaType.APPLICATION_JSON
                                 )
@@ -173,8 +163,11 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
-    void geeftBadRequestWanneerGebruikerHeaderOntbreekt()
+    void geeftUnauthorizedWanneerGebruikerNietIsGeauthenticeerd()
             throws Exception {
+
+        UUID verantwoordelijkeId =
+                UUID.randomUUID();
 
         String json = """
                 {
@@ -192,7 +185,7 @@ class GlobalExceptionHandlerTest {
                   "afdelingIds": []
                 }
                 """.formatted(
-                UUID.randomUUID()
+                verantwoordelijkeId
         );
 
         mockMvc.perform(
@@ -203,12 +196,22 @@ class GlobalExceptionHandlerTest {
                                 .content(json)
                 )
                 .andExpect(
-                        status().isBadRequest()
+                        status().isUnauthorized()
+                )
+                .andExpect(
+                        jsonPath("$.status")
+                                .value(401)
+                )
+                .andExpect(
+                        jsonPath("$.error")
+                                .value(
+                                        "Unauthorized"
+                                )
                 )
                 .andExpect(
                         jsonPath("$.message")
                                 .value(
-                                        "Verplichte header ontbreekt: X-Gebruiker-Id"
+                                        "Gebruiker is niet geauthenticeerd"
                                 )
                 );
 
@@ -242,4 +245,47 @@ class GlobalExceptionHandlerTest {
                 afspraakService
         );
     }
+
+    @Test
+    void geeftForbiddenBijOnvoldoendeRechten()
+            throws Exception {
+
+        UUID afspraakId =
+                UUID.randomUUID();
+
+        when(
+                afspraakService.vindAfspraak(
+                        afspraakId
+                )
+        ).thenThrow(
+                new ForbiddenOperationException(
+                        "Onvoldoende rechten"
+                )
+        );
+
+        mockMvc.perform(
+                        get(
+                                "/api/afspraken/{id}",
+                                afspraakId
+                        )
+                )
+                .andExpect(
+                        status().isForbidden()
+                )
+                .andExpect(
+                        jsonPath("$.status")
+                                .value(403)
+                )
+                .andExpect(
+                        jsonPath("$.error")
+                                .value("Forbidden")
+                )
+                .andExpect(
+                        jsonPath("$.message")
+                                .value(
+                                        "Onvoldoende rechten"
+                                )
+                );
+    }
+
 }

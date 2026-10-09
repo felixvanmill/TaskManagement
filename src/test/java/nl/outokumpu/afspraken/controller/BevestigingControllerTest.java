@@ -1,12 +1,18 @@
 package nl.outokumpu.afspraken.controller;
 
 import nl.outokumpu.afspraken.enums.Beslissing;
+import nl.outokumpu.afspraken.enums.GebruikersRol;
+import nl.outokumpu.afspraken.security.GebruikerPrincipal;
 import nl.outokumpu.afspraken.service.BevestigingService;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import org.springframework.http.MediaType;
+
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
@@ -39,7 +45,8 @@ class BevestigingControllerTest {
     }
 
     @Test
-    void markeertAfspraakAlsGezien() throws Exception {
+    void markeertAfspraakAlsGezien()
+            throws Exception {
 
         UUID afspraakId =
                 UUID.randomUUID();
@@ -52,9 +59,10 @@ class BevestigingControllerTest {
                                 "/api/afspraken/{afspraakId}/bevestiging/gezien",
                                 afspraakId
                         )
-                                .header(
-                                        "X-Gebruiker-Id",
-                                        gebruikerId
+                                .principal(
+                                        authenticatieVoor(
+                                                gebruikerId
+                                        )
                                 )
                 )
                 .andExpect(
@@ -70,7 +78,8 @@ class BevestigingControllerTest {
     }
 
     @Test
-    void registreertGoedkeuring() throws Exception {
+    void registreertGoedkeuring()
+            throws Exception {
 
         UUID afspraakId =
                 UUID.randomUUID();
@@ -89,9 +98,10 @@ class BevestigingControllerTest {
                                 "/api/afspraken/{afspraakId}/bevestiging/beslissing",
                                 afspraakId
                         )
-                                .header(
-                                        "X-Gebruiker-Id",
-                                        gebruikerId
+                                .principal(
+                                        authenticatieVoor(
+                                                gebruikerId
+                                        )
                                 )
                                 .contentType(
                                         MediaType.APPLICATION_JSON
@@ -112,7 +122,8 @@ class BevestigingControllerTest {
     }
 
     @Test
-    void registreertAfwijzing() throws Exception {
+    void registreertAfwijzing()
+            throws Exception {
 
         UUID afspraakId =
                 UUID.randomUUID();
@@ -131,9 +142,10 @@ class BevestigingControllerTest {
                                 "/api/afspraken/{afspraakId}/bevestiging/beslissing",
                                 afspraakId
                         )
-                                .header(
-                                        "X-Gebruiker-Id",
-                                        gebruikerId
+                                .principal(
+                                        authenticatieVoor(
+                                                gebruikerId
+                                        )
                                 )
                                 .contentType(
                                         MediaType.APPLICATION_JSON
@@ -150,6 +162,26 @@ class BevestigingControllerTest {
                 afspraakId,
                 gebruikerId,
                 Beslissing.AFGEWEZEN
+        );
+    }
+
+    private Authentication authenticatieVoor(
+            UUID gebruikerId
+    ) {
+
+        GebruikerPrincipal principal =
+                new GebruikerPrincipal(
+                        gebruikerId,
+                        "bevestiging@example.com",
+                        "$2a$10$testhash",
+                        GebruikersRol.GEBRUIKER,
+                        true
+                );
+
+        return new UsernamePasswordAuthenticationToken(
+                principal,
+                null,
+                principal.getAuthorities()
         );
     }
 }
