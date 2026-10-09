@@ -15,7 +15,10 @@ import nl.outokumpu.afspraken.repository.AfdelingRepository;
 import nl.outokumpu.afspraken.repository.GebruikerRepository;
 import nl.outokumpu.afspraken.repository.OperationeleAfspraakRepository;
 import nl.outokumpu.afspraken.repository.WijzigingRepository;
+import nl.outokumpu.afspraken.dto.request.AfspraakFilterRequest;
+import nl.outokumpu.afspraken.repository.specification.AfspraakSpecificaties;
 
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -310,6 +313,72 @@ public class AfspraakService {
         return afspraakRepository
                 .findByStatusOrderByLaatstGewijzigdOpDesc(
                         AfspraakStatus.AFGEROND
+                )
+                .stream()
+                .map(
+                        afspraakMapper::naarSummaryResponse
+                )
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<AfspraakSummaryResponse> zoekAfspraken(
+            String zoekterm
+    ) {
+
+        if (zoekterm == null
+                || zoekterm.isBlank()) {
+
+            throw new IllegalArgumentException(
+                    "Zoekterm is verplicht"
+            );
+        }
+
+        return afspraakRepository
+                .zoekOpTrefwoord(
+                        zoekterm.trim()
+                )
+                .stream()
+                .map(
+                        afspraakMapper::naarSummaryResponse
+                )
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<AfspraakSummaryResponse> filterAfspraken(
+            AfspraakFilterRequest filter
+    ) {
+
+        if (filter == null) {
+            throw new IllegalArgumentException(
+                    "Filter is verplicht"
+            );
+        }
+
+        if (filter.periodeVan() != null
+                && filter.periodeTot() != null
+                && filter.periodeVan()
+                .isAfter(
+                        filter.periodeTot()
+                )) {
+
+            throw new IllegalArgumentException(
+                    "Periode van mag niet na periode tot liggen"
+            );
+        }
+
+        Sort sortering =
+                Sort.by(
+                        Sort.Direction.DESC,
+                        "laatstGewijzigdOp"
+                );
+
+        return afspraakRepository
+                .findAll(
+                        AfspraakSpecificaties
+                                .metFilters(filter),
+                        sortering
                 )
                 .stream()
                 .map(
