@@ -1,4 +1,3 @@
-
 package nl.outokumpu.afspraken.entity;
 
 import jakarta.persistence.*;
@@ -57,6 +56,40 @@ public class Bevestiging {
         this.gebruiker = gebruiker;
         this.gezien = false;
         this.beslissing = Beslissing.GEEN;
+    }
+
+    public void markeerGezien() {
+
+        if (this.gezien) {
+            throw new IllegalStateException(
+                    "Afspraak is al als gezien geregistreerd"
+            );
+        }
+
+        this.gezien = true;
+        this.gezienOp = Instant.now();
+    }
+
+    public void registreerBeslissing(
+            Beslissing nieuweBeslissing
+    ) {
+
+        if (nieuweBeslissing == null
+                || nieuweBeslissing == Beslissing.GEEN) {
+
+            throw new IllegalArgumentException(
+                    "Beslissing moet GOEDGEKEURD of AFGEWEZEN zijn"
+            );
+        }
+
+        if (this.beslissing == nieuweBeslissing) {
+            throw new IllegalArgumentException(
+                    "Nieuwe beslissing moet verschillen van de huidige beslissing"
+            );
+        }
+
+        this.beslissing = nieuweBeslissing;
+        this.beslistOp = Instant.now();
     }
 
     public UUID getId() {

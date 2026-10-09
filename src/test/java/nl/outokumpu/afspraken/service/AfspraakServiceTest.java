@@ -253,17 +253,25 @@ class AfspraakServiceTest {
         );
 
         assertEquals(
-                1,
+                2,
                 opgeslagenAfspraak
                         .getBevestigingen()
                         .size()
         );
 
         assertSame(
-                goedkeurder,
+                betrokkene,
                 opgeslagenAfspraak
                         .getBevestigingen()
                         .get(0)
+                        .getGebruiker()
+        );
+
+        assertSame(
+                goedkeurder,
+                opgeslagenAfspraak
+                        .getBevestigingen()
+                        .get(1)
                         .getGebruiker()
         );
 

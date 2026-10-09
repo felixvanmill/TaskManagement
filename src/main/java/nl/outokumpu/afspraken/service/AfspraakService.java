@@ -90,9 +90,14 @@ public class AfspraakService {
         );
 
         for (Gebruiker gebruiker : betrokkenGebruikers) {
+
             afspraak.voegBetrokkenheidToe(
                     gebruiker,
                     BetrokkenRol.BETROKKENE
+            );
+
+            afspraak.voegBevestigingToe(
+                    gebruiker
             );
         }
 
@@ -114,9 +119,28 @@ public class AfspraakService {
                     BetrokkenRol.GOEDKEURDER
             );
 
-            afspraak.voegBevestigingToe(
-                    goedkeurder
-            );
+            boolean heeftAlBevestiging =
+                    afspraak.getBevestigingen()
+                            .stream()
+                            .anyMatch(bevestiging ->
+                                    bevestiging.getGebruiker() == goedkeurder
+                                            ||
+                                            (
+                                                    goedkeurder.getId() != null
+                                                            &&
+                                                            goedkeurder.getId().equals(
+                                                                    bevestiging
+                                                                            .getGebruiker()
+                                                                            .getId()
+                                                            )
+                                            )
+                            );
+
+            if (!heeftAlBevestiging) {
+                afspraak.voegBevestigingToe(
+                        goedkeurder
+                );
+            }
         }
 
         List<Afdeling> betrokkenAfdelingen =
