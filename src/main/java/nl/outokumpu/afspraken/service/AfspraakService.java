@@ -7,6 +7,7 @@ import nl.outokumpu.afspraken.dto.request.UpdateAfspraakRequest;
 import nl.outokumpu.afspraken.dto.response.AfspraakDetailResponse;
 import nl.outokumpu.afspraken.dto.response.AfspraakSummaryResponse;
 import nl.outokumpu.afspraken.entity.*;
+import nl.outokumpu.afspraken.enums.AfspraakStatus;
 import nl.outokumpu.afspraken.enums.BetrokkenRol;
 import nl.outokumpu.afspraken.enums.ProcesstapStatus;
 import nl.outokumpu.afspraken.mapper.AfspraakMapper;
@@ -282,6 +283,34 @@ public class AfspraakService {
     public List<AfspraakSummaryResponse> vindAlleAfspraken() {
 
         return afspraakRepository.findAll()
+                .stream()
+                .map(
+                        afspraakMapper::naarSummaryResponse
+                )
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<AfspraakSummaryResponse> vindActieveAfspraken() {
+
+        return afspraakRepository
+                .findByStatusNotOrderByLaatstGewijzigdOpDesc(
+                        AfspraakStatus.AFGEROND
+                )
+                .stream()
+                .map(
+                        afspraakMapper::naarSummaryResponse
+                )
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<AfspraakSummaryResponse> vindAfgerondeAfspraken() {
+
+        return afspraakRepository
+                .findByStatusOrderByLaatstGewijzigdOpDesc(
+                        AfspraakStatus.AFGEROND
+                )
                 .stream()
                 .map(
                         afspraakMapper::naarSummaryResponse
