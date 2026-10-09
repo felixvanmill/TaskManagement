@@ -3,10 +3,12 @@ package nl.outokumpu.afspraken.exception;
 import jakarta.servlet.http.HttpServletRequest;
 
 import nl.outokumpu.afspraken.dto.response.ApiErrorResponse;
-
+import nl.outokumpu.afspraken.exception.ForbiddenOperationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+
+import org.springframework.security.access.AccessDeniedException;
 
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingRequestHeaderException;
@@ -66,6 +68,36 @@ public class GlobalExceptionHandler {
 
         return maakResponse(
                 HttpStatus.UNAUTHORIZED,
+                exception.getMessage(),
+                request
+        );
+    }
+
+    @ExceptionHandler(
+            AccessDeniedException.class
+    )
+    public ResponseEntity<ApiErrorResponse> handleAccessDenied(
+            AccessDeniedException exception,
+            HttpServletRequest request
+    ) {
+
+        return maakResponse(
+                HttpStatus.FORBIDDEN,
+                "Onvoldoende rechten voor deze actie",
+                request
+        );
+    }
+
+    @ExceptionHandler(
+            ForbiddenOperationException.class
+    )
+    public ResponseEntity<ApiErrorResponse> handleForbiddenOperation(
+            ForbiddenOperationException exception,
+            HttpServletRequest request
+    ) {
+
+        return maakResponse(
+                HttpStatus.FORBIDDEN,
                 exception.getMessage(),
                 request
         );

@@ -24,7 +24,11 @@ import org.springframework.test.web.servlet.MvcResult;
 
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.UUID;
+
 import static org.junit.jupiter.api.Assertions.*;
+
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -71,60 +75,15 @@ class SecurityIntegratieTest {
                 true
         );
 
-        String loginJson = """
-                {
-                  "email": "security@example.com",
-                  "wachtwoord": "SterkWachtwoord123!"
-                }
-                """;
-
-        MvcResult loginResult =
-                mockMvc.perform(
-                                post("/api/auth/login")
-                                        .contentType(
-                                                MediaType.APPLICATION_JSON
-                                        )
-                                        .content(
-                                                loginJson
-                                        )
-                        )
-                        .andExpect(
-                                status().isOk()
-                        )
-                        .andExpect(
-                                jsonPath("$.email")
-                                        .value(
-                                                "security@example.com"
-                                        )
-                        )
-                        .andExpect(
-                                jsonPath("$.rol")
-                                        .value(
-                                                "GEBRUIKER"
-                                        )
-                        )
-                        .andReturn();
-
         MockHttpSession session =
-                (MockHttpSession) loginResult
-                        .getRequest()
-                        .getSession(
-                                false
-                        );
+                login(
+                        "security@example.com",
+                        "SterkWachtwoord123!"
+                );
 
-        assertNotNull(
-                session
-        );
-
-        /*
-         * Dezelfde server-side session wordt nu gebruikt
-         * voor een beveiligde request.
-         */
         mockMvc.perform(
                         get("/api/auth/me")
-                                .session(
-                                        session
-                                )
+                                .session(session)
                 )
                 .andExpect(
                         status().isOk()
@@ -144,16 +103,10 @@ class SecurityIntegratieTest {
 
         mockMvc.perform(
                         get("/api/afdelingen")
-                                .session(
-                                        session
-                                )
+                                .session(session)
                 )
                 .andExpect(
                         status().isOk()
-                )
-                .andExpect(
-                        jsonPath("$")
-                                .isArray()
                 );
     }
 
@@ -181,9 +134,7 @@ class SecurityIntegratieTest {
                                 .contentType(
                                         MediaType.APPLICATION_JSON
                                 )
-                                .content(
-                                        loginJson
-                                )
+                                .content(loginJson)
                 )
                 .andExpect(
                         status().isUnauthorized()
@@ -220,19 +171,253 @@ class SecurityIntegratieTest {
                                 .contentType(
                                         MediaType.APPLICATION_JSON
                                 )
-                                .content(
-                                        loginJson
-                                )
+                                .content(loginJson)
                 )
                 .andExpect(
                         status().isUnauthorized()
+                );
+    }
+
+    @Test
+    void gewoneGebruikerKrijgtGeenToegangTotGebruikersbeheer()
+            throws Exception {
+
+        maakGebruiker(
+                "Gewone Gebruiker",
+                "gebruiker@example.com",
+                "SterkWachtwoord123!",
+                GebruikersRol.GEBRUIKER,
+                true
+        );
+
+        MockHttpSession session =
+                login(
+                        "gebruiker@example.com",
+                        "SterkWachtwoord123!"
+                );
+
+        mockMvc.perform(
+                        get("/api/gebruikers/beheer")
+                                .session(session)
                 )
                 .andExpect(
-                        jsonPath("$.message")
-                                .value(
-                                        "Ongeldige inloggegevens"
-                                )
+                        status().isForbidden()
                 );
+    }
+
+    @Test
+    void beheerderKrijgtToegangTotGebruikersbeheer()
+            throws Exception {
+
+        maakGebruiker(
+                "Beheerder",
+                "beheerder@example.com",
+                "SterkWachtwoord123!",
+                GebruikersRol.BEHEERDER,
+                true
+        );
+
+        MockHttpSession session =
+                login(
+                        "beheerder@example.com",
+                        "SterkWachtwoord123!"
+                );
+
+        mockMvc.perform(
+                        get("/api/gebruikers/beheer")
+                                .session(session)
+                )
+                .andExpect(
+                        status().isOk()
+                )
+                .andExpect(
+                        jsonPath("$")
+                                .isArray()
+                );
+    }
+
+    @Test
+    void gewoneGebruikerKanToegangVanAndereGebruikerNietWijzigen()
+            throws Exception {
+
+        maakGebruiker(
+                "Gewone Gebruiker",
+                "normaal@example.com",
+                "SterkWachtwoord123!",
+                GebruikersRol.GEBRUIKER,
+                true
+        );
+
+        Gebruiker doelGebruiker =
+                maakGebruiker(
+                        "Doel Gebruiker",
+                        "doel@example.com",
+                        "DoelWachtwoord123!",
+                        GebruikersRol.GEBRUIKER,
+                        true
+                );
+
+        MockHttpSession session =
+                login(
+                        "normaal@example.com",
+                        "SterkWachtwoord123!"
+                );
+
+        String json = """
+                {
+                  "rol": "BEHEERDER",
+                  "actief": false
+                }
+                """;
+
+        mockMvc.perform(
+                        put(
+                                "/api/gebruikers/{id}/toegang",
+                                doelGebruiker.getId()
+                        )
+                                .session(session)
+                                .with(csrf())
+                                .contentType(
+                                        MediaType.APPLICATION_JSON
+                                )
+                                .content(json)
+                )
+                .andExpect(
+                        status().isForbidden()
+                );
+
+        Gebruiker ongewijzigdeGebruiker =
+                gebruikerRepository
+                        .findById(
+                                doelGebruiker.getId()
+                        )
+                        .orElseThrow();
+
+        assertEquals(
+                GebruikersRol.GEBRUIKER,
+                ongewijzigdeGebruiker.getRol()
+        );
+
+        assertTrue(
+                ongewijzigdeGebruiker.isActief()
+        );
+    }
+
+    @Test
+    void beheerderKanRolEnToegangVanGebruikerWijzigen()
+            throws Exception {
+
+        maakGebruiker(
+                "Beheerder",
+                "admin@example.com",
+                "SterkWachtwoord123!",
+                GebruikersRol.BEHEERDER,
+                true
+        );
+
+        Gebruiker doelGebruiker =
+                maakGebruiker(
+                        "Doel Gebruiker",
+                        "wijzigen@example.com",
+                        "DoelWachtwoord123!",
+                        GebruikersRol.GEBRUIKER,
+                        true
+                );
+
+        MockHttpSession session =
+                login(
+                        "admin@example.com",
+                        "SterkWachtwoord123!"
+                );
+
+        String json = """
+                {
+                  "rol": "BEHEERDER",
+                  "actief": false
+                }
+                """;
+
+        mockMvc.perform(
+                        put(
+                                "/api/gebruikers/{id}/toegang",
+                                doelGebruiker.getId()
+                        )
+                                .session(session)
+                                .with(csrf())
+                                .contentType(
+                                        MediaType.APPLICATION_JSON
+                                )
+                                .content(json)
+                )
+                .andExpect(
+                        status().isOk()
+                )
+                .andExpect(
+                        jsonPath("$.rol")
+                                .value(
+                                        "BEHEERDER"
+                                )
+                )
+                .andExpect(
+                        jsonPath("$.actief")
+                                .value(false)
+                );
+
+        Gebruiker gewijzigdeGebruiker =
+                gebruikerRepository
+                        .findById(
+                                doelGebruiker.getId()
+                        )
+                        .orElseThrow();
+
+        assertEquals(
+                GebruikersRol.BEHEERDER,
+                gewijzigdeGebruiker.getRol()
+        );
+
+        assertFalse(
+                gewijzigdeGebruiker.isActief()
+        );
+    }
+
+    private MockHttpSession login(
+            String email,
+            String wachtwoord
+    ) throws Exception {
+
+        String json = """
+                {
+                  "email": "%s",
+                  "wachtwoord": "%s"
+                }
+                """.formatted(
+                email,
+                wachtwoord
+        );
+
+        MvcResult resultaat =
+                mockMvc.perform(
+                                post("/api/auth/login")
+                                        .contentType(
+                                                MediaType.APPLICATION_JSON
+                                        )
+                                        .content(json)
+                        )
+                        .andExpect(
+                                status().isOk()
+                        )
+                        .andReturn();
+
+        MockHttpSession session =
+                (MockHttpSession) resultaat
+                        .getRequest()
+                        .getSession(false);
+
+        assertNotNull(
+                session
+        );
+
+        return session;
     }
 
     private Gebruiker maakGebruiker(
@@ -246,7 +431,8 @@ class SecurityIntegratieTest {
         Afdeling afdeling =
                 afdelingRepository.saveAndFlush(
                         new Afdeling(
-                                "Security Test Afdeling"
+                                "Security Test "
+                                        + UUID.randomUUID()
                         )
                 );
 

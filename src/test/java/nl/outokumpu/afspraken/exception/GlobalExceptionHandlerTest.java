@@ -245,4 +245,47 @@ class GlobalExceptionHandlerTest {
                 afspraakService
         );
     }
+
+    @Test
+    void geeftForbiddenBijOnvoldoendeRechten()
+            throws Exception {
+
+        UUID afspraakId =
+                UUID.randomUUID();
+
+        when(
+                afspraakService.vindAfspraak(
+                        afspraakId
+                )
+        ).thenThrow(
+                new ForbiddenOperationException(
+                        "Onvoldoende rechten"
+                )
+        );
+
+        mockMvc.perform(
+                        get(
+                                "/api/afspraken/{id}",
+                                afspraakId
+                        )
+                )
+                .andExpect(
+                        status().isForbidden()
+                )
+                .andExpect(
+                        jsonPath("$.status")
+                                .value(403)
+                )
+                .andExpect(
+                        jsonPath("$.error")
+                                .value("Forbidden")
+                )
+                .andExpect(
+                        jsonPath("$.message")
+                                .value(
+                                        "Onvoldoende rechten"
+                                )
+                );
+    }
+
 }

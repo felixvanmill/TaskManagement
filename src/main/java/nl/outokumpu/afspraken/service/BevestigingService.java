@@ -10,7 +10,7 @@ import nl.outokumpu.afspraken.entity.Gebruiker;
 import nl.outokumpu.afspraken.enums.Beslissing;
 import nl.outokumpu.afspraken.enums.BetrokkenRol;
 import nl.outokumpu.afspraken.repository.BevestigingRepository;
-
+import nl.outokumpu.afspraken.exception.ForbiddenOperationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -118,7 +118,7 @@ public class BevestigingService {
                         );
 
         if (!isGoedkeurder) {
-            throw new IllegalArgumentException(
+            throw new ForbiddenOperationException(
                     "Alleen een aangewezen goedkeurder kan een beslissing registreren"
             );
         }
