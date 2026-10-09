@@ -2,13 +2,19 @@ package nl.outokumpu.afspraken.controller;
 
 import nl.outokumpu.afspraken.dto.request.UpdateToewijzingRequest;
 import nl.outokumpu.afspraken.enums.AfspraakStatus;
+import nl.outokumpu.afspraken.enums.GebruikersRol;
 import nl.outokumpu.afspraken.enums.UitvoeringsStatus;
+import nl.outokumpu.afspraken.security.GebruikerPrincipal;
 import nl.outokumpu.afspraken.service.WorkflowService;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import org.springframework.http.MediaType;
+
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
@@ -86,9 +92,10 @@ class WorkflowControllerTest {
                                 "/api/afspraken/{id}/toewijzing",
                                 afspraakId
                         )
-                                .header(
-                                        "X-Gebruiker-Id",
-                                        gebruikerId
+                                .principal(
+                                        authenticatieVoor(
+                                                gebruikerId
+                                        )
                                 )
                                 .contentType(
                                         MediaType.APPLICATION_JSON
@@ -122,9 +129,10 @@ class WorkflowControllerTest {
                                 "/api/processtappen/{id}/starten",
                                 processtapId
                         )
-                                .header(
-                                        "X-Gebruiker-Id",
-                                        gebruikerId
+                                .principal(
+                                        authenticatieVoor(
+                                                gebruikerId
+                                        )
                                 )
                 )
                 .andExpect(
@@ -153,9 +161,10 @@ class WorkflowControllerTest {
                                 "/api/processtappen/{id}/afronden",
                                 processtapId
                         )
-                                .header(
-                                        "X-Gebruiker-Id",
-                                        gebruikerId
+                                .principal(
+                                        authenticatieVoor(
+                                                gebruikerId
+                                        )
                                 )
                 )
                 .andExpect(
@@ -190,9 +199,10 @@ class WorkflowControllerTest {
                                 "/api/afspraken/{id}/status",
                                 afspraakId
                         )
-                                .header(
-                                        "X-Gebruiker-Id",
-                                        gebruikerId
+                                .principal(
+                                        authenticatieVoor(
+                                                gebruikerId
+                                        )
                                 )
                                 .contentType(
                                         MediaType.APPLICATION_JSON
@@ -232,9 +242,10 @@ class WorkflowControllerTest {
                                 "/api/afspraken/{id}/uitvoeringsstatus",
                                 afspraakId
                         )
-                                .header(
-                                        "X-Gebruiker-Id",
-                                        gebruikerId
+                                .principal(
+                                        authenticatieVoor(
+                                                gebruikerId
+                                        )
                                 )
                                 .contentType(
                                         MediaType.APPLICATION_JSON
@@ -251,6 +262,26 @@ class WorkflowControllerTest {
                 afspraakId,
                 UitvoeringsStatus.IN_UITVOERING,
                 gebruikerId
+        );
+    }
+
+    private Authentication authenticatieVoor(
+            UUID gebruikerId
+    ) {
+
+        GebruikerPrincipal principal =
+                new GebruikerPrincipal(
+                        gebruikerId,
+                        "workflow@example.com",
+                        "$2a$10$testhash",
+                        GebruikersRol.GEBRUIKER,
+                        true
+                );
+
+        return new UsernamePasswordAuthenticationToken(
+                principal,
+                null,
+                principal.getAuthorities()
         );
     }
 }

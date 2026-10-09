@@ -10,11 +10,15 @@ import nl.outokumpu.afspraken.dto.response.AfspraakDetailResponse;
 import nl.outokumpu.afspraken.dto.response.AfspraakSummaryResponse;
 import nl.outokumpu.afspraken.enums.AfspraakStatus;
 import nl.outokumpu.afspraken.enums.AfspraakType;
+import nl.outokumpu.afspraken.security.SecurityGebruiker;
 import nl.outokumpu.afspraken.service.AfspraakService;
 
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+
+import org.springframework.security.core.Authentication;
+
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -30,14 +34,20 @@ public class AfspraakController {
     public AfspraakController(
             AfspraakService afspraakService
     ) {
-        this.afspraakService = afspraakService;
+        this.afspraakService =
+                afspraakService;
     }
 
     @PostMapping
     public ResponseEntity<AfspraakDetailResponse> maakAfspraak(
             @Valid @RequestBody CreateAfspraakRequest request,
-            @RequestHeader("X-Gebruiker-Id") UUID gebruikerId
+            Authentication authentication
     ) {
+
+        UUID gebruikerId =
+                SecurityGebruiker.gebruikerId(
+                        authentication
+                );
 
         AfspraakDetailResponse response =
                 afspraakService.createAfspraak(
@@ -46,7 +56,9 @@ public class AfspraakController {
                 );
 
         return ResponseEntity
-                .status(HttpStatus.CREATED)
+                .status(
+                        HttpStatus.CREATED
+                )
                 .body(response);
     }
 
@@ -56,7 +68,9 @@ public class AfspraakController {
     ) {
 
         return ResponseEntity.ok(
-                afspraakService.vindAfspraak(id)
+                afspraakService.vindAfspraak(
+                        id
+                )
         );
     }
 
@@ -65,7 +79,8 @@ public class AfspraakController {
     vindAlleAfspraken() {
 
         return ResponseEntity.ok(
-                afspraakService.vindAlleAfspraken()
+                afspraakService
+                        .vindAlleAfspraken()
         );
     }
 
@@ -74,7 +89,8 @@ public class AfspraakController {
     vindActieveAfspraken() {
 
         return ResponseEntity.ok(
-                afspraakService.vindActieveAfspraken()
+                afspraakService
+                        .vindActieveAfspraken()
         );
     }
 
@@ -83,7 +99,8 @@ public class AfspraakController {
     vindAfgerondeAfspraken() {
 
         return ResponseEntity.ok(
-                afspraakService.vindAfgerondeAfspraken()
+                afspraakService
+                        .vindAfgerondeAfspraken()
         );
     }
 
@@ -120,11 +137,15 @@ public class AfspraakController {
             String fabriek,
 
             @RequestParam(required = false)
-            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+            @DateTimeFormat(
+                    iso = DateTimeFormat.ISO.DATE
+            )
             LocalDate periodeVan,
 
             @RequestParam(required = false)
-            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+            @DateTimeFormat(
+                    iso = DateTimeFormat.ISO.DATE
+            )
             LocalDate periodeTot
     ) {
 
@@ -150,8 +171,13 @@ public class AfspraakController {
     public ResponseEntity<AfspraakDetailResponse> updateAfspraak(
             @PathVariable UUID id,
             @Valid @RequestBody UpdateAfspraakRequest request,
-            @RequestHeader("X-Gebruiker-Id") UUID gebruikerId
+            Authentication authentication
     ) {
+
+        UUID gebruikerId =
+                SecurityGebruiker.gebruikerId(
+                        authentication
+                );
 
         return ResponseEntity.ok(
                 afspraakService.updateAfspraak(
@@ -166,8 +192,13 @@ public class AfspraakController {
     public ResponseEntity<AfspraakDetailResponse> wijzigGoedkeurders(
             @PathVariable UUID id,
             @Valid @RequestBody UpdateGoedkeurdersRequest request,
-            @RequestHeader("X-Gebruiker-Id") UUID gebruikerId
+            Authentication authentication
     ) {
+
+        UUID gebruikerId =
+                SecurityGebruiker.gebruikerId(
+                        authentication
+                );
 
         return ResponseEntity.ok(
                 afspraakService.wijzigGoedkeurders(

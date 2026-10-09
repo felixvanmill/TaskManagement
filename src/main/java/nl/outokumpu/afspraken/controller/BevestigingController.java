@@ -4,9 +4,13 @@ import jakarta.validation.Valid;
 
 import nl.outokumpu.afspraken.dto.request.BeslissingRequest;
 import nl.outokumpu.afspraken.dto.response.BevestigingResponse;
+import nl.outokumpu.afspraken.security.SecurityGebruiker;
 import nl.outokumpu.afspraken.service.BevestigingService;
 
 import org.springframework.http.ResponseEntity;
+
+import org.springframework.security.core.Authentication;
+
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
@@ -27,8 +31,13 @@ public class BevestigingController {
     @PutMapping("/gezien")
     public ResponseEntity<BevestigingResponse> markeerGezien(
             @PathVariable UUID afspraakId,
-            @RequestHeader("X-Gebruiker-Id") UUID gebruikerId
+            Authentication authentication
     ) {
+
+        UUID gebruikerId =
+                SecurityGebruiker.gebruikerId(
+                        authentication
+                );
 
         return ResponseEntity.ok(
                 bevestigingService.markeerGezien(
@@ -41,9 +50,14 @@ public class BevestigingController {
     @PutMapping("/beslissing")
     public ResponseEntity<BevestigingResponse> registreerBeslissing(
             @PathVariable UUID afspraakId,
-            @RequestHeader("X-Gebruiker-Id") UUID gebruikerId,
-            @Valid @RequestBody BeslissingRequest request
+            @Valid @RequestBody BeslissingRequest request,
+            Authentication authentication
     ) {
+
+        UUID gebruikerId =
+                SecurityGebruiker.gebruikerId(
+                        authentication
+                );
 
         return ResponseEntity.ok(
                 bevestigingService.registreerBeslissing(

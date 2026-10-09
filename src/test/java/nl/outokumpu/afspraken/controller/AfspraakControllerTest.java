@@ -3,12 +3,18 @@ package nl.outokumpu.afspraken.controller;
 import nl.outokumpu.afspraken.dto.request.AfspraakFilterRequest;
 import nl.outokumpu.afspraken.enums.AfspraakStatus;
 import nl.outokumpu.afspraken.enums.AfspraakType;
+import nl.outokumpu.afspraken.enums.GebruikersRol;
+import nl.outokumpu.afspraken.security.GebruikerPrincipal;
 import nl.outokumpu.afspraken.service.AfspraakService;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import org.springframework.http.MediaType;
+
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
@@ -77,9 +83,10 @@ class AfspraakControllerTest {
 
         mockMvc.perform(
                         post("/api/afspraken")
-                                .header(
-                                        "X-Gebruiker-Id",
-                                        gebruikerId
+                                .principal(
+                                        authenticatieVoor(
+                                                gebruikerId
+                                        )
                                 )
                                 .contentType(
                                         MediaType.APPLICATION_JSON
@@ -99,7 +106,8 @@ class AfspraakControllerTest {
     }
 
     @Test
-    void haaltAfspraakDetailOp() throws Exception {
+    void haaltAfspraakDetailOp()
+            throws Exception {
 
         UUID afspraakId =
                 UUID.randomUUID();
@@ -122,10 +130,12 @@ class AfspraakControllerTest {
     }
 
     @Test
-    void haaltAlleAfsprakenOp() throws Exception {
+    void haaltAlleAfsprakenOp()
+            throws Exception {
 
         when(
-                afspraakService.vindAlleAfspraken()
+                afspraakService
+                        .vindAlleAfspraken()
         ).thenReturn(
                 List.of()
         );
@@ -137,7 +147,8 @@ class AfspraakControllerTest {
                         status().isOk()
                 )
                 .andExpect(
-                        jsonPath("$").isArray()
+                        jsonPath("$")
+                                .isArray()
                 );
 
         verify(
@@ -146,10 +157,12 @@ class AfspraakControllerTest {
     }
 
     @Test
-    void haaltActieveAfsprakenOp() throws Exception {
+    void haaltActieveAfsprakenOp()
+            throws Exception {
 
         when(
-                afspraakService.vindActieveAfspraken()
+                afspraakService
+                        .vindActieveAfspraken()
         ).thenReturn(
                 List.of()
         );
@@ -161,7 +174,8 @@ class AfspraakControllerTest {
                         status().isOk()
                 )
                 .andExpect(
-                        jsonPath("$").isArray()
+                        jsonPath("$")
+                                .isArray()
                 );
 
         verify(
@@ -170,10 +184,12 @@ class AfspraakControllerTest {
     }
 
     @Test
-    void haaltArchiefOp() throws Exception {
+    void haaltArchiefOp()
+            throws Exception {
 
         when(
-                afspraakService.vindAfgerondeAfspraken()
+                afspraakService
+                        .vindAfgerondeAfspraken()
         ).thenReturn(
                 List.of()
         );
@@ -185,7 +201,8 @@ class AfspraakControllerTest {
                         status().isOk()
                 )
                 .andExpect(
-                        jsonPath("$").isArray()
+                        jsonPath("$")
+                                .isArray()
                 );
 
         verify(
@@ -194,12 +211,14 @@ class AfspraakControllerTest {
     }
 
     @Test
-    void zoektAfspraken() throws Exception {
+    void zoektAfspraken()
+            throws Exception {
 
         when(
-                afspraakService.zoekAfspraken(
-                        "capaciteit"
-                )
+                afspraakService
+                        .zoekAfspraken(
+                                "capaciteit"
+                        )
         ).thenReturn(
                 List.of()
         );
@@ -215,7 +234,8 @@ class AfspraakControllerTest {
                         status().isOk()
                 )
                 .andExpect(
-                        jsonPath("$").isArray()
+                        jsonPath("$")
+                                .isArray()
                 );
 
         verify(
@@ -226,7 +246,8 @@ class AfspraakControllerTest {
     }
 
     @Test
-    void filtertAfspraken() throws Exception {
+    void filtertAfspraken()
+            throws Exception {
 
         UUID verantwoordelijkeId =
                 UUID.randomUUID();
@@ -254,9 +275,10 @@ class AfspraakControllerTest {
                 );
 
         when(
-                afspraakService.filterAfspraken(
-                        verwachtFilter
-                )
+                afspraakService
+                        .filterAfspraken(
+                                verwachtFilter
+                        )
         ).thenReturn(
                 List.of()
         );
@@ -296,7 +318,8 @@ class AfspraakControllerTest {
                         status().isOk()
                 )
                 .andExpect(
-                        jsonPath("$").isArray()
+                        jsonPath("$")
+                                .isArray()
                 );
 
         verify(
@@ -307,7 +330,8 @@ class AfspraakControllerTest {
     }
 
     @Test
-    void wijzigtAfspraak() throws Exception {
+    void wijzigtAfspraak()
+            throws Exception {
 
         UUID afspraakId =
                 UUID.randomUUID();
@@ -334,9 +358,10 @@ class AfspraakControllerTest {
                                 "/api/afspraken/{id}",
                                 afspraakId
                         )
-                                .header(
-                                        "X-Gebruiker-Id",
-                                        gebruikerId
+                                .principal(
+                                        authenticatieVoor(
+                                                gebruikerId
+                                        )
                                 )
                                 .contentType(
                                         MediaType.APPLICATION_JSON
@@ -357,7 +382,8 @@ class AfspraakControllerTest {
     }
 
     @Test
-    void wijzigtGoedkeurders() throws Exception {
+    void wijzigtGoedkeurders()
+            throws Exception {
 
         UUID afspraakId =
                 UUID.randomUUID();
@@ -383,9 +409,10 @@ class AfspraakControllerTest {
                                 "/api/afspraken/{id}/goedkeurders",
                                 afspraakId
                         )
-                                .header(
-                                        "X-Gebruiker-Id",
-                                        gebruikerId
+                                .principal(
+                                        authenticatieVoor(
+                                                gebruikerId
+                                        )
                                 )
                                 .contentType(
                                         MediaType.APPLICATION_JSON
@@ -402,6 +429,26 @@ class AfspraakControllerTest {
                 eq(afspraakId),
                 any(),
                 eq(gebruikerId)
+        );
+    }
+
+    private Authentication authenticatieVoor(
+            UUID gebruikerId
+    ) {
+
+        GebruikerPrincipal principal =
+                new GebruikerPrincipal(
+                        gebruikerId,
+                        "user@example.com",
+                        "$2a$10$testhash",
+                        GebruikersRol.GEBRUIKER,
+                        true
+                );
+
+        return new UsernamePasswordAuthenticationToken(
+                principal,
+                null,
+                principal.getAuthorities()
         );
     }
 }

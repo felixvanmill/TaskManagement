@@ -7,6 +7,7 @@ import nl.outokumpu.afspraken.dto.response.ApiErrorResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingRequestHeaderException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -20,7 +21,9 @@ import java.util.Map;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler(MethodArgumentNotValidException.class)
+    @ExceptionHandler(
+            MethodArgumentNotValidException.class
+    )
     public ResponseEntity<ApiErrorResponse> handleValidation(
             MethodArgumentNotValidException exception,
             HttpServletRequest request
@@ -53,7 +56,24 @@ public class GlobalExceptionHandler {
                 .body(response);
     }
 
-    @ExceptionHandler(IllegalArgumentException.class)
+    @ExceptionHandler(
+            AuthenticatieException.class
+    )
+    public ResponseEntity<ApiErrorResponse> handleAuthenticatie(
+            AuthenticatieException exception,
+            HttpServletRequest request
+    ) {
+
+        return maakResponse(
+                HttpStatus.UNAUTHORIZED,
+                exception.getMessage(),
+                request
+        );
+    }
+
+    @ExceptionHandler(
+            IllegalArgumentException.class
+    )
     public ResponseEntity<ApiErrorResponse> handleIllegalArgument(
             IllegalArgumentException exception,
             HttpServletRequest request
@@ -66,7 +86,9 @@ public class GlobalExceptionHandler {
         );
     }
 
-    @ExceptionHandler(MissingRequestHeaderException.class)
+    @ExceptionHandler(
+            MissingRequestHeaderException.class
+    )
     public ResponseEntity<ApiErrorResponse> handleMissingHeader(
             MissingRequestHeaderException exception,
             HttpServletRequest request
@@ -80,7 +102,9 @@ public class GlobalExceptionHandler {
         );
     }
 
-    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    @ExceptionHandler(
+            MethodArgumentTypeMismatchException.class
+    )
     public ResponseEntity<ApiErrorResponse> handleTypeMismatch(
             MethodArgumentTypeMismatchException exception,
             HttpServletRequest request
@@ -94,7 +118,9 @@ public class GlobalExceptionHandler {
         );
     }
 
-    @ExceptionHandler(HttpMessageNotReadableException.class)
+    @ExceptionHandler(
+            HttpMessageNotReadableException.class
+    )
     public ResponseEntity<ApiErrorResponse> handleOnleesbareRequest(
             HttpMessageNotReadableException exception,
             HttpServletRequest request
@@ -107,16 +133,14 @@ public class GlobalExceptionHandler {
         );
     }
 
-    @ExceptionHandler(Exception.class)
+    @ExceptionHandler(
+            Exception.class
+    )
     public ResponseEntity<ApiErrorResponse> handleOnverwachteFout(
             Exception exception,
             HttpServletRequest request
     ) {
 
-        /*
-         * Geen technische foutdetails naar de client sturen.
-         * Logging voegen we later centraal toe.
-         */
         return maakResponse(
                 HttpStatus.INTERNAL_SERVER_ERROR,
                 "Er is een onverwachte fout opgetreden",
