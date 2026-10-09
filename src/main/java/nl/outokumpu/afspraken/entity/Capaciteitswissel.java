@@ -79,6 +79,67 @@ public class Capaciteitswissel extends OperationeleAfspraak {
         this.periodeTot = periodeTot;
     }
 
+    public void wijzigCapaciteitsgegevens(
+            String fabriek,
+            String finishType,
+            String grade,
+            BigDecimal capaciteitVan,
+            BigDecimal capaciteitNaar,
+            String capaciteitEenheid,
+            LocalDate periodeVan,
+            LocalDate periodeTot
+    ) {
+
+        if (fabriek == null || fabriek.isBlank()) {
+            throw new IllegalArgumentException(
+                    "Fabriek is verplicht"
+            );
+        }
+
+        if (finishType == null || finishType.isBlank()) {
+            throw new IllegalArgumentException(
+                    "Finish type is verplicht"
+            );
+        }
+
+        if (grade == null || grade.isBlank()) {
+            throw new IllegalArgumentException(
+                    "Grade is verplicht"
+            );
+        }
+
+        if (capaciteitVan == null
+                || capaciteitNaar == null) {
+
+            throw new IllegalArgumentException(
+                    "Capaciteiten zijn verplicht"
+            );
+        }
+
+        if (capaciteitEenheid == null
+                || capaciteitEenheid.isBlank()) {
+
+            throw new IllegalArgumentException(
+                    "Capaciteitseenheid is verplicht"
+            );
+        }
+
+        if (periodeVan == null || periodeTot == null) {
+            throw new IllegalArgumentException(
+                    "Capaciteitsperiode is verplicht"
+            );
+        }
+
+        this.fabriek = fabriek;
+        this.finishType = finishType;
+        this.grade = grade;
+        this.capaciteitVan = capaciteitVan;
+        this.capaciteitNaar = capaciteitNaar;
+        this.capaciteitEenheid = capaciteitEenheid;
+        this.periodeVan = periodeVan;
+        this.periodeTot = periodeTot;
+    }
+
     public String getFabriek() {
         return fabriek;
     }

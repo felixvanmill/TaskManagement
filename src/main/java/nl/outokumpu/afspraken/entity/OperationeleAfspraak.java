@@ -200,6 +200,55 @@ public class OperationeleAfspraak {
         }
     }
 
+    public void wijzigGegevens(
+            String titel,
+            String beschrijving,
+            String reden,
+            String achtergrond,
+            String aannames,
+            LocalDate ingangsdatum,
+            LocalDate deadline
+    ) {
+
+        if (titel == null || titel.isBlank()) {
+            throw new IllegalArgumentException(
+                    "Titel is verplicht"
+            );
+        }
+
+        if (beschrijving == null || beschrijving.isBlank()) {
+            throw new IllegalArgumentException(
+                    "Beschrijving is verplicht"
+            );
+        }
+
+        if (reden == null || reden.isBlank()) {
+            throw new IllegalArgumentException(
+                    "Reden is verplicht"
+            );
+        }
+
+        if (ingangsdatum == null) {
+            throw new IllegalArgumentException(
+                    "Ingangsdatum is verplicht"
+            );
+        }
+
+        if (deadline == null) {
+            throw new IllegalArgumentException(
+                    "Deadline is verplicht"
+            );
+        }
+
+        this.titel = titel;
+        this.beschrijving = beschrijving;
+        this.reden = reden;
+        this.achtergrond = achtergrond;
+        this.aannames = aannames;
+        this.ingangsdatum = ingangsdatum;
+        this.deadline = deadline;
+    }
+
     public UUID getId() {
         return id;
     }

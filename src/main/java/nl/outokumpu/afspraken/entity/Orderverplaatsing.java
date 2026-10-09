@@ -91,6 +91,52 @@ public class Orderverplaatsing extends OperationeleAfspraak {
                 nieuweStatus;
     }
 
+    public void wijzigOrdergegevens(
+            String vanFabriek,
+            String naarFabriek,
+            String finishType,
+            BigDecimal totaalVolumeTons,
+            LocalDate gewensteVerplaatsingsdatum
+    ) {
+
+        if (vanFabriek == null || vanFabriek.isBlank()) {
+            throw new IllegalArgumentException(
+                    "Fabriek van herkomst is verplicht"
+            );
+        }
+
+        if (naarFabriek == null || naarFabriek.isBlank()) {
+            throw new IllegalArgumentException(
+                    "Bestemmingsfabriek is verplicht"
+            );
+        }
+
+        if (finishType == null || finishType.isBlank()) {
+            throw new IllegalArgumentException(
+                    "Finish type is verplicht"
+            );
+        }
+
+        if (totaalVolumeTons == null) {
+            throw new IllegalArgumentException(
+                    "Totaal volume is verplicht"
+            );
+        }
+
+        if (gewensteVerplaatsingsdatum == null) {
+            throw new IllegalArgumentException(
+                    "Gewenste verplaatsingsdatum is verplicht"
+            );
+        }
+
+        this.vanFabriek = vanFabriek;
+        this.naarFabriek = naarFabriek;
+        this.finishType = finishType;
+        this.totaalVolumeTons = totaalVolumeTons;
+        this.gewensteVerplaatsingsdatum =
+                gewensteVerplaatsingsdatum;
+    }
+
     public String getVanFabriek() {
         return vanFabriek;
     }

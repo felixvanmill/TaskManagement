@@ -17,7 +17,7 @@ import nl.outokumpu.afspraken.mapper.AfspraakMapper;
 import nl.outokumpu.afspraken.repository.AfdelingRepository;
 import nl.outokumpu.afspraken.repository.GebruikerRepository;
 import nl.outokumpu.afspraken.repository.OperationeleAfspraakRepository;
-
+import nl.outokumpu.afspraken.repository.WijzigingRepository;
 import nl.outokumpu.afspraken.dto.response.AfspraakSummaryResponse;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -40,6 +40,7 @@ class AfspraakServiceTest {
     private GebruikerRepository gebruikerRepository;
     private AfdelingRepository afdelingRepository;
     private AfspraakMapper afspraakMapper;
+    private WijzigingRepository wijzigingRepository;
 
     private AfspraakService afspraakService;
 
@@ -58,11 +59,15 @@ class AfspraakServiceTest {
         afspraakMapper =
                 mock(AfspraakMapper.class);
 
+        wijzigingRepository =
+                mock(WijzigingRepository.class);
+
         afspraakService =
                 new AfspraakService(
                         afspraakRepository,
                         gebruikerRepository,
                         afdelingRepository,
+                        wijzigingRepository,
                         afspraakMapper
                 );
     }
