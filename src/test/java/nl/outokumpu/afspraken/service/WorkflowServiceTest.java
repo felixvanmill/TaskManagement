@@ -10,6 +10,8 @@ import nl.outokumpu.afspraken.enums.AfspraakStatus;
 import nl.outokumpu.afspraken.enums.ProcesstapStatus;
 import nl.outokumpu.afspraken.enums.UitvoeringsStatus;
 import nl.outokumpu.afspraken.mapper.AfspraakMapper;
+import nl.outokumpu.afspraken.repository.AfdelingRepository;
+import nl.outokumpu.afspraken.repository.GebruikerRepository;
 import nl.outokumpu.afspraken.repository.OperationeleAfspraakRepository;
 import nl.outokumpu.afspraken.repository.ProcesstapRepository;
 import nl.outokumpu.afspraken.repository.WijzigingRepository;
@@ -30,6 +32,8 @@ class WorkflowServiceTest {
 
     private ProcesstapRepository processtapRepository;
     private OperationeleAfspraakRepository afspraakRepository;
+    private GebruikerRepository gebruikerRepository;
+    private AfdelingRepository afdelingRepository;
     private WijzigingRepository wijzigingRepository;
     private AfspraakMapper afspraakMapper;
 
@@ -44,6 +48,12 @@ class WorkflowServiceTest {
         afspraakRepository =
                 mock(OperationeleAfspraakRepository.class);
 
+        gebruikerRepository =
+                mock(GebruikerRepository.class);
+
+        afdelingRepository =
+                mock(AfdelingRepository.class);
+
         wijzigingRepository =
                 mock(WijzigingRepository.class);
 
@@ -54,6 +64,8 @@ class WorkflowServiceTest {
                 new WorkflowService(
                         processtapRepository,
                         afspraakRepository,
+                        gebruikerRepository,
+                        afdelingRepository,
                         wijzigingRepository,
                         afspraakMapper
                 );

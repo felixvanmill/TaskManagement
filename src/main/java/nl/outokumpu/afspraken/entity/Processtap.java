@@ -94,6 +94,40 @@ public class Processtap {
         this.afgerondOp = Instant.now();
     }
 
+    public void wijzigVerantwoordelijke(
+            Gebruiker nieuweVerantwoordelijke
+    ) {
+
+        if (nieuweVerantwoordelijke == null) {
+            throw new IllegalArgumentException(
+                    "Nieuwe verantwoordelijke is verplicht"
+            );
+        }
+
+        boolean zelfdeVerantwoordelijke =
+                this.verantwoordelijke == nieuweVerantwoordelijke
+                        ||
+                        (
+                                this.verantwoordelijke.getId() != null
+                                        &&
+                                        this.verantwoordelijke
+                                                .getId()
+                                                .equals(
+                                                        nieuweVerantwoordelijke
+                                                                .getId()
+                                                )
+                        );
+
+        if (zelfdeVerantwoordelijke) {
+            throw new IllegalArgumentException(
+                    "Nieuwe verantwoordelijke moet verschillen van de huidige verantwoordelijke"
+            );
+        }
+
+        this.verantwoordelijke =
+                nieuweVerantwoordelijke;
+    }
+
     public UUID getId() {
         return id;
     }
