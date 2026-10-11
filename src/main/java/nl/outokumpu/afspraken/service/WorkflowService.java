@@ -177,10 +177,6 @@ public class WorkflowService {
                         afspraak.getStatus().name()
                 );
 
-        afspraakRepository.save(
-                afspraak
-        );
-
         wijzigingRepository.save(
                 wijziging
         );
@@ -240,9 +236,6 @@ public class WorkflowService {
                                 .name()
                 );
 
-        afspraakRepository.save(
-                orderverplaatsing
-        );
 
         wijzigingRepository.save(
                 wijziging

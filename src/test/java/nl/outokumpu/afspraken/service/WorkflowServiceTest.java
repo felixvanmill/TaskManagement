@@ -485,8 +485,6 @@ class WorkflowServiceTest {
         when(afspraakRepository.findById(afspraakId))
                 .thenReturn(Optional.of(afspraak));
 
-        when(afspraakRepository.save(afspraak))
-                .thenReturn(afspraak);
 
         when(wijzigingRepository.save(any(Wijziging.class)))
                 .thenAnswer(
@@ -545,8 +543,10 @@ class WorkflowServiceTest {
                 wijziging.getGewijzigdDoor()
         );
 
-        verify(afspraakRepository)
-                .save(afspraak);
+        verify(
+                afspraakRepository,
+                never()
+        ).save(any());
 
         verify(wijzigingRepository)
                 .save(wijziging);
@@ -652,9 +652,6 @@ class WorkflowServiceTest {
                         Optional.of(orderverplaatsing)
                 );
 
-        when(afspraakRepository.save(orderverplaatsing))
-                .thenReturn(orderverplaatsing);
-
         when(wijzigingRepository.save(any(Wijziging.class)))
                 .thenAnswer(
                         invocation ->
@@ -717,8 +714,10 @@ class WorkflowServiceTest {
                 wijziging.getGewijzigdDoor()
         );
 
-        verify(afspraakRepository)
-                .save(orderverplaatsing);
+        verify(
+                afspraakRepository,
+                never()
+        ).save(any());
 
         verify(wijzigingRepository)
                 .save(wijziging);
