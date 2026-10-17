@@ -343,6 +343,186 @@ export function AfspraakDetailPage() {
                     Processtappen
                 </h2>
 
+                {afspraak.type === 'CAPACITEITSWISSEL'
+                    && afspraak.capaciteitswissel !== null && (
+                        <section className="detail-section">
+                            <h2>
+                                Capaciteitswissel
+                            </h2>
+
+                            <article className="content-card">
+                                <dl className="detail-list">
+                                    <div>
+                                        <dt>Fabriek</dt>
+                                        <dd>
+                                            {
+                                                afspraak
+                                                    .capaciteitswissel
+                                                    .fabriek
+                                            }
+                                        </dd>
+                                    </div>
+
+                                    <div>
+                                        <dt>Finish type</dt>
+                                        <dd>
+                                            {
+                                                afspraak
+                                                    .capaciteitswissel
+                                                    .finishType
+                                            }
+                                        </dd>
+                                    </div>
+
+                                    <div>
+                                        <dt>Grade</dt>
+                                        <dd>
+                                            {
+                                                afspraak
+                                                    .capaciteitswissel
+                                                    .grade
+                                            }
+                                        </dd>
+                                    </div>
+
+                                    <div>
+                                        <dt>Capaciteit van</dt>
+                                        <dd>
+                                            {
+                                                afspraak
+                                                    .capaciteitswissel
+                                                    .capaciteitVan
+                                            }
+                                            {' '}
+                                            {
+                                                afspraak
+                                                    .capaciteitswissel
+                                                    .capaciteitEenheid
+                                            }
+                                        </dd>
+                                    </div>
+
+                                    <div>
+                                        <dt>Capaciteit naar</dt>
+                                        <dd>
+                                            {
+                                                afspraak
+                                                    .capaciteitswissel
+                                                    .capaciteitNaar
+                                            }
+                                            {' '}
+                                            {
+                                                afspraak
+                                                    .capaciteitswissel
+                                                    .capaciteitEenheid
+                                            }
+                                        </dd>
+                                    </div>
+
+                                    <div>
+                                        <dt>Periode</dt>
+                                        <dd>
+                                            {formatteerDatum(
+                                                afspraak
+                                                    .capaciteitswissel
+                                                    .periodeVan,
+                                            )}
+                                            {' t/m '}
+                                            {formatteerDatum(
+                                                afspraak
+                                                    .capaciteitswissel
+                                                    .periodeTot,
+                                            )}
+                                        </dd>
+                                    </div>
+                                </dl>
+                            </article>
+                        </section>
+                    )}
+
+                {afspraak.type === 'ORDERVERPLAATSING'
+                    && afspraak.orderverplaatsing !== null && (
+                        <section className="detail-section">
+                            <h2>
+                                Orderverplaatsing
+                            </h2>
+
+                            <article className="content-card">
+                                <dl className="detail-list">
+                                    <div>
+                                        <dt>Van fabriek</dt>
+                                        <dd>
+                                            {
+                                                afspraak
+                                                    .orderverplaatsing
+                                                    .vanFabriek
+                                            }
+                                        </dd>
+                                    </div>
+
+                                    <div>
+                                        <dt>Naar fabriek</dt>
+                                        <dd>
+                                            {
+                                                afspraak
+                                                    .orderverplaatsing
+                                                    .naarFabriek
+                                            }
+                                        </dd>
+                                    </div>
+
+                                    <div>
+                                        <dt>Finish type</dt>
+                                        <dd>
+                                            {
+                                                afspraak
+                                                    .orderverplaatsing
+                                                    .finishType
+                                            }
+                                        </dd>
+                                    </div>
+
+                                    <div>
+                                        <dt>Totaal volume</dt>
+                                        <dd>
+                                            {
+                                                afspraak
+                                                    .orderverplaatsing
+                                                    .totaalVolumeTons
+                                            }
+                                            {' tons'}
+                                        </dd>
+                                    </div>
+
+                                    <div>
+                                        <dt>
+                                            Gewenste verplaatsingsdatum
+                                        </dt>
+                                        <dd>
+                                            {formatteerDatum(
+                                                afspraak
+                                                    .orderverplaatsing
+                                                    .gewensteVerplaatsingsdatum,
+                                            )}
+                                        </dd>
+                                    </div>
+
+                                    <div>
+                                        <dt>Uitvoeringsstatus</dt>
+                                        <dd>
+                                            {
+                                                afspraak
+                                                    .orderverplaatsing
+                                                    .uitvoeringsstatus
+                                                ?? 'Niet ingesteld'
+                                            }
+                                        </dd>
+                                    </div>
+                                </dl>
+                            </article>
+                        </section>
+                    )}
+
                 {afspraak.processtappen.length === 0 ? (
                     <div className="content-card">
                         <p>

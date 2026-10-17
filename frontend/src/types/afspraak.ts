@@ -18,6 +18,11 @@ export type Beslissing =
     | 'GOEDGEKEURD'
     | 'AFGEWEZEN'
 
+export type UitvoeringsStatus =
+    | 'NIET_UITGEVOERD'
+    | 'IN_UITVOERING'
+    | 'UITGEVOERD'
+
 export interface Afdeling {
     id: string
     naam: string
@@ -70,6 +75,26 @@ export interface Wijziging {
     nieuweWaarde: string | null
 }
 
+export interface CapaciteitswisselData {
+    fabriek: string
+    finishType: string
+    grade: string
+    capaciteitVan: number
+    capaciteitNaar: number
+    capaciteitEenheid: string
+    periodeVan: string
+    periodeTot: string
+}
+
+export interface OrderverplaatsingData {
+    vanFabriek: string
+    naarFabriek: string
+    finishType: string
+    totaalVolumeTons: number
+    gewensteVerplaatsingsdatum: string
+    uitvoeringsstatus: UitvoeringsStatus | null
+}
+
 export interface AfspraakDetail {
     id: string
     titel: string
@@ -91,8 +116,8 @@ export interface AfspraakDetail {
     processtappen: Processtap[]
     bevestigingen: Bevestiging[]
     wijzigingen: Wijziging[]
-    capaciteitswissel: unknown | null
-    orderverplaatsing: unknown | null
+    capaciteitswissel: CapaciteitswisselData | null
+    orderverplaatsing: OrderverplaatsingData | null
 }
 
 export interface CapaciteitswisselInput {

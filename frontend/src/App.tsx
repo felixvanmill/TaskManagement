@@ -8,6 +8,7 @@ import { ProtectedRoute } from './components/ProtectedRoute'
 import { AfspraakDetailPage } from './pages/AfspraakDetailPage'
 import { DashboardPage } from './pages/DashboardPage'
 import { LoginPage } from './pages/LoginPage'
+import { NieuweAfspraakPage } from './pages/NieuweAfspraakPage'
 
 function App() {
     return (
@@ -23,6 +24,11 @@ function App() {
                 <Route
                     path="/"
                     element={<DashboardPage />}
+                />
+
+                <Route
+                    path="/afspraken/nieuw"
+                    element={<NieuweAfspraakPage />}
                 />
 
                 <Route

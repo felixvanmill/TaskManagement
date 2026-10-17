@@ -623,4 +623,141 @@ h1 {
     }
   }
 
+  .create-form {
+    display: grid;
+    gap: 24px;
+  }
+
+  .form-section h2 {
+    margin-top: 0;
+    margin-bottom: 24px;
+  }
+
+  .form-grid {
+    display: grid;
+    grid-template-columns:
+        repeat(2, minmax(0, 1fr));
+    gap: 20px;
+  }
+
+  .form-field {
+    display: grid;
+    align-content: start;
+    gap: 8px;
+  }
+
+  .form-field-wide {
+    grid-column: 1 / -1;
+  }
+
+  .form-field > span {
+    font-weight: 700;
+  }
+
+  .form-field input,
+  .form-field select,
+  .form-field textarea {
+    width: 100%;
+    padding: 11px 13px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    background: white;
+    color: #111827;
+    font: inherit;
+  }
+
+  .form-field textarea {
+    resize: vertical;
+    line-height: 1.5;
+  }
+
+  .form-field input:focus,
+  .form-field select:focus,
+  .form-field textarea:focus {
+    border-color: #2563eb;
+    outline: 2px solid #bfdbfe;
+  }
+
+  .selection-grid {
+    display: grid;
+    grid-template-columns:
+        repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .selection-option {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 14px;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+
+  .selection-option:hover {
+    background: #f9fafb;
+  }
+
+  .selection-option input {
+    margin-top: 3px;
+  }
+
+  .selection-option > span {
+    display: grid;
+    gap: 3px;
+  }
+
+  .selection-option small {
+    color: #6b7280;
+  }
+
+  .form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    padding-bottom: 40px;
+  }
+
+  .secondary-link-button {
+    display: inline-flex;
+    align-items: center;
+    padding: 12px 18px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    background: white;
+    color: #374151;
+    font-weight: 700;
+    text-decoration: none;
+  }
+
+  .secondary-link-button:hover {
+    background: #f9fafb;
+  }
+
+  @media (max-width: 800px) {
+    .form-grid,
+    .selection-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .form-field-wide {
+      grid-column: auto;
+    }
+
+    .overview-header {
+      align-items: stretch;
+      flex-direction: column;
+    }
+
+    .form-actions {
+      flex-direction: column-reverse;
+    }
+
+    .form-actions > * {
+      justify-content: center;
+      text-align: center;
+    }
+  }
+
 }

@@ -196,6 +196,16 @@ export function DashboardPage() {
                             } gevonden`}
                     </p>
                 </div>
+
+                <button
+                    type="button"
+                    className="primary-button"
+                    onClick={() =>
+                        navigate('/afspraken/nieuw')
+                    }
+                >
+                    + Nieuwe afspraak
+                </button>
             </section>
 
             {foutmelding !== null && (
@@ -217,7 +227,7 @@ export function DashboardPage() {
                 && afspraken.length === 0 && (
                     <section className="content-card empty-state">
                         <h3>
-                            Nog geen afspraken
+                        Nog geen afspraken
                         </h3>
 
                         <p>
