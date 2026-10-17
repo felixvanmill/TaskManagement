@@ -4,6 +4,10 @@ import {
 } from 'react'
 
 import {
+    useNavigate,
+} from 'react-router-dom'
+
+import {
     getAfspraken,
 } from '../api/afspraken'
 
@@ -78,6 +82,9 @@ function typeLabel(
 }
 
 export function DashboardPage() {
+    const navigate =
+        useNavigate()
+
     const {
         gebruiker,
         logout,
@@ -126,6 +133,14 @@ export function DashboardPage() {
         return null
     }
 
+    function openAfspraak(
+        id: string,
+    ) {
+        navigate(
+            `/afspraken/${id}`,
+        )
+    }
+
     return (
         <main className="dashboard-page">
             <header className="dashboard-header">
@@ -151,8 +166,8 @@ export function DashboardPage() {
                         </strong>
 
                         <span>
-              {gebruiker.rol}
-            </span>
+                            {gebruiker.rol}
+                        </span>
                     </div>
 
                     <button
@@ -235,7 +250,26 @@ export function DashboardPage() {
                                 <tbody>
                                 {afspraken.map(
                                     (afspraak) => (
-                                        <tr key={afspraak.id}>
+                                        <tr
+                                            key={afspraak.id}
+                                            className="clickable-row"
+                                            tabIndex={0}
+                                            onClick={() =>
+                                                openAfspraak(
+                                                    afspraak.id,
+                                                )
+                                            }
+                                            onKeyDown={(event) => {
+                                                if (
+                                                    event.key === 'Enter'
+                                                    || event.key === ' '
+                                                ) {
+                                                    openAfspraak(
+                                                        afspraak.id,
+                                                    )
+                                                }
+                                            }}
+                                        >
                                             <td>
                                                 <strong>
                                                     {afspraak.titel}
@@ -249,15 +283,15 @@ export function DashboardPage() {
                                             </td>
 
                                             <td>
-                          <span
-                              className={
-                                  `status-badge status-${afspraak.status.toLowerCase()}`
-                              }
-                          >
-                            {statusLabel(
-                                afspraak.status,
-                            )}
-                          </span>
+                                                    <span
+                                                        className={
+                                                            `status-badge status-${afspraak.status.toLowerCase()}`
+                                                        }
+                                                    >
+                                                        {statusLabel(
+                                                            afspraak.status,
+                                                        )}
+                                                    </span>
                                             </td>
 
                                             <td>
@@ -283,14 +317,14 @@ export function DashboardPage() {
                                                     </strong>
 
                                                     <span>
-                              {
-                                  afspraak
-                                      .initiatiefnemer
-                                      .afdeling
-                                      ?.naam
-                                  ?? 'Geen afdeling'
-                              }
-                            </span>
+                                                            {
+                                                                afspraak
+                                                                    .initiatiefnemer
+                                                                    .afdeling
+                                                                    ?.naam
+                                                                ?? 'Geen afdeling'
+                                                            }
+                                                        </span>
                                                 </div>
                                             </td>
 

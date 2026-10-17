@@ -99,36 +99,45 @@ export function LoginPage() {
                 <form
                     onSubmit={handleSubmit}
                     className="login-form"
+                    autoComplete="on"
                 >
-                    <label>
+                    <label htmlFor="login-email">
                         E-mailadres
-                        <input
-                            type="email"
-                            value={email}
-                            onChange={(event) =>
-                                setEmail(
-                                    event.target.value,
-                                )
-                            }
-                            autoComplete="email"
-                            required
-                        />
                     </label>
 
-                    <label>
+                    <input
+                        id="login-email"
+                        name="username"
+                        type="email"
+                        value={email}
+                        onChange={(event) =>
+                            setEmail(
+                                event.target.value,
+                            )
+                        }
+                        autoComplete="username"
+                        autoCapitalize="none"
+                        spellCheck={false}
+                        required
+                    />
+
+                    <label htmlFor="login-password">
                         Wachtwoord
-                        <input
-                            type="password"
-                            value={wachtwoord}
-                            onChange={(event) =>
-                                setWachtwoord(
-                                    event.target.value,
-                                )
-                            }
-                            autoComplete="current-password"
-                            required
-                        />
                     </label>
+
+                    <input
+                        id="login-password"
+                        name="password"
+                        type="password"
+                        value={wachtwoord}
+                        onChange={(event) =>
+                            setWachtwoord(
+                                event.target.value,
+                            )
+                        }
+                        autoComplete="current-password"
+                        required
+                    />
 
                     {foutmelding !== null && (
                         <p className="error-message">
