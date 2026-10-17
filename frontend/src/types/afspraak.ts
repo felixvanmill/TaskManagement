@@ -94,3 +94,42 @@ export interface AfspraakDetail {
     capaciteitswissel: unknown | null
     orderverplaatsing: unknown | null
 }
+
+export interface CapaciteitswisselInput {
+    fabriek: string
+    finishType: string
+    grade: string
+    capaciteitVan: number
+    capaciteitNaar: number
+    capaciteitEenheid: string
+    periodeVan: string
+    periodeTot: string
+}
+
+export interface OrderverplaatsingInput {
+    vanFabriek: string
+    naarFabriek: string
+    finishType: string
+    totaalVolumeTons: number
+    gewensteVerplaatsingsdatum: string
+    uitvoeringsstatus: null
+}
+
+export interface CreateAfspraakRequest {
+    titel: string
+    beschrijving: string
+    reden: string
+    achtergrond: string
+    aannames: string
+    type: AfspraakType
+    ingangsdatum: string
+    deadline: string
+    verantwoordelijkeId: string
+    eersteProcesstapNaam: string
+    eersteProcesstapDeadline: string
+    betrokkeneIds: string[]
+    goedkeurderIds: string[]
+    afdelingIds: string[]
+    capaciteitswissel: CapaciteitswisselInput | null
+    orderverplaatsing: OrderverplaatsingInput | null
+}
