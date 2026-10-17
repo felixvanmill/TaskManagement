@@ -4,6 +4,10 @@ import {
 } from 'react'
 
 import {
+    OpmerkingenSection,
+} from '../components/OpmerkingenSection'
+
+import {
     Link,
     useParams,
 } from 'react-router-dom'
@@ -530,6 +534,10 @@ export function AfspraakDetailPage() {
                         )}
                 </article>
             </section>
+
+            <OpmerkingenSection
+                afspraakId={afspraak.id}
+            />
 
             <section className="detail-section">
                 <h2>
