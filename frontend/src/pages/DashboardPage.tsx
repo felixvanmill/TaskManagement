@@ -8,16 +8,43 @@ import {
 } from 'react-router-dom'
 
 import {
-    getAfspraken,
+    filterAfspraken,
+    getActieveAfspraken,
+    getArchiefAfspraken,
+    zoekAfspraken,
 } from '../api/afspraken'
 
-import { useAuth } from '../auth/useAuth'
+import {
+    getGebruikers,
+} from '../api/gebruikers'
+
+import {
+    getAfdelingen,
+} from '../api/afdelingen'
+
+import {
+    AfsprakenFilters,
+} from '../components/AfsprakenFilters'
+
+import {
+    useAuth,
+} from '../auth/useAuth'
 
 import type {
+    Afdeling,
+    AfspraakGebruiker,
     AfspraakStatus,
     AfspraakSummary,
     AfspraakType,
 } from '../types/afspraak'
+
+import type {
+    AfspraakFilterParams,
+} from '../api/afspraken'
+
+type OverzichtWeergave =
+    | 'actief'
+    | 'archief'
 
 function formatteerDatum(
     datum: string,
@@ -81,6 +108,23 @@ function typeLabel(
     }
 }
 
+function filterOpWeergave(
+    afspraken: AfspraakSummary[],
+    weergave: OverzichtWeergave,
+) {
+    if (weergave === 'archief') {
+        return afspraken.filter(
+            (afspraak) =>
+                afspraak.status === 'AFGEROND',
+        )
+    }
+
+    return afspraken.filter(
+        (afspraak) =>
+            afspraak.status !== 'AFGEROND',
+    )
+}
+
 export function DashboardPage() {
     const navigate =
         useNavigate()
@@ -96,6 +140,21 @@ export function DashboardPage() {
     ] = useState<AfspraakSummary[]>([])
 
     const [
+        gebruikers,
+        setGebruikers,
+    ] = useState<AfspraakGebruiker[]>([])
+
+    const [
+        afdelingen,
+        setAfdelingen,
+    ] = useState<Afdeling[]>([])
+
+    const [
+        weergave,
+        setWeergave,
+    ] = useState<OverzichtWeergave>('actief')
+
+    const [
         laden,
         setLaden,
     ] = useState(true)
@@ -106,31 +165,150 @@ export function DashboardPage() {
     ] = useState<string | null>(null)
 
     useEffect(() => {
-        async function laadAfspraken() {
+        async function laadDashboard() {
             try {
                 setLaden(true)
                 setFoutmelding(null)
 
-                const response =
-                    await getAfspraken()
+                const [
+                    afsprakenResponse,
+                    gebruikersResponse,
+                    afdelingenResponse,
+                ] = await Promise.all([
+                    getActieveAfspraken(),
+                    getGebruikers(),
+                    getAfdelingen(),
+                ])
 
-                setAfspraken(response)
+                setAfspraken(
+                    afsprakenResponse,
+                )
+
+                setGebruikers(
+                    gebruikersResponse,
+                )
+
+                setAfdelingen(
+                    afdelingenResponse,
+                )
             } catch (error) {
                 setFoutmelding(
                     error instanceof Error
                         ? error.message
-                        : 'Afspraken konden niet worden geladen',
+                        : 'Dashboard kon niet worden geladen',
                 )
             } finally {
                 setLaden(false)
             }
         }
 
-        void laadAfspraken()
+        void laadDashboard()
     }, [])
 
     if (gebruiker === null) {
         return null
+    }
+
+    async function laadBasisOverzicht(
+        nieuweWeergave: OverzichtWeergave,
+    ) {
+        try {
+            setLaden(true)
+            setFoutmelding(null)
+
+            const response =
+                nieuweWeergave === 'actief'
+                    ? await getActieveAfspraken()
+                    : await getArchiefAfspraken()
+
+            setAfspraken(
+                response,
+            )
+        } catch (error) {
+            setFoutmelding(
+                error instanceof Error
+                    ? error.message
+                    : 'Afspraken konden niet worden geladen',
+            )
+        } finally {
+            setLaden(false)
+        }
+    }
+
+    async function wijzigWeergave(
+        nieuweWeergave: OverzichtWeergave,
+    ) {
+        setWeergave(
+            nieuweWeergave,
+        )
+
+        await laadBasisOverzicht(
+            nieuweWeergave,
+        )
+    }
+
+    async function handleZoeken(
+        zoekterm: string,
+    ) {
+        try {
+            setLaden(true)
+            setFoutmelding(null)
+
+            const response =
+                await zoekAfspraken(
+                    zoekterm,
+                )
+
+            setAfspraken(
+                filterOpWeergave(
+                    response,
+                    weergave,
+                ),
+            )
+        } catch (error) {
+            setFoutmelding(
+                error instanceof Error
+                    ? error.message
+                    : 'Zoeken is mislukt',
+            )
+        } finally {
+            setLaden(false)
+        }
+    }
+
+    async function handleFilteren(
+        filters: AfspraakFilterParams,
+    ) {
+        try {
+            setLaden(true)
+            setFoutmelding(null)
+
+            const response =
+                await filterAfspraken(
+                    filters,
+                )
+
+            setAfspraken(
+                filterOpWeergave(
+                    response,
+                    weergave,
+                ),
+            )
+        } catch (error) {
+            setFoutmelding(
+                error instanceof Error
+                    ? error.message
+                    : 'Filteren is mislukt',
+            )
+        } finally {
+            setLaden(false)
+        }
+    }
+
+    async function handleReset() {
+        await laadBasisOverzicht(
+            weergave,
+        )
     }
 
     function openAfspraak(
@@ -173,7 +351,9 @@ export function DashboardPage() {
                     <button
                         type="button"
                         className="secondary-button"
-                        onClick={() => void logout()}
+                        onClick={() =>
+                            void logout()
+                        }
                     >
                         Uitloggen
                     </button>
@@ -201,12 +381,61 @@ export function DashboardPage() {
                     type="button"
                     className="primary-button"
                     onClick={() =>
-                        navigate('/afspraken/nieuw')
+                        navigate(
+                            '/afspraken/nieuw',
+                        )
                     }
                 >
                     + Nieuwe afspraak
                 </button>
             </section>
+
+            <div className="overview-tabs">
+                <button
+                    type="button"
+                    className={
+                        weergave === 'actief'
+                            ? 'overview-tab overview-tab-active'
+                            : 'overview-tab'
+                    }
+                    disabled={laden}
+                    onClick={() =>
+                        void wijzigWeergave(
+                            'actief',
+                        )
+                    }
+                >
+                    Actief
+                </button>
+
+                <button
+                    type="button"
+                    className={
+                        weergave === 'archief'
+                            ? 'overview-tab overview-tab-active'
+                            : 'overview-tab'
+                    }
+                    disabled={laden}
+                    onClick={() =>
+                        void wijzigWeergave(
+                            'archief',
+                        )
+                    }
+                >
+                    Archief
+                </button>
+            </div>
+
+            <AfsprakenFilters
+                key={weergave}
+                weergave={weergave}
+                gebruikers={gebruikers}
+                afdelingen={afdelingen}
+                bezig={laden}
+                onZoeken={handleZoeken}
+                onFilteren={handleFilteren}
+                onReset={handleReset}
+            />
 
             {foutmelding !== null && (
                 <div className="alert-error">
@@ -227,12 +456,12 @@ export function DashboardPage() {
                 && afspraken.length === 0 && (
                     <section className="content-card empty-state">
                         <h3>
-                        Nog geen afspraken
+                            Geen afspraken gevonden
                         </h3>
 
                         <p>
-                            Er zijn momenteel geen
-                            operationele afspraken beschikbaar.
+                            Er zijn geen afspraken die
+                            aan de huidige selectie voldoen.
                         </p>
                     </section>
                 )}

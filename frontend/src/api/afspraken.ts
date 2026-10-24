@@ -2,13 +2,25 @@ import { apiFetch } from './http'
 
 import type {
     AfspraakDetail,
+    AfspraakStatus,
     AfspraakSummary,
+    AfspraakType,
     CreateAfspraakRequest,
 } from '../types/afspraak'
 
 interface ApiErrorResponse {
     message?: string
     veldFouten?: Record<string, string>
+}
+
+export interface AfspraakFilterParams {
+    type?: AfspraakType
+    status?: AfspraakStatus
+    verantwoordelijkeId?: string
+    afdelingId?: string
+    fabriek?: string
+    periodeVan?: string
+    periodeTot?: string
 }
 
 async function leesApiFout(
@@ -35,19 +47,122 @@ async function leesApiFout(
     }
 }
 
-export async function getAfspraken():
-    Promise<AfspraakSummary[]> {
+async function leesAfspraken(
+    pad: string,
+): Promise<AfspraakSummary[]> {
     const response = await apiFetch(
-        '/api/afspraken',
+        pad,
     )
 
     if (!response.ok) {
         throw new Error(
-            `Afspraken ophalen mislukt (${response.status})`,
+            await leesApiFout(
+                response,
+                `Afspraken ophalen mislukt (${response.status})`,
+            ),
         )
     }
 
     return response.json() as Promise<AfspraakSummary[]>
+}
+
+export async function getAfspraken():
+    Promise<AfspraakSummary[]> {
+    return leesAfspraken(
+        '/api/afspraken',
+    )
+}
+
+export async function getActieveAfspraken():
+    Promise<AfspraakSummary[]> {
+    return leesAfspraken(
+        '/api/afspraken/actief',
+    )
+}
+
+export async function getArchiefAfspraken():
+    Promise<AfspraakSummary[]> {
+    return leesAfspraken(
+        '/api/afspraken/archief',
+    )
+}
+
+export async function zoekAfspraken(
+    zoekterm: string,
+): Promise<AfspraakSummary[]> {
+    const params =
+        new URLSearchParams({
+            zoekterm,
+        })
+
+    return leesAfspraken(
+        `/api/afspraken/zoeken?${params.toString()}`,
+    )
+}
+
+export async function filterAfspraken(
+    filters: AfspraakFilterParams,
+): Promise<AfspraakSummary[]> {
+    const params =
+        new URLSearchParams()
+
+    if (filters.type) {
+        params.set(
+            'type',
+            filters.type,
+        )
+    }
+
+    if (filters.status) {
+        params.set(
+            'status',
+            filters.status,
+        )
+    }
+
+    if (filters.verantwoordelijkeId) {
+        params.set(
+            'verantwoordelijkeId',
+            filters.verantwoordelijkeId,
+        )
+    }
+
+    if (filters.afdelingId) {
+        params.set(
+            'afdelingId',
+            filters.afdelingId,
+        )
+    }
+
+    if (filters.fabriek?.trim()) {
+        params.set(
+            'fabriek',
+            filters.fabriek.trim(),
+        )
+    }
+
+    if (filters.periodeVan) {
+        params.set(
+            'periodeVan',
+            filters.periodeVan,
+        )
+    }
+
+    if (filters.periodeTot) {
+        params.set(
+            'periodeTot',
+            filters.periodeTot,
+        )
+    }
+
+    const query =
+        params.toString()
+
+    return leesAfspraken(
+        query
+            ? `/api/afspraken/filter?${query}`
+            : '/api/afspraken/filter',
+    )
 }
 
 export async function getAfspraak(
