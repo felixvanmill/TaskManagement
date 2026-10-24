@@ -381,8 +381,12 @@ public class AfspraakService {
                                         betrokkenheid.getRol()
                                                 == BetrokkenRol.GOEDKEURDER
                                 )
-                                .map(Betrokkenheid::getGebruiker)
-                                .map(Gebruiker::getId)
+                                .map(
+                                        Betrokkenheid::getGebruiker
+                                )
+                                .map(
+                                        Gebruiker::getId
+                                )
                                 .toList()
                 );
 
@@ -419,13 +423,22 @@ public class AfspraakService {
                         nieuweIds.toString()
                 );
 
-        afspraakRepository.save(
-                afspraak
-        );
-
+        /*
+         * De afspraak is binnen deze transactie al managed.
+         * Daarom niet opnieuw save(afspraak) uitvoeren.
+         *
+         * De gewijzigde betrokkenheden worden via dirty checking
+         * en orphanRemoval verwerkt.
+         */
         wijzigingRepository.save(
                 wijziging
         );
+
+        /*
+         * Forceer de databasewijzigingen voordat de response
+         * wordt gemapt.
+         */
+        afspraakRepository.flush();
 
         return afspraakMapper.naarDetailResponse(
                 afspraak

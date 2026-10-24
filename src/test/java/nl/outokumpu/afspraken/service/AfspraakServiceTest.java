@@ -834,7 +834,7 @@ class AfspraakServiceTest {
         );
 
         verify(afspraakRepository)
-                .save(afspraak);
+                .flush();
 
         verify(wijzigingRepository)
                 .save(

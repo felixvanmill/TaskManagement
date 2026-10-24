@@ -37,6 +37,10 @@ export interface UpdateAfspraakRequest {
     orderverplaatsing: OrderverplaatsingInput | null
 }
 
+export interface UpdateGoedkeurdersRequest {
+    goedkeurderIds: string[]
+}
+
 async function leesApiFout(
     response: Response,
     standaardMelding: string,
@@ -194,7 +198,10 @@ export async function getAfspraak(
 
     if (!response.ok) {
         throw new Error(
-            `Afspraak ophalen mislukt (${response.status})`,
+            await leesApiFout(
+                response,
+                `Afspraak ophalen mislukt (${response.status})`,
+            ),
         )
     }
 
@@ -242,6 +249,31 @@ export async function updateAfspraak(
             await leesApiFout(
                 response,
                 `Afspraak bijwerken mislukt (${response.status})`,
+            )
+
+        throw new Error(melding)
+    }
+
+    return response.json() as Promise<AfspraakDetail>
+}
+
+export async function wijzigGoedkeurders(
+    id: string,
+    request: UpdateGoedkeurdersRequest,
+): Promise<AfspraakDetail> {
+    const response = await apiFetch(
+        `/api/afspraken/${id}/goedkeurders`,
+        {
+            method: 'PUT',
+            body: JSON.stringify(request),
+        },
+    )
+
+    if (!response.ok) {
+        const melding =
+            await leesApiFout(
+                response,
+                `Goedkeurders wijzigen mislukt (${response.status})`,
             )
 
         throw new Error(melding)

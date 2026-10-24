@@ -12,6 +12,7 @@ import {
 import {
     getAfspraak,
     updateAfspraak,
+    wijzigGoedkeurders,
 } from '../api/afspraken'
 
 import type {
@@ -19,11 +20,16 @@ import type {
 } from '../api/afspraken'
 
 import {
+    getGebruikers,
+} from '../api/gebruikers'
+
+import {
     useAuth,
 } from '../auth/useAuth'
 
 import type {
     AfspraakDetail,
+    AfspraakGebruiker,
     AfspraakType,
 } from '../types/afspraak'
 
@@ -62,6 +68,108 @@ function bepaalHuidigeVerantwoordelijke(
     return afspraak.processtappen[
     afspraak.processtappen.length - 1
         ].verantwoordelijke
+}
+
+function wijzigSelectie(
+    huidigeIds: string[],
+    id: string,
+) {
+    if (huidigeIds.includes(id)) {
+        return huidigeIds.filter(
+            (huidigId) =>
+                huidigId !== id,
+        )
+    }
+
+    return [
+        ...huidigeIds,
+        id,
+    ]
+}
+
+function maakUpdateRequestVanAfspraak(
+    afspraak: AfspraakDetail,
+): UpdateAfspraakRequest {
+    return {
+        titel: afspraak.titel,
+        beschrijving: afspraak.beschrijving,
+        reden: afspraak.reden ?? '',
+        achtergrond: afspraak.achtergrond ?? '',
+        aannames: afspraak.aannames ?? '',
+        ingangsdatum: afspraak.ingangsdatum,
+        deadline: afspraak.deadline,
+
+        capaciteitswissel:
+            afspraak.type === 'CAPACITEITSWISSEL'
+            && afspraak.capaciteitswissel !== null
+                ? {
+                    fabriek:
+                    afspraak.capaciteitswissel.fabriek,
+
+                    finishType:
+                    afspraak.capaciteitswissel.finishType,
+
+                    grade:
+                    afspraak.capaciteitswissel.grade,
+
+                    capaciteitVan:
+                    afspraak.capaciteitswissel.capaciteitVan,
+
+                    capaciteitNaar:
+                    afspraak.capaciteitswissel.capaciteitNaar,
+
+                    capaciteitEenheid:
+                    afspraak.capaciteitswissel.capaciteitEenheid,
+
+                    periodeVan:
+                    afspraak.capaciteitswissel.periodeVan,
+
+                    periodeTot:
+                    afspraak.capaciteitswissel.periodeTot,
+                }
+                : null,
+
+        orderverplaatsing:
+            afspraak.type === 'ORDERVERPLAATSING'
+            && afspraak.orderverplaatsing !== null
+                ? {
+                    vanFabriek:
+                    afspraak.orderverplaatsing.vanFabriek,
+
+                    naarFabriek:
+                    afspraak.orderverplaatsing.naarFabriek,
+
+                    finishType:
+                    afspraak.orderverplaatsing.finishType,
+
+                    totaalVolumeTons:
+                    afspraak.orderverplaatsing.totaalVolumeTons,
+
+                    gewensteVerplaatsingsdatum:
+                    afspraak.orderverplaatsing
+                        .gewensteVerplaatsingsdatum,
+
+                    uitvoeringsstatus: null,
+                }
+                : null,
+    }
+}
+
+function idsZijnGelijk(
+    eerste: string[],
+    tweede: string[],
+) {
+    const eersteGesorteerd =
+        [...eerste].sort()
+
+    const tweedeGesorteerd =
+        [...tweede].sort()
+
+    return JSON.stringify(
+        eersteGesorteerd,
+    ) === JSON.stringify(
+        tweedeGesorteerd,
+    )
 }
 
 export function BewerkAfspraakPage() {
@@ -195,6 +303,21 @@ export function BewerkAfspraakPage() {
         setGewensteVerplaatsingsdatum,
     ] = useState('')
 
+    const [
+        gebruikers,
+        setGebruikers,
+    ] = useState<AfspraakGebruiker[]>([])
+
+    const [
+        goedkeurderIds,
+        setGoedkeurderIds,
+    ] = useState<string[]>([])
+
+    const [
+        gebruikersLaden,
+        setGebruikersLaden,
+    ] = useState(false)
+
     useEffect(() => {
         async function laadAfspraak() {
             if (id === undefined) {
@@ -242,6 +365,13 @@ export function BewerkAfspraakPage() {
 
                 setDeadline(
                     response.deadline,
+                )
+
+                setGoedkeurderIds(
+                    response.goedkeurders.map(
+                        (goedkeurder) =>
+                            goedkeurder.id,
+                    ),
                 )
 
                 if (
@@ -320,6 +450,25 @@ export function BewerkAfspraakPage() {
                             .gewensteVerplaatsingsdatum,
                     )
                 }
+
+                if (
+                    gebruiker !== null
+                    && gebruiker.id
+                    === response.initiatiefnemer.id
+                ) {
+                    try {
+                        setGebruikersLaden(true)
+
+                        const gebruikersResponse =
+                            await getGebruikers()
+
+                        setGebruikers(
+                            gebruikersResponse,
+                        )
+                    } finally {
+                        setGebruikersLaden(false)
+                    }
+                }
             } catch (error) {
                 setFoutmelding(
                     error instanceof Error
@@ -332,7 +481,10 @@ export function BewerkAfspraakPage() {
         }
 
         void laadAfspraak()
-    }, [id])
+    }, [
+        id,
+        gebruiker,
+    ])
 
     if (laden) {
         return (
@@ -395,6 +547,11 @@ export function BewerkAfspraakPage() {
             === huidigeVerantwoordelijke?.id
         )
 
+    const magGoedkeurdersWijzigen =
+        gebruiker !== null
+        && gebruiker.id
+        === afspraak.initiatiefnemer.id
+
     if (!magWijzigen) {
         return (
             <main className="dashboard-page">
@@ -425,6 +582,7 @@ export function BewerkAfspraakPage() {
 
             return
         }
+
         if (deadline < ingangsdatum) {
             setFoutmelding(
                 'De deadline mag niet vóór de ingangsdatum liggen.',
@@ -434,7 +592,7 @@ export function BewerkAfspraakPage() {
         }
 
         if (
-            afspraak?.type === 'CAPACITEITSWISSEL'
+            afspraak.type === 'CAPACITEITSWISSEL'
             && periodeTot < periodeVan
         ) {
             setFoutmelding(
@@ -452,51 +610,128 @@ export function BewerkAfspraakPage() {
             aannames: aannames.trim(),
             ingangsdatum,
             deadline,
+
             capaciteitswissel:
-                afspraak?.type === 'CAPACITEITSWISSEL'
+                afspraak.type === 'CAPACITEITSWISSEL'
                     ? {
                         fabriek:
                             fabriek.trim(),
+
                         finishType:
                             finishType.trim(),
+
                         grade:
                             grade.trim(),
+
                         capaciteitVan:
-                            Number(capaciteitVan),
+                            Number(
+                                capaciteitVan,
+                            ),
+
                         capaciteitNaar:
-                            Number(capaciteitNaar),
+                            Number(
+                                capaciteitNaar,
+                            ),
+
                         capaciteitEenheid:
                             capaciteitEenheid.trim(),
+
                         periodeVan,
                         periodeTot,
                     }
                     : null,
+
             orderverplaatsing:
-                afspraak?.type === 'ORDERVERPLAATSING'
+                afspraak.type === 'ORDERVERPLAATSING'
                     ? {
                         vanFabriek:
                             vanFabriek.trim(),
+
                         naarFabriek:
                             naarFabriek.trim(),
+
                         finishType:
                             orderFinishType.trim(),
+
                         totaalVolumeTons:
-                            Number(totaalVolumeTons),
+                            Number(
+                                totaalVolumeTons,
+                            ),
+
                         gewensteVerplaatsingsdatum,
+
                         uitvoeringsstatus: null,
                     }
                     : null,
+        }
+
+        const origineleRequest =
+            maakUpdateRequestVanAfspraak(
+                afspraak,
+            )
+
+        const afspraakGewijzigd =
+            JSON.stringify(request)
+            !== JSON.stringify(
+                origineleRequest,
+            )
+
+        const huidigeGoedkeurderIds =
+            afspraak.goedkeurders.map(
+                (goedkeurder) =>
+                    goedkeurder.id,
+            )
+
+        const goedkeurdersGewijzigd =
+            magGoedkeurdersWijzigen
+            && !idsZijnGelijk(
+                huidigeGoedkeurderIds,
+                goedkeurderIds,
+            )
+
+        if (
+            !afspraakGewijzigd
+            && !goedkeurdersGewijzigd
+        ) {
+            setFoutmelding(
+                'Er zijn geen wijzigingen om op te slaan.',
+            )
+
+            return
         }
 
         try {
             setOpslaan(true)
             setFoutmelding(null)
 
-            const bijgewerkteAfspraak =
-                await updateAfspraak(
-                    afspraak.id,
-                    request,
+            let bijgewerkteAfspraak =
+                afspraak
+
+            if (afspraakGewijzigd) {
+                bijgewerkteAfspraak =
+                    await updateAfspraak(
+                        afspraak.id,
+                        request,
+                    )
+
+                setAfspraak(
+                    bijgewerkteAfspraak,
                 )
+            }
+
+            if (goedkeurdersGewijzigd) {
+                bijgewerkteAfspraak =
+                    await wijzigGoedkeurders(
+                        afspraak.id,
+                        {
+                            goedkeurderIds,
+                        },
+                    )
+
+                setAfspraak(
+                    bijgewerkteAfspraak,
+                )
+            }
 
             navigate(
                 `/afspraken/${bijgewerkteAfspraak.id}`,
@@ -575,6 +810,7 @@ export function BewerkAfspraakPage() {
                                 }
                                 maxLength={255}
                                 required
+                                disabled={opslaan}
                             />
                         </label>
 
@@ -608,6 +844,7 @@ export function BewerkAfspraakPage() {
                                     )
                                 }
                                 required
+                                disabled={opslaan}
                             />
                         </label>
 
@@ -625,6 +862,7 @@ export function BewerkAfspraakPage() {
                                     )
                                 }
                                 required
+                                disabled={opslaan}
                             />
                         </label>
 
@@ -643,6 +881,7 @@ export function BewerkAfspraakPage() {
                                 maxLength={5000}
                                 rows={5}
                                 required
+                                disabled={opslaan}
                             />
                         </label>
 
@@ -661,6 +900,7 @@ export function BewerkAfspraakPage() {
                                 maxLength={2000}
                                 rows={3}
                                 required
+                                disabled={opslaan}
                             />
                         </label>
 
@@ -678,6 +918,7 @@ export function BewerkAfspraakPage() {
                                 }
                                 maxLength={5000}
                                 rows={3}
+                                disabled={opslaan}
                             />
                         </label>
 
@@ -695,10 +936,89 @@ export function BewerkAfspraakPage() {
                                 }
                                 maxLength={5000}
                                 rows={3}
+                                disabled={opslaan}
                             />
                         </label>
                     </div>
                 </section>
+
+                {magGoedkeurdersWijzigen && (
+                    <section className="content-card form-section">
+                        <h2>
+                            Goedkeurders
+                        </h2>
+
+                        <p>
+                            Selecteer welke gebruikers deze
+                            afspraak formeel moeten goedkeuren.
+                        </p>
+
+                        {gebruikersLaden ? (
+                            <p>
+                                Gebruikers laden...
+                            </p>
+                        ) : (
+                            <>
+                                <div className="selection-grid">
+                                    {gebruikers.map(
+                                        (keuzeGebruiker) => (
+                                            <label
+                                                key={
+                                                    keuzeGebruiker.id
+                                                }
+                                                className="selection-option"
+                                            >
+                                                <input
+                                                    type="checkbox"
+                                                    checked={
+                                                        goedkeurderIds
+                                                            .includes(
+                                                                keuzeGebruiker.id,
+                                                            )
+                                                    }
+                                                    disabled={opslaan}
+                                                    onChange={() =>
+                                                        setGoedkeurderIds(
+                                                            (huidige) =>
+                                                                wijzigSelectie(
+                                                                    huidige,
+                                                                    keuzeGebruiker.id,
+                                                                ),
+                                                        )
+                                                    }
+                                                />
+
+                                                <span>
+                                                    <strong>
+                                                        {
+                                                            keuzeGebruiker
+                                                                .naam
+                                                        }
+                                                    </strong>
+
+                                                    <small>
+                                                        {
+                                                            keuzeGebruiker
+                                                                .afdeling
+                                                                ?.naam
+                                                            ?? 'Geen afdeling'
+                                                        }
+                                                    </small>
+                                                </span>
+                                            </label>
+                                        ),
+                                    )}
+                                </div>
+
+                                {gebruikers.length === 0 && (
+                                    <p>
+                                        Geen gebruikers beschikbaar.
+                                    </p>
+                                )}
+                            </>
+                        )}
+                    </section>
+                )}
 
                 {afspraak.type === 'CAPACITEITSWISSEL' && (
                     <section className="content-card form-section">
@@ -722,6 +1042,7 @@ export function BewerkAfspraakPage() {
                                     }
                                     maxLength={100}
                                     required
+                                    disabled={opslaan}
                                 />
                             </label>
 
@@ -740,6 +1061,7 @@ export function BewerkAfspraakPage() {
                                     }
                                     maxLength={100}
                                     required
+                                    disabled={opslaan}
                                 />
                             </label>
 
@@ -758,6 +1080,7 @@ export function BewerkAfspraakPage() {
                                     }
                                     maxLength={100}
                                     required
+                                    disabled={opslaan}
                                 />
                             </label>
 
@@ -776,6 +1099,7 @@ export function BewerkAfspraakPage() {
                                     }
                                     maxLength={50}
                                     required
+                                    disabled={opslaan}
                                 />
                             </label>
 
@@ -794,6 +1118,7 @@ export function BewerkAfspraakPage() {
                                         )
                                     }
                                     required
+                                    disabled={opslaan}
                                 />
                             </label>
 
@@ -812,6 +1137,7 @@ export function BewerkAfspraakPage() {
                                         )
                                     }
                                     required
+                                    disabled={opslaan}
                                 />
                             </label>
 
@@ -829,6 +1155,7 @@ export function BewerkAfspraakPage() {
                                         )
                                     }
                                     required
+                                    disabled={opslaan}
                                 />
                             </label>
 
@@ -846,6 +1173,7 @@ export function BewerkAfspraakPage() {
                                         )
                                     }
                                     required
+                                    disabled={opslaan}
                                 />
                             </label>
                         </div>
@@ -874,6 +1202,7 @@ export function BewerkAfspraakPage() {
                                     }
                                     maxLength={100}
                                     required
+                                    disabled={opslaan}
                                 />
                             </label>
 
@@ -892,6 +1221,7 @@ export function BewerkAfspraakPage() {
                                     }
                                     maxLength={100}
                                     required
+                                    disabled={opslaan}
                                 />
                             </label>
 
@@ -910,6 +1240,7 @@ export function BewerkAfspraakPage() {
                                     }
                                     maxLength={100}
                                     required
+                                    disabled={opslaan}
                                 />
                             </label>
 
@@ -928,6 +1259,7 @@ export function BewerkAfspraakPage() {
                                         )
                                     }
                                     required
+                                    disabled={opslaan}
                                 />
                             </label>
 
@@ -947,6 +1279,7 @@ export function BewerkAfspraakPage() {
                                         )
                                     }
                                     required
+                                    disabled={opslaan}
                                 />
                             </label>
                         </div>
@@ -964,7 +1297,10 @@ export function BewerkAfspraakPage() {
                     <button
                         type="submit"
                         className="primary-button"
-                        disabled={opslaan}
+                        disabled={
+                            opslaan
+                            || gebruikersLaden
+                        }
                     >
                         {opslaan
                             ? 'Wijzigingen opslaan...'

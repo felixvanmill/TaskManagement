@@ -639,51 +639,54 @@ export function AfspraakDetailPage() {
                         Goedkeuring
                     </h2>
 
-                    {afspraak.bevestigingen.length === 0
+                    {afspraak.goedkeurders.length === 0
                         ? (
                             <p>
-                                Geen bevestigingen beschikbaar.
+                                Geen goedkeurders aangewezen.
                             </p>
                         )
                         : (
                             <ul className="simple-list">
-                                {
-                                    afspraak
-                                        .bevestigingen
-                                        .map(
-                                            (bevestiging) => (
-                                                <li
-                                                    key={
-                                                        bevestiging.id
-                                                    }
-                                                >
-                                                    <strong>
-                                                        {
-                                                            bevestiging
-                                                                .gebruiker
-                                                                .naam
-                                                        }
-                                                    </strong>
+                                {afspraak.goedkeurders.map(
+                                    (goedkeurder) => {
+                                        const bevestiging =
+                                            afspraak.bevestigingen.find(
+                                                (item) =>
+                                                    item.gebruiker.id
+                                                    === goedkeurder.id,
+                                            )
 
-                                                    <span>
-                                                        {
+                                        return (
+                                            <li
+                                                key={
+                                                    goedkeurder.id
+                                                }
+                                            >
+                                                <strong>
+                                                    {
+                                                        goedkeurder
+                                                            .naam
+                                                    }
+                                                </strong>
+
+                                                <span>
+                                    {bevestiging?.gezien
+                                        ? 'Gezien'
+                                        : 'Nog niet gezien'}
+
+                                                    {' · '}
+
+                                                    {bevestiging === undefined
+                                                        ? 'Nog geen beslissing'
+                                                        : beslissingLabel(
                                                             bevestiging
-                                                                .gezien
-                                                                ? 'Gezien'
-                                                                : 'Nog niet gezien'
-                                                        }
-                                                        {' · '}
-                                                        {
-                                                            beslissingLabel(
-                                                                bevestiging
-                                                                    .beslissing,
-                                                            )
-                                                        }
-                                                    </span>
-                                                </li>
-                                            ),
+                                                                .beslissing,
+                                                        )}
+                                </span>
+                                            </li>
                                         )
-                                }
+                                    },
+                                )}
                             </ul>
                         )}
                 </article>
@@ -730,7 +733,7 @@ export function AfspraakDetailPage() {
                                                     className="content-card history-item"
                                                 >
                                                     <div>
-                                                        <strong>
+                                                    <strong>
                                                             {
                                                                 wijziging
                                                                     .onderdeel
