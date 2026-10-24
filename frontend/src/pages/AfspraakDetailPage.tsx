@@ -8,6 +8,10 @@ import {
 } from '../components/OpmerkingenSection'
 
 import {
+    TypespecifiekeDetailsSection,
+} from '../components/TypespecifiekeDetailsSection'
+
+import {
     ProcesstappenSection,
 } from '../components/ProcesstappenSection'
 
@@ -340,6 +344,10 @@ export function AfspraakDetailPage() {
                     </div>
                 </article>
             </section>
+
+            <TypespecifiekeDetailsSection
+                afspraak={afspraak}
+            />
 
             <ProcesstappenSection
                 afspraak={afspraak}
