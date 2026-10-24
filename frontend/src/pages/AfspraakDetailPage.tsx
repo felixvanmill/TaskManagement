@@ -12,6 +12,10 @@ import {
 } from '../components/ProcesstappenSection'
 
 import {
+    BevestigingActiesSection,
+} from '../components/BevestigingActiesSection'
+
+import {
     Link,
     useParams,
 } from 'react-router-dom'
@@ -338,6 +342,11 @@ export function AfspraakDetailPage() {
             </section>
 
             <ProcesstappenSection
+                afspraak={afspraak}
+                onAfspraakGewijzigd={setAfspraak}
+            />
+
+            <BevestigingActiesSection
                 afspraak={afspraak}
                 onAfspraakGewijzigd={setAfspraak}
             />

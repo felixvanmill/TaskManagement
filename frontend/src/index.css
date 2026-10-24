@@ -840,4 +840,50 @@ h1 {
     }
   }
 
+  .bevestiging-acties {
+    display: grid;
+    gap: 18px;
+    margin-bottom: 24px;
+  }
+
+  .bevestiging-acties h2 {
+    margin-top: 0;
+  }
+
+  .bevestiging-status {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px 28px;
+  }
+
+  .bevestiging-status p {
+    margin: 0;
+  }
+
+  .bevestiging-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .danger-button {
+    padding: 12px 18px;
+    border: 0;
+    border-radius: 8px;
+    background: #b91c1c;
+    color: white;
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  .danger-button:hover:not(:disabled) {
+    background: #991b1b;
+  }
+
+  .danger-button:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+
 }
