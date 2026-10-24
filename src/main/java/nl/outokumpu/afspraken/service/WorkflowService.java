@@ -7,19 +7,20 @@ import nl.outokumpu.afspraken.enums.AfspraakStatus;
 import nl.outokumpu.afspraken.enums.BetrokkenRol;
 import nl.outokumpu.afspraken.enums.ProcesstapStatus;
 import nl.outokumpu.afspraken.enums.UitvoeringsStatus;
+import nl.outokumpu.afspraken.exception.ForbiddenOperationException;
 import nl.outokumpu.afspraken.mapper.AfspraakMapper;
 import nl.outokumpu.afspraken.repository.AfdelingRepository;
 import nl.outokumpu.afspraken.repository.GebruikerRepository;
 import nl.outokumpu.afspraken.repository.OperationeleAfspraakRepository;
 import nl.outokumpu.afspraken.repository.ProcesstapRepository;
 import nl.outokumpu.afspraken.repository.WijzigingRepository;
-import nl.outokumpu.afspraken.exception.ForbiddenOperationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
@@ -236,7 +237,6 @@ public class WorkflowService {
                                 .name()
                 );
 
-
         wijzigingRepository.save(
                 wijziging
         );
@@ -345,26 +345,66 @@ public class WorkflowService {
                         nieuweVerantwoordelijke.getId()
                 );
 
-        List<Betrokkenheid> huidigeBetrokkenheden =
-                new ArrayList<>(
-                        afspraak.getBetrokkenheden()
+        Set<UUID> nieuweBetrokkeneIds =
+                new HashSet<>(
+                        nieuweBetrokkenen
+                                .stream()
+                                .map(Gebruiker::getId)
+                                .toList()
                 );
 
-        huidigeBetrokkenheden.stream()
-                .filter(betrokkenheid ->
-                        betrokkenheid.getRol()
-                                == BetrokkenRol.BETROKKENE
-                )
-                .forEach(
-                        afspraak::verwijderBetrokkenheid
+        List<Betrokkenheid> teVerwijderenBetrokkenheden =
+                afspraak.getBetrokkenheden()
+                        .stream()
+                        .filter(betrokkenheid ->
+                                betrokkenheid.getRol()
+                                        == BetrokkenRol.BETROKKENE
+                        )
+                        .filter(betrokkenheid ->
+                                !nieuweBetrokkeneIds.contains(
+                                        betrokkenheid
+                                                .getGebruiker()
+                                                .getId()
+                                )
+                        )
+                        .toList();
+
+        for (
+                Betrokkenheid betrokkenheid
+                : teVerwijderenBetrokkenheden
+        ) {
+            afspraak.verwijderBetrokkenheid(
+                    betrokkenheid
+            );
+        }
+
+        Set<UUID> huidigeBetrokkeneIds =
+                new HashSet<>(
+                        afspraak.getBetrokkenheden()
+                                .stream()
+                                .filter(betrokkenheid ->
+                                        betrokkenheid.getRol()
+                                                == BetrokkenRol.BETROKKENE
+                                )
+                                .map(Betrokkenheid::getGebruiker)
+                                .map(Gebruiker::getId)
+                                .toList()
                 );
 
         for (Gebruiker betrokkene : nieuweBetrokkenen) {
 
-            afspraak.voegBetrokkenheidToe(
-                    betrokkene,
-                    BetrokkenRol.BETROKKENE
-            );
+            if (!huidigeBetrokkeneIds.contains(
+                    betrokkene.getId()
+            )) {
+                afspraak.voegBetrokkenheidToe(
+                        betrokkene,
+                        BetrokkenRol.BETROKKENE
+                );
+
+                huidigeBetrokkeneIds.add(
+                        betrokkene.getId()
+                );
+            }
 
             if (!heeftBevestiging(
                     afspraak,
@@ -376,21 +416,54 @@ public class WorkflowService {
             }
         }
 
-        List<Afdeling> huidigeAfdelingen =
-                new ArrayList<>(
-                        afspraak.getBetrokkenAfdelingen()
+        Set<UUID> nieuweAfdelingIds =
+                new HashSet<>(
+                        nieuweAfdelingen
+                                .stream()
+                                .map(Afdeling::getId)
+                                .toList()
                 );
 
-        for (Afdeling afdeling : huidigeAfdelingen) {
+        List<Afdeling> teVerwijderenAfdelingen =
+                afspraak.getBetrokkenAfdelingen()
+                        .stream()
+                        .filter(afdeling ->
+                                !nieuweAfdelingIds.contains(
+                                        afdeling.getId()
+                                )
+                        )
+                        .toList();
+
+        for (
+                Afdeling afdeling
+                : teVerwijderenAfdelingen
+        ) {
             afspraak.verwijderAfdeling(
                     afdeling
             );
         }
 
+        Set<UUID> huidigeAfdelingIds =
+                new HashSet<>(
+                        afspraak.getBetrokkenAfdelingen()
+                                .stream()
+                                .map(Afdeling::getId)
+                                .toList()
+                );
+
         for (Afdeling afdeling : nieuweAfdelingen) {
-            afspraak.voegAfdelingToe(
-                    afdeling
-            );
+
+            if (!huidigeAfdelingIds.contains(
+                    afdeling.getId()
+            )) {
+                afspraak.voegAfdelingToe(
+                        afdeling
+                );
+
+                huidigeAfdelingIds.add(
+                        afdeling.getId()
+                );
+            }
         }
 
         UUID huidigeVerantwoordelijkeId =

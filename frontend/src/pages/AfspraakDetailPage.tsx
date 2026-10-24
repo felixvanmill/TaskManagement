@@ -12,6 +12,10 @@ import {
 } from '../components/TypespecifiekeDetailsSection'
 
 import {
+    ToewijzingSection,
+} from '../components/ToewijzingSection'
+
+import {
     ProcesstappenSection,
 } from '../components/ProcesstappenSection'
 
@@ -347,6 +351,12 @@ export function AfspraakDetailPage() {
 
             <TypespecifiekeDetailsSection
                 afspraak={afspraak}
+                onAfspraakGewijzigd={setAfspraak}
+            />
+
+            <ToewijzingSection
+                afspraak={afspraak}
+                onAfspraakGewijzigd={setAfspraak}
             />
 
             <ProcesstappenSection

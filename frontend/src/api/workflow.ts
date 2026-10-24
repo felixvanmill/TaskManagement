@@ -3,10 +3,18 @@ import { apiFetch } from './http'
 import type {
     AfspraakDetail,
     AfspraakStatus,
+    UitvoeringsStatus,
 } from '../types/afspraak'
 
 interface ApiErrorResponse {
     message?: string
+}
+
+export interface UpdateToewijzingRequest {
+    betrokkeneIds: string[]
+    afdelingIds: string[]
+    processtapId: string
+    verantwoordelijkeId: string
 }
 
 async function voerWorkflowActieUit(
@@ -71,5 +79,27 @@ export async function wijzigAfspraakStatus(
         {
             status,
         },
+    )
+}
+
+export async function wijzigUitvoeringsstatus(
+    afspraakId: string,
+    status: UitvoeringsStatus,
+): Promise<AfspraakDetail> {
+    return voerWorkflowActieUit(
+        `/api/afspraken/${afspraakId}/uitvoeringsstatus`,
+        {
+            status,
+        },
+    )
+}
+
+export async function wijzigToewijzing(
+    afspraakId: string,
+    request: UpdateToewijzingRequest,
+): Promise<AfspraakDetail> {
+    return voerWorkflowActieUit(
+        `/api/afspraken/${afspraakId}/toewijzing`,
+        request,
     )
 }
