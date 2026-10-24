@@ -20,6 +20,10 @@ import {
     getAfspraak,
 } from '../api/afspraken'
 
+import {
+    AfspraakStatusSection,
+} from '../components/AfspraakStatusSection'
+
 import type {
     AfspraakDetail,
     AfspraakStatus,
@@ -223,6 +227,11 @@ export function AfspraakDetailPage() {
                     )}
                 </span>
             </header>
+
+            <AfspraakStatusSection
+                afspraak={afspraak}
+                onAfspraakGewijzigd={setAfspraak}
+            />
 
             <section className="detail-grid">
                 <article className="content-card">

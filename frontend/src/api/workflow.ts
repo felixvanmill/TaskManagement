@@ -2,6 +2,7 @@ import { apiFetch } from './http'
 
 import type {
     AfspraakDetail,
+    AfspraakStatus,
 } from '../types/afspraak'
 
 interface ApiErrorResponse {
@@ -10,11 +11,17 @@ interface ApiErrorResponse {
 
 async function voerWorkflowActieUit(
     pad: string,
+    body?: unknown,
 ): Promise<AfspraakDetail> {
     const response = await apiFetch(
         pad,
         {
             method: 'PUT',
+            ...(body !== undefined
+                ? {
+                    body: JSON.stringify(body),
+                }
+                : {}),
         },
     )
 
@@ -52,5 +59,17 @@ export async function rondProcesstapAf(
 ): Promise<AfspraakDetail> {
     return voerWorkflowActieUit(
         `/api/processtappen/${processtapId}/afronden`,
+    )
+}
+
+export async function wijzigAfspraakStatus(
+    afspraakId: string,
+    status: AfspraakStatus,
+): Promise<AfspraakDetail> {
+    return voerWorkflowActieUit(
+        `/api/afspraken/${afspraakId}/status`,
+        {
+            status,
+        },
     )
 }

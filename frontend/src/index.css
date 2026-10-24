@@ -801,4 +801,43 @@ h1 {
     }
   }
 
+  .afspraak-status-section {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    margin-bottom: 24px;
+  }
+
+  .afspraak-status-section h2 {
+    margin-top: 0;
+  }
+
+  .status-change-controls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .status-change-controls select {
+    min-width: 180px;
+    padding: 11px 13px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    background: white;
+    font: inherit;
+  }
+
+  .muted-text {
+    color: #6b7280;
+  }
+
+  @media (max-width: 800px) {
+    .afspraak-status-section,
+    .status-change-controls {
+      align-items: stretch;
+      flex-direction: column;
+    }
+  }
+
 }
