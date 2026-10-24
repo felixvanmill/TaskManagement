@@ -1004,4 +1004,133 @@ h1 {
     }
   }
 
+  .overview-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .user-management-list {
+    display: grid;
+    gap: 18px;
+    padding-bottom: 40px;
+  }
+
+  .user-management-card {
+    display: grid;
+    gap: 20px;
+  }
+
+  .user-management-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 20px;
+  }
+
+  .user-management-header h2 {
+    margin-top: 0;
+    margin-bottom: 4px;
+  }
+
+  .user-management-header p {
+    margin: 0 0 4px;
+  }
+
+  .user-management-header span {
+    color: #6b7280;
+  }
+
+  .user-access-badges {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 8px;
+  }
+
+  .access-badge {
+    padding: 6px 10px;
+    border-radius: 999px;
+    background: #f3f4f6;
+    color: #4b5563;
+    font-size: 0.8rem;
+    font-weight: 700;
+  }
+
+  .access-active {
+    background: #ecfdf5;
+    color: #047857;
+  }
+
+  .access-inactive {
+    background: #fef2f2;
+    color: #b91c1c;
+  }
+
+  .admin-self-warning {
+    margin: 0;
+    padding: 12px 14px;
+    border-radius: 8px;
+    background: #fffbeb;
+    color: #92400e;
+  }
+
+  .user-management-fields {
+    display: grid;
+    grid-template-columns:
+        repeat(3, minmax(0, 1fr));
+    align-items: end;
+    gap: 18px;
+  }
+
+  .form-field small {
+    color: #6b7280;
+  }
+
+  .access-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 44px;
+    font-weight: 700;
+  }
+
+  .access-checkbox input {
+    width: 18px;
+    height: 18px;
+  }
+
+  .user-management-actions {
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  .alert-success {
+    padding: 12px 14px;
+    border-radius: 8px;
+    background: #ecfdf5;
+    color: #047857;
+    font-weight: 600;
+  }
+
+  @media (max-width: 800px) {
+    .overview-actions,
+    .user-management-header {
+      align-items: stretch;
+      flex-direction: column;
+    }
+
+    .user-access-badges {
+      justify-content: flex-start;
+    }
+
+    .user-management-fields {
+      grid-template-columns: 1fr;
+    }
+
+    .user-management-actions .primary-button {
+      width: 100%;
+    }
+  }
+
 }

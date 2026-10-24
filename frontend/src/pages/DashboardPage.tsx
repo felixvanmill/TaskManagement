@@ -377,17 +377,33 @@ export function DashboardPage() {
                     </p>
                 </div>
 
-                <button
-                    type="button"
-                    className="primary-button"
-                    onClick={() =>
-                        navigate(
-                            '/afspraken/nieuw',
-                        )
-                    }
-                >
-                    + Nieuwe afspraak
-                </button>
+                <div className="overview-actions">
+                    {gebruiker.rol === 'BEHEERDER' && (
+                        <button
+                            type="button"
+                            className="secondary-button"
+                            onClick={() =>
+                                navigate(
+                                    '/beheer/gebruikers',
+                                )
+                            }
+                        >
+                            Gebruikersbeheer
+                        </button>
+                    )}
+
+                    <button
+                        type="button"
+                        className="primary-button"
+                        onClick={() =>
+                            navigate(
+                                '/afspraken/nieuw',
+                            )
+                        }
+                    >
+                        + Nieuwe afspraak
+                    </button>
+                </div>
             </section>
 
             <div className="overview-tabs">
