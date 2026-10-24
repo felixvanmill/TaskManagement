@@ -174,7 +174,7 @@ class AfspraakBewerkenServiceTest {
         );
 
         verify(afspraakRepository)
-                .save(afspraak);
+                .flush();
 
         verify(wijzigingRepository)
                 .saveAll(

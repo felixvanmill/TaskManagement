@@ -4,6 +4,10 @@ import {
 } from 'react'
 
 import {
+    useAuth,
+} from '../auth/useAuth'
+
+import {
     OpmerkingenSection,
 } from '../components/OpmerkingenSection'
 
@@ -43,6 +47,18 @@ import type {
     Beslissing,
 } from '../types/afspraak'
 
+type ToewijzingHistorie = {
+    processtap: string
+    betrokkenen: string
+    afdelingen: string
+    verantwoordelijke: string
+}
+
+type ToewijzingVerschil = {
+    label: string
+    oudeWaarde: string
+    nieuweWaarde: string
+}
 
 function formatteerDatum(
     datum: string,
@@ -106,7 +122,6 @@ function typeLabel(
     }
 }
 
-
 function beslissingLabel(
     beslissing: Beslissing,
 ) {
@@ -122,9 +137,126 @@ function beslissingLabel(
     }
 }
 
+function parseToewijzingWaarde(
+    waarde: string | null,
+): ToewijzingHistorie | null {
+
+    if (waarde === null) {
+        return null
+    }
+
+    const match =
+        waarde.match(
+            /^Processtap: (.*?) \| Betrokkenen: (.*?) \| Afdelingen: (.*?) \| Verantwoordelijke: (.*)$/,
+        )
+
+    if (match === null) {
+        return null
+    }
+
+    const [
+        ,
+        processtap,
+        betrokkenen,
+        afdelingen,
+        verantwoordelijke,
+    ] = match
+
+    if (
+        processtap === undefined
+        || betrokkenen === undefined
+        || afdelingen === undefined
+        || verantwoordelijke === undefined
+    ) {
+        return null
+    }
+
+    return {
+        processtap,
+        betrokkenen,
+        afdelingen,
+        verantwoordelijke,
+    }
+}
+
+function bepaalToewijzingVerschillen(
+    oudeWaarde: string | null,
+    nieuweWaarde: string | null,
+): ToewijzingVerschil[] | null {
+
+    const oud =
+        parseToewijzingWaarde(
+            oudeWaarde,
+        )
+
+    const nieuw =
+        parseToewijzingWaarde(
+            nieuweWaarde,
+        )
+
+    if (
+        oud === null
+        || nieuw === null
+    ) {
+        return null
+    }
+
+    const verschillen: ToewijzingVerschil[] = []
+
+    if (
+        oud.processtap
+        !== nieuw.processtap
+    ) {
+        verschillen.push({
+            label: 'Processtap',
+            oudeWaarde: oud.processtap,
+            nieuweWaarde: nieuw.processtap,
+        })
+    }
+
+    if (
+        oud.betrokkenen
+        !== nieuw.betrokkenen
+    ) {
+        verschillen.push({
+            label: 'Betrokkenen',
+            oudeWaarde: oud.betrokkenen,
+            nieuweWaarde: nieuw.betrokkenen,
+        })
+    }
+
+    if (
+        oud.afdelingen
+        !== nieuw.afdelingen
+    ) {
+        verschillen.push({
+            label: 'Afdelingen',
+            oudeWaarde: oud.afdelingen,
+            nieuweWaarde: nieuw.afdelingen,
+        })
+    }
+
+    if (
+        oud.verantwoordelijke
+        !== nieuw.verantwoordelijke
+    ) {
+        verschillen.push({
+            label: 'Verantwoordelijke',
+            oudeWaarde: oud.verantwoordelijke,
+            nieuweWaarde: nieuw.verantwoordelijke,
+        })
+    }
+
+    return verschillen
+}
+
 export function AfspraakDetailPage() {
     const { id } =
         useParams<{ id: string }>()
+
+    const {
+        gebruiker,
+    } = useAuth()
 
     const [
         afspraak,
@@ -203,6 +335,31 @@ export function AfspraakDetailPage() {
         )
     }
 
+    const actieveProcesstap =
+        afspraak.processtappen.find(
+            (processtap) =>
+                processtap.status !== 'AFGEROND',
+        )
+
+    const laatsteProcesstap =
+        afspraak.processtappen[
+        afspraak.processtappen.length - 1
+            ]
+
+    const huidigeVerantwoordelijke =
+        actieveProcesstap?.verantwoordelijke
+        ?? laatsteProcesstap?.verantwoordelijke
+        ?? null
+
+    const magBewerken =
+        gebruiker !== null
+        && (
+            gebruiker.id
+            === afspraak.initiatiefnemer.id
+            || gebruiker.id
+            === huidigeVerantwoordelijke?.id
+        )
+
     return (
         <main className="dashboard-page">
             <Link
@@ -229,15 +386,28 @@ export function AfspraakDetailPage() {
                     </p>
                 </div>
 
-                <span
-                    className={
-                        `status-badge status-${afspraak.status.toLowerCase()}`
-                    }
-                >
-                    {statusLabel(
-                        afspraak.status,
+                <div className="status-change-controls">
+                    {magBewerken && (
+                        <Link
+                            to={
+                                `/afspraken/${afspraak.id}/bewerken`
+                            }
+                            className="secondary-link-button"
+                        >
+                            Afspraak bewerken
+                        </Link>
                     )}
-                </span>
+
+                    <span
+                        className={
+                            `status-badge status-${afspraak.status.toLowerCase()}`
+                        }
+                    >
+                        {statusLabel(
+                            afspraak.status,
+                        )}
+                    </span>
+                </div>
             </header>
 
             <AfspraakStatusSection
@@ -254,6 +424,7 @@ export function AfspraakDetailPage() {
                     <dl className="detail-list">
                         <div>
                             <dt>Ingangsdatum</dt>
+
                             <dd>
                                 {formatteerDatum(
                                     afspraak.ingangsdatum,
@@ -263,6 +434,7 @@ export function AfspraakDetailPage() {
 
                         <div>
                             <dt>Deadline</dt>
+
                             <dd>
                                 {formatteerDatum(
                                     afspraak.deadline,
@@ -272,6 +444,7 @@ export function AfspraakDetailPage() {
 
                         <div>
                             <dt>Initiatiefnemer</dt>
+
                             <dd>
                                 {
                                     afspraak
@@ -283,6 +456,7 @@ export function AfspraakDetailPage() {
 
                         <div>
                             <dt>Afdeling</dt>
+
                             <dd>
                                 {
                                     afspraak
@@ -296,6 +470,7 @@ export function AfspraakDetailPage() {
 
                         <div>
                             <dt>Aangemaakt</dt>
+
                             <dd>
                                 {formatteerDatumTijd(
                                     afspraak.aangemaaktOp,
@@ -305,6 +480,7 @@ export function AfspraakDetailPage() {
 
                         <div>
                             <dt>Laatst gewijzigd</dt>
+
                             <dd>
                                 {formatteerDatumTijd(
                                     afspraak
@@ -321,7 +497,9 @@ export function AfspraakDetailPage() {
                     </h2>
 
                     <div className="detail-text-block">
-                        <h3>Reden</h3>
+                        <h3>
+                            Reden
+                        </h3>
 
                         <p>
                             {afspraak.reden
@@ -330,7 +508,9 @@ export function AfspraakDetailPage() {
                     </div>
 
                     <div className="detail-text-block">
-                        <h3>Achtergrond</h3>
+                        <h3>
+                            Achtergrond
+                        </h3>
 
                         <p>
                             {afspraak.achtergrond
@@ -339,7 +519,9 @@ export function AfspraakDetailPage() {
                     </div>
 
                     <div className="detail-text-block">
-                        <h3>Aannames</h3>
+                        <h3>
+                            Aannames
+                        </h3>
 
                         <p>
                             {afspraak.aannames
@@ -387,22 +569,25 @@ export function AfspraakDetailPage() {
                                     afspraak
                                         .betrokkenGebruikers
                                         .map(
-                                            (gebruiker) => (
+                                            (
+                                                betrokkenGebruiker,
+                                            ) => (
                                                 <li
                                                     key={
-                                                        gebruiker.id
+                                                        betrokkenGebruiker
+                                                            .id
                                                     }
                                                 >
                                                     <strong>
                                                         {
-                                                            gebruiker
+                                                            betrokkenGebruiker
                                                                 .naam
                                                         }
                                                     </strong>
 
                                                     <span>
                                                         {
-                                                            gebruiker
+                                                            betrokkenGebruiker
                                                                 .afdeling
                                                                 ?.naam
                                                             ?? 'Geen afdeling'
@@ -481,14 +666,19 @@ export function AfspraakDetailPage() {
                                                     </strong>
 
                                                     <span>
-                                                        {bevestiging.gezien
-                                                            ? 'Gezien'
-                                                            : 'Nog niet gezien'}
-                                                        {' · '}
-                                                        {beslissingLabel(
+                                                        {
                                                             bevestiging
-                                                                .beslissing,
-                                                        )}
+                                                                .gezien
+                                                                ? 'Gezien'
+                                                                : 'Nog niet gezien'
+                                                        }
+                                                        {' · '}
+                                                        {
+                                                            beslissingLabel(
+                                                                bevestiging
+                                                                    .beslissing,
+                                                            )
+                                                        }
                                                     </span>
                                                 </li>
                                             ),
@@ -508,71 +698,128 @@ export function AfspraakDetailPage() {
                     Wijzigingshistorie
                 </h2>
 
-                {afspraak.wijzigingen.length === 0 ? (
-                    <div className="content-card">
-                        <p>
-                            Nog geen wijzigingen geregistreerd.
-                        </p>
-                    </div>
-                ) : (
-                    <div className="history-list">
-                        {
-                            afspraak.wijzigingen
-                                .map(
-                                    (wijziging) => (
-                                        <article
-                                            key={
-                                                wijziging.id
-                                            }
-                                            className="content-card history-item"
-                                        >
-                                            <div>
-                                                <strong>
-                                                    {
-                                                        wijziging
-                                                            .onderdeel
-                                                    }
-                                                </strong>
+                {afspraak.wijzigingen.length === 0
+                    ? (
+                        <div className="content-card">
+                            <p>
+                                Nog geen wijzigingen geregistreerd.
+                            </p>
+                        </div>
+                    )
+                    : (
+                        <div className="history-list">
+                            {
+                                afspraak.wijzigingen
+                                    .map(
+                                        (wijziging) => {
 
-                                                <p>
-                                                    {
-                                                        wijziging
-                                                            .oudeWaarde
-                                                        ?? '—'
-                                                    }
-                                                    {' → '}
-                                                    {
-                                                        wijziging
-                                                            .nieuweWaarde
-                                                        ?? '—'
-                                                    }
-                                                </p>
-                                            </div>
+                                            const toewijzingVerschillen =
+                                                wijziging.onderdeel
+                                                === 'Toewijzing'
+                                                    ? bepaalToewijzingVerschillen(
+                                                        wijziging.oudeWaarde,
+                                                        wijziging.nieuweWaarde,
+                                                    )
+                                                    : null
 
-                                            <div className="history-meta">
-                                                <span>
-                                                    {
-                                                        wijziging
-                                                            .gewijzigdDoor
-                                                            .naam
+                                            return (
+                                                <article
+                                                    key={
+                                                        wijziging.id
                                                     }
-                                                </span>
+                                                    className="content-card history-item"
+                                                >
+                                                    <div>
+                                                        <strong>
+                                                            {
+                                                                wijziging
+                                                                    .onderdeel
+                                                            }
+                                                        </strong>
 
-                                                <span>
-                                                    {
-                                                        formatteerDatumTijd(
-                                                            wijziging
-                                                                .gewijzigdOp,
-                                                        )
-                                                    }
-                                                </span>
-                                            </div>
-                                        </article>
-                                    ),
-                                )
-                        }
-                    </div>
-                )}
+                                                        {
+                                                            toewijzingVerschillen
+                                                            !== null
+                                                            && toewijzingVerschillen
+                                                                .length > 0
+                                                                ? (
+                                                                    <div>
+                                                                        {
+                                                                            toewijzingVerschillen
+                                                                                .map(
+                                                                                    (
+                                                                                        verschil,
+                                                                                    ) => (
+                                                                                        <p
+                                                                                            key={
+                                                                                                verschil.label
+                                                                                            }
+                                                                                        >
+                                                                                            <strong>
+                                                                                                {
+                                                                                                    verschil.label
+                                                                                                }
+                                                                                                :
+                                                                                            </strong>
+                                                                                            {' '}
+                                                                                            {
+                                                                                                verschil
+                                                                                                    .oudeWaarde
+                                                                                            }
+                                                                                            {' → '}
+                                                                                            {
+                                                                                                verschil
+                                                                                                    .nieuweWaarde
+                                                                                            }
+                                                                                        </p>
+                                                                                    ),
+                                                                                )
+                                                                        }
+                                                                    </div>
+                                                                )
+                                                                : (
+                                                                    <p>
+                                                                        {
+                                                                            wijziging
+                                                                                .oudeWaarde
+                                                                            ?? '—'
+                                                                        }
+                                                                        {' → '}
+                                                                        {
+                                                                            wijziging
+                                                                                .nieuweWaarde
+                                                                            ?? '—'
+                                                                        }
+                                                                    </p>
+                                                                )
+                                                        }
+                                                    </div>
+
+                                                    <div className="history-meta">
+                                                        <span>
+                                                            {
+                                                                wijziging
+                                                                    .gewijzigdDoor
+                                                                    .naam
+                                                            }
+                                                        </span>
+
+                                                        <span>
+                                                            {
+                                                                formatteerDatumTijd(
+                                                                    wijziging
+                                                                        .gewijzigdOp,
+                                                                )
+                                                            }
+                                                        </span>
+                                                    </div>
+                                                </article>
+                                            )
+                                        },
+                                    )
+                            }
+                        </div>
+                    )}
             </section>
         </main>
     )

@@ -32,6 +32,10 @@ import {
     NieuweAfspraakPage,
 } from './pages/NieuweAfspraakPage'
 
+import {
+    BewerkAfspraakPage,
+} from './pages/BewerkAfspraakPage'
+
 function App() {
     return (
         <Routes>
@@ -56,6 +60,11 @@ function App() {
                 <Route
                     path="/afspraken/:id"
                     element={<AfspraakDetailPage />}
+                />
+
+                <Route
+                    path="/afspraken/:id/bewerken"
+                    element={<BewerkAfspraakPage />}
                 />
 
                 <Route

@@ -81,13 +81,19 @@ public class WorkflowService {
                 processtap.getAfspraak()
                         .registreerWijziging(
                                 verantwoordelijke,
-                                "Processtapstatus: " + processtap.getNaam(),
+                                "Processtapstatus: "
+                                        + processtap.getNaam(),
                                 oudeStatus,
                                 processtap.getStatus().name()
                         );
 
-        processtapRepository.save(processtap);
-        wijzigingRepository.save(wijziging);
+        processtapRepository.save(
+                processtap
+        );
+
+        wijzigingRepository.save(
+                wijziging
+        );
 
         return afspraakMapper.naarDetailResponse(
                 processtap.getAfspraak()
@@ -125,13 +131,19 @@ public class WorkflowService {
                 processtap.getAfspraak()
                         .registreerWijziging(
                                 verantwoordelijke,
-                                "Processtapstatus: " + processtap.getNaam(),
+                                "Processtapstatus: "
+                                        + processtap.getNaam(),
                                 oudeStatus,
                                 processtap.getStatus().name()
                         );
 
-        processtapRepository.save(processtap);
-        wijzigingRepository.save(wijziging);
+        processtapRepository.save(
+                processtap
+        );
+
+        wijzigingRepository.save(
+                wijziging
+        );
 
         return afspraakMapper.naarDetailResponse(
                 processtap.getAfspraak()
@@ -145,7 +157,9 @@ public class WorkflowService {
     ) {
 
         OperationeleAfspraak afspraak =
-                afspraakRepository.findById(afspraakId)
+                afspraakRepository.findById(
+                                afspraakId
+                        )
                         .orElseThrow(() ->
                                 new IllegalArgumentException(
                                         "Afspraak niet gevonden"
@@ -194,7 +208,9 @@ public class WorkflowService {
     ) {
 
         OperationeleAfspraak afspraak =
-                afspraakRepository.findById(afspraakId)
+                afspraakRepository.findById(
+                                afspraakId
+                        )
                         .orElseThrow(() ->
                                 new IllegalArgumentException(
                                         "Afspraak niet gevonden"
@@ -253,7 +269,9 @@ public class WorkflowService {
     ) {
 
         OperationeleAfspraak afspraak =
-                afspraakRepository.findById(afspraakId)
+                afspraakRepository.findById(
+                                afspraakId
+                        )
                         .orElseThrow(() ->
                                 new IllegalArgumentException(
                                         "Afspraak niet gevonden"
@@ -313,43 +331,49 @@ public class WorkflowService {
                                 )
                         );
 
+        List<Gebruiker> huidigeBetrokkenen =
+                afspraak.getBetrokkenheden()
+                        .stream()
+                        .filter(betrokkenheid ->
+                                betrokkenheid.getRol()
+                                        == BetrokkenRol.BETROKKENE
+                        )
+                        .map(
+                                Betrokkenheid::getGebruiker
+                        )
+                        .toList();
+
+        List<Afdeling> huidigeAfdelingen =
+                afspraak.getBetrokkenAfdelingen()
+                        .stream()
+                        .toList();
+
+        Gebruiker huidigeVerantwoordelijke =
+                processtap.getVerantwoordelijke();
+
         String oudeToewijzing =
                 beschrijfToewijzing(
-                        afspraak.getBetrokkenheden()
-                                .stream()
-                                .filter(betrokkenheid ->
-                                        betrokkenheid.getRol()
-                                                == BetrokkenRol.BETROKKENE
-                                )
-                                .map(Betrokkenheid::getGebruiker)
-                                .map(Gebruiker::getId)
-                                .toList(),
-                        afspraak.getBetrokkenAfdelingen()
-                                .stream()
-                                .map(Afdeling::getId)
-                                .toList(),
-                        processtap.getVerantwoordelijke()
-                                .getId()
+                        processtap.getNaam(),
+                        huidigeBetrokkenen,
+                        huidigeAfdelingen,
+                        huidigeVerantwoordelijke
                 );
 
         String nieuweToewijzing =
                 beschrijfToewijzing(
-                        nieuweBetrokkenen
-                                .stream()
-                                .map(Gebruiker::getId)
-                                .toList(),
-                        nieuweAfdelingen
-                                .stream()
-                                .map(Afdeling::getId)
-                                .toList(),
-                        nieuweVerantwoordelijke.getId()
+                        processtap.getNaam(),
+                        nieuweBetrokkenen,
+                        nieuweAfdelingen,
+                        nieuweVerantwoordelijke
                 );
 
         Set<UUID> nieuweBetrokkeneIds =
                 new HashSet<>(
                         nieuweBetrokkenen
                                 .stream()
-                                .map(Gebruiker::getId)
+                                .map(
+                                        Gebruiker::getId
+                                )
                                 .toList()
                 );
 
@@ -386,8 +410,12 @@ public class WorkflowService {
                                         betrokkenheid.getRol()
                                                 == BetrokkenRol.BETROKKENE
                                 )
-                                .map(Betrokkenheid::getGebruiker)
-                                .map(Gebruiker::getId)
+                                .map(
+                                        Betrokkenheid::getGebruiker
+                                )
+                                .map(
+                                        Gebruiker::getId
+                                )
                                 .toList()
                 );
 
@@ -420,7 +448,9 @@ public class WorkflowService {
                 new HashSet<>(
                         nieuweAfdelingen
                                 .stream()
-                                .map(Afdeling::getId)
+                                .map(
+                                        Afdeling::getId
+                                )
                                 .toList()
                 );
 
@@ -447,7 +477,9 @@ public class WorkflowService {
                 new HashSet<>(
                         afspraak.getBetrokkenAfdelingen()
                                 .stream()
-                                .map(Afdeling::getId)
+                                .map(
+                                        Afdeling::getId
+                                )
                                 .toList()
                 );
 
@@ -466,12 +498,8 @@ public class WorkflowService {
             }
         }
 
-        UUID huidigeVerantwoordelijkeId =
-                processtap.getVerantwoordelijke()
-                        .getId();
-
         if (!Objects.equals(
-                huidigeVerantwoordelijkeId,
+                huidigeVerantwoordelijke.getId(),
                 nieuweVerantwoordelijke.getId()
         )) {
             processtap.wijzigVerantwoordelijke(
@@ -598,29 +626,90 @@ public class WorkflowService {
     }
 
     private String beschrijfToewijzing(
-            List<UUID> betrokkeneIds,
-            List<UUID> afdelingIds,
-            UUID verantwoordelijkeId
+            String processtapNaam,
+            List<Gebruiker> betrokkenen,
+            List<Afdeling> afdelingen,
+            Gebruiker verantwoordelijke
     ) {
 
-        List<UUID> gesorteerdeBetrokkeneIds =
-                betrokkeneIds.stream()
+        List<String> betrokkenNamen =
+                betrokkenen.stream()
+                        .map(
+                                this::beschrijfGebruiker
+                        )
                         .distinct()
-                        .sorted()
+                        .sorted(
+                                String.CASE_INSENSITIVE_ORDER
+                        )
                         .toList();
 
-        List<UUID> gesorteerdeAfdelingIds =
-                afdelingIds.stream()
+        List<String> afdelingNamen =
+                afdelingen.stream()
+                        .map(
+                                this::beschrijfAfdeling
+                        )
                         .distinct()
-                        .sorted()
+                        .sorted(
+                                String.CASE_INSENSITIVE_ORDER
+                        )
                         .toList();
 
-        return "betrokkenen="
-                + gesorteerdeBetrokkeneIds
-                + "; afdelingen="
-                + gesorteerdeAfdelingIds
-                + "; verantwoordelijke="
-                + verantwoordelijkeId;
+        String betrokkenenTekst =
+                betrokkenNamen.isEmpty()
+                        ? "Geen"
+                        : String.join(
+                        ", ",
+                        betrokkenNamen
+                );
+
+        String afdelingenTekst =
+                afdelingNamen.isEmpty()
+                        ? "Geen"
+                        : String.join(
+                        ", ",
+                        afdelingNamen
+                );
+
+        return "Processtap: "
+                + processtapNaam
+                + " | Betrokkenen: "
+                + betrokkenenTekst
+                + " | Afdelingen: "
+                + afdelingenTekst
+                + " | Verantwoordelijke: "
+                + beschrijfGebruiker(
+                verantwoordelijke
+        );
+    }
+
+    private String beschrijfGebruiker(
+            Gebruiker gebruiker
+    ) {
+
+        if (gebruiker.getNaam() != null
+                && !gebruiker.getNaam().isBlank()) {
+
+            return gebruiker.getNaam();
+        }
+
+        return gebruiker.getId() == null
+                ? "Onbekend"
+                : gebruiker.getId().toString();
+    }
+
+    private String beschrijfAfdeling(
+            Afdeling afdeling
+    ) {
+
+        if (afdeling.getNaam() != null
+                && !afdeling.getNaam().isBlank()) {
+
+            return afdeling.getNaam();
+        }
+
+        return afdeling.getId() == null
+                ? "Onbekend"
+                : afdeling.getId().toString();
     }
 
     private void controleerAlleIdsGevonden(

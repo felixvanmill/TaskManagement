@@ -5,7 +5,9 @@ import type {
     AfspraakStatus,
     AfspraakSummary,
     AfspraakType,
+    CapaciteitswisselInput,
     CreateAfspraakRequest,
+    OrderverplaatsingInput,
 } from '../types/afspraak'
 
 interface ApiErrorResponse {
@@ -21,6 +23,18 @@ export interface AfspraakFilterParams {
     fabriek?: string
     periodeVan?: string
     periodeTot?: string
+}
+
+export interface UpdateAfspraakRequest {
+    titel: string
+    beschrijving: string
+    reden: string
+    achtergrond: string
+    aannames: string
+    ingangsdatum: string
+    deadline: string
+    capaciteitswissel: CapaciteitswisselInput | null
+    orderverplaatsing: OrderverplaatsingInput | null
 }
 
 async function leesApiFout(
@@ -203,6 +217,31 @@ export async function createAfspraak(
             await leesApiFout(
                 response,
                 `Afspraak aanmaken mislukt (${response.status})`,
+            )
+
+        throw new Error(melding)
+    }
+
+    return response.json() as Promise<AfspraakDetail>
+}
+
+export async function updateAfspraak(
+    id: string,
+    request: UpdateAfspraakRequest,
+): Promise<AfspraakDetail> {
+    const response = await apiFetch(
+        `/api/afspraken/${id}`,
+        {
+            method: 'PUT',
+            body: JSON.stringify(request),
+        },
+    )
+
+    if (!response.ok) {
+        const melding =
+            await leesApiFout(
+                response,
+                `Afspraak bijwerken mislukt (${response.status})`,
             )
 
         throw new Error(melding)
