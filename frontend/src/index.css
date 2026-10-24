@@ -760,4 +760,45 @@ h1 {
     }
   }
 
+  .process-content {
+    min-width: 0;
+  }
+
+  .process-actions {
+    display: grid;
+    justify-items: end;
+    gap: 12px;
+  }
+
+  .process-status {
+    display: inline-flex;
+    padding: 5px 9px;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+
+  .process-status-niet_gestart {
+    background: #f3f4f6;
+    color: #4b5563;
+  }
+
+  .process-status-in_uitvoering {
+    background: #fffbeb;
+    color: #92400e;
+  }
+
+  .process-status-afgerond {
+    background: #ecfdf5;
+    color: #047857;
+  }
+
+  @media (max-width: 800px) {
+    .process-actions {
+      grid-column: 2;
+      justify-items: start;
+    }
+  }
+
 }
