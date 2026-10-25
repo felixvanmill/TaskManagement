@@ -9,12 +9,20 @@ import {
 } from './components/AdminRoute'
 
 import {
+    AppLayout,
+} from './components/AppLayout'
+
+import {
     ProtectedRoute,
 } from './components/ProtectedRoute'
 
 import {
     AfspraakDetailPage,
 } from './pages/AfspraakDetailPage'
+
+import {
+    BewerkAfspraakPage,
+} from './pages/BewerkAfspraakPage'
 
 import {
     DashboardPage,
@@ -32,10 +40,6 @@ import {
     NieuweAfspraakPage,
 } from './pages/NieuweAfspraakPage'
 
-import {
-    BewerkAfspraakPage,
-} from './pages/BewerkAfspraakPage'
-
 function App() {
     return (
         <Routes>
@@ -48,34 +52,38 @@ function App() {
                 element={<ProtectedRoute />}
             >
                 <Route
-                    path="/"
-                    element={<DashboardPage />}
-                />
-
-                <Route
-                    path="/afspraken/nieuw"
-                    element={<NieuweAfspraakPage />}
-                />
-
-                <Route
-                    path="/afspraken/:id"
-                    element={<AfspraakDetailPage />}
-                />
-
-                <Route
-                    path="/afspraken/:id/bewerken"
-                    element={<BewerkAfspraakPage />}
-                />
-
-                <Route
-                    element={<AdminRoute />}
+                    element={<AppLayout />}
                 >
                     <Route
-                        path="/beheer/gebruikers"
-                        element={
-                            <GebruikersbeheerPage />
-                        }
+                        path="/"
+                        element={<DashboardPage />}
                     />
+
+                    <Route
+                        path="/afspraken/nieuw"
+                        element={<NieuweAfspraakPage />}
+                    />
+
+                    <Route
+                        path="/afspraken/:id"
+                        element={<AfspraakDetailPage />}
+                    />
+
+                    <Route
+                        path="/afspraken/:id/bewerken"
+                        element={<BewerkAfspraakPage />}
+                    />
+
+                    <Route
+                        element={<AdminRoute />}
+                    >
+                        <Route
+                            path="/beheer/gebruikers"
+                            element={
+                                <GebruikersbeheerPage />
+                            }
+                        />
+                    </Route>
                 </Route>
             </Route>
 

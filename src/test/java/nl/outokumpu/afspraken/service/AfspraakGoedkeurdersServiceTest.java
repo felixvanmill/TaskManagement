@@ -156,13 +156,6 @@ class AfspraakGoedkeurdersServiceTest {
                 )
         );
 
-        when(
-                afspraakRepository.save(
-                        afspraak
-                )
-        ).thenReturn(
-                afspraak
-        );
 
         AfspraakDetailResponse response =
                 mock(AfspraakDetailResponse.class);
@@ -301,9 +294,7 @@ class AfspraakGoedkeurdersServiceTest {
         );
 
         verify(afspraakRepository)
-                .save(
-                        afspraak
-                );
+                .flush();
 
         verify(wijzigingRepository)
                 .save(
