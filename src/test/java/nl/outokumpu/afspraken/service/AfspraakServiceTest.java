@@ -33,6 +33,8 @@ import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
+import nl.outokumpu.afspraken.dto.request.UpdateGoedkeurdersRequest;
+import nl.outokumpu.afspraken.entity.Betrokkenheid;
 
 class AfspraakServiceTest {
 
@@ -670,6 +672,174 @@ class AfspraakServiceTest {
         verify(afspraakMapper)
                 .naarDetailResponse(
                         orderverplaatsing
+                );
+    }
+
+    @Test
+    void bestaandeGoedkeurderBlijftBehoudenBijWijzigenGoedkeurders() {
+
+        UUID afspraakId = UUID.randomUUID();
+        UUID initiatiefnemerId = UUID.randomUUID();
+        UUID bestaandeGoedkeurderId = UUID.randomUUID();
+        UUID nieuweGoedkeurderId = UUID.randomUUID();
+
+        Gebruiker initiatiefnemer =
+                mock(Gebruiker.class);
+
+        Gebruiker bestaandeGoedkeurder =
+                mock(Gebruiker.class);
+
+        Gebruiker nieuweGoedkeurder =
+                mock(Gebruiker.class);
+
+        when(initiatiefnemer.getId())
+                .thenReturn(initiatiefnemerId);
+
+        when(bestaandeGoedkeurder.getId())
+                .thenReturn(bestaandeGoedkeurderId);
+
+        when(nieuweGoedkeurder.getId())
+                .thenReturn(nieuweGoedkeurderId);
+
+        OperationeleAfspraak afspraak =
+                new OperationeleAfspraak(
+                        "Operationele afspraak",
+                        "Beschrijving",
+                        "Reden",
+                        null,
+                        null,
+                        LocalDate.of(2026, 10, 3),
+                        LocalDate.of(2026, 10, 31),
+                        initiatiefnemer
+                );
+
+        afspraak.voegBetrokkenheidToe(
+                bestaandeGoedkeurder,
+                BetrokkenRol.GOEDKEURDER
+        );
+
+        afspraak.voegBevestigingToe(
+                bestaandeGoedkeurder
+        );
+
+        Betrokkenheid bestaandeRelatie =
+                afspraak.getBetrokkenheden()
+                        .get(0);
+
+        UpdateGoedkeurdersRequest request =
+                new UpdateGoedkeurdersRequest(
+                        List.of(
+                                bestaandeGoedkeurderId,
+                                nieuweGoedkeurderId
+                        )
+                );
+
+        when(afspraakRepository.findById(afspraakId))
+                .thenReturn(Optional.of(afspraak));
+
+        when(
+                gebruikerRepository.findAllById(
+                        request.goedkeurderIds()
+                )
+        ).thenReturn(
+                List.of(
+                        bestaandeGoedkeurder,
+                        nieuweGoedkeurder
+                )
+        );
+
+        AfspraakDetailResponse response =
+                mock(AfspraakDetailResponse.class);
+
+        when(
+                afspraakMapper.naarDetailResponse(
+                        afspraak
+                )
+        ).thenReturn(response);
+
+        AfspraakDetailResponse resultaat =
+                afspraakService.wijzigGoedkeurders(
+                        afspraakId,
+                        request,
+                        initiatiefnemerId
+                );
+
+        assertSame(
+                response,
+                resultaat
+        );
+
+        assertEquals(
+                2,
+                afspraak.getBetrokkenheden()
+                        .stream()
+                        .filter(betrokkenheid ->
+                                betrokkenheid.getRol()
+                                        == BetrokkenRol.GOEDKEURDER
+                        )
+                        .count()
+        );
+
+        Betrokkenheid behoudenRelatie =
+                afspraak.getBetrokkenheden()
+                        .stream()
+                        .filter(betrokkenheid ->
+                                betrokkenheid.getRol()
+                                        == BetrokkenRol.GOEDKEURDER
+                        )
+                        .filter(betrokkenheid ->
+                                bestaandeGoedkeurderId.equals(
+                                        betrokkenheid
+                                                .getGebruiker()
+                                                .getId()
+                                )
+                        )
+                        .findFirst()
+                        .orElseThrow();
+
+        assertSame(
+                bestaandeRelatie,
+                behoudenRelatie
+        );
+
+        assertTrue(
+                afspraak.getBetrokkenheden()
+                        .stream()
+                        .anyMatch(betrokkenheid ->
+                                betrokkenheid.getRol()
+                                        == BetrokkenRol.GOEDKEURDER
+                                        && nieuweGoedkeurderId.equals(
+                                        betrokkenheid
+                                                .getGebruiker()
+                                                .getId()
+                                )
+                        )
+        );
+
+        assertEquals(
+                2,
+                afspraak.getBevestigingen().size()
+        );
+
+        assertEquals(
+                1,
+                afspraak.getWijzigingen().size()
+        );
+
+        assertEquals(
+                "Goedkeurders",
+                afspraak.getWijzigingen()
+                        .get(0)
+                        .getOnderdeel()
+        );
+
+        verify(afspraakRepository)
+                .flush();
+
+        verify(wijzigingRepository)
+                .save(
+                        afspraak.getWijzigingen()
+                                .get(0)
                 );
     }
 

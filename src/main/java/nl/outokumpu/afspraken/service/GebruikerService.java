@@ -8,9 +8,9 @@ import nl.outokumpu.afspraken.entity.Gebruiker;
 import nl.outokumpu.afspraken.repository.GebruikerRepository;
 
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.crypto.password.PasswordEncoder;
 
 import org.springframework.stereotype.Service;
+
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
@@ -21,17 +21,12 @@ import java.util.UUID;
 public class GebruikerService {
 
     private final GebruikerRepository gebruikerRepository;
-    private final PasswordEncoder passwordEncoder;
 
     public GebruikerService(
-            GebruikerRepository gebruikerRepository,
-            PasswordEncoder passwordEncoder
+            GebruikerRepository gebruikerRepository
     ) {
         this.gebruikerRepository =
                 gebruikerRepository;
-
-        this.passwordEncoder =
-                passwordEncoder;
     }
 
     public List<GebruikerResponse> vindAlleGebruikers() {
@@ -79,26 +74,6 @@ public class GebruikerService {
         gebruiker.wijzigToegang(
                 request.actief()
         );
-
-        if (request.nieuwWachtwoord() != null) {
-
-            if (request.nieuwWachtwoord()
-                    .isBlank()) {
-
-                throw new IllegalArgumentException(
-                        "Nieuw wachtwoord mag niet leeg zijn"
-                );
-            }
-
-            String wachtwoordHash =
-                    passwordEncoder.encode(
-                            request.nieuwWachtwoord()
-                    );
-
-            gebruiker.wijzigWachtwoordHash(
-                    wachtwoordHash
-            );
-        }
 
         Gebruiker opgeslagenGebruiker =
                 gebruikerRepository.save(

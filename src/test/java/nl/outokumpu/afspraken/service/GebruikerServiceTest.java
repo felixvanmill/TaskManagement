@@ -11,8 +11,6 @@ import nl.outokumpu.afspraken.repository.GebruikerRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import org.springframework.security.crypto.password.PasswordEncoder;
-
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -23,7 +21,6 @@ import static org.mockito.Mockito.*;
 class GebruikerServiceTest {
 
     private GebruikerRepository gebruikerRepository;
-    private PasswordEncoder passwordEncoder;
     private GebruikerService gebruikerService;
 
     @BeforeEach
@@ -32,13 +29,9 @@ class GebruikerServiceTest {
         gebruikerRepository =
                 mock(GebruikerRepository.class);
 
-        passwordEncoder =
-                mock(PasswordEncoder.class);
-
         gebruikerService =
                 new GebruikerService(
-                        gebruikerRepository,
-                        passwordEncoder
+                        gebruikerRepository
                 );
     }
 
@@ -137,8 +130,17 @@ class GebruikerServiceTest {
     @Test
     void geeftBeheerinformatieTerug() {
 
+        UUID afdelingId =
+                UUID.randomUUID();
+
         Afdeling afdeling =
                 mock(Afdeling.class);
+
+        when(
+                afdeling.getId()
+        ).thenReturn(
+                afdelingId
+        );
 
         when(
                 afdeling.getNaam()
@@ -197,8 +199,23 @@ class GebruikerServiceTest {
         UUID gebruikerId =
                 UUID.randomUUID();
 
+        UUID afdelingId =
+                UUID.randomUUID();
+
         Afdeling afdeling =
                 mock(Afdeling.class);
+
+        when(
+                afdeling.getId()
+        ).thenReturn(
+                afdelingId
+        );
+
+        when(
+                afdeling.getNaam()
+        ).thenReturn(
+                "Capacity Planning"
+        );
 
         Gebruiker gebruiker =
                 new Gebruiker(
@@ -228,8 +245,7 @@ class GebruikerServiceTest {
         UpdateGebruikerToegangRequest request =
                 new UpdateGebruikerToegangRequest(
                         GebruikersRol.BEHEERDER,
-                        false,
-                        null
+                        false
                 );
 
         GebruikerBeheerResponse response =
@@ -261,76 +277,6 @@ class GebruikerServiceTest {
         ).save(
                 gebruiker
         );
-
-        verifyNoInteractions(
-                passwordEncoder
-        );
-    }
-
-    @Test
-    void nieuwWachtwoordWordtGehasht() {
-
-        UUID gebruikerId =
-                UUID.randomUUID();
-
-        Afdeling afdeling =
-                mock(Afdeling.class);
-
-        Gebruiker gebruiker =
-                new Gebruiker(
-                        "Gebruiker",
-                        "user@example.com",
-                        afdeling
-                );
-
-        when(
-                gebruikerRepository.findById(
-                        gebruikerId
-                )
-        ).thenReturn(
-                Optional.of(
-                        gebruiker
-                )
-        );
-
-        when(
-                passwordEncoder.encode(
-                        "NieuwWachtwoord123!"
-                )
-        ).thenReturn(
-                "$2a$10$nieuwehash"
-        );
-
-        when(
-                gebruikerRepository.save(
-                        gebruiker
-                )
-        ).thenReturn(
-                gebruiker
-        );
-
-        UpdateGebruikerToegangRequest request =
-                new UpdateGebruikerToegangRequest(
-                        GebruikersRol.GEBRUIKER,
-                        true,
-                        "NieuwWachtwoord123!"
-                );
-
-        gebruikerService.wijzigToegang(
-                gebruikerId,
-                request
-        );
-
-        assertEquals(
-                "$2a$10$nieuwehash",
-                gebruiker.getWachtwoordHash()
-        );
-
-        verify(
-                passwordEncoder
-        ).encode(
-                "NieuwWachtwoord123!"
-        );
     }
 
     @Test
@@ -350,8 +296,7 @@ class GebruikerServiceTest {
         UpdateGebruikerToegangRequest request =
                 new UpdateGebruikerToegangRequest(
                         GebruikersRol.GEBRUIKER,
-                        true,
-                        null
+                        true
                 );
 
         IllegalArgumentException exception =

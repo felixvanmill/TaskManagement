@@ -1,0 +1,204 @@
+import {
+    useState,
+} from 'react'
+
+import {
+    wijzigAfspraakStatus,
+} from '../api/workflow'
+
+import {
+    useAuth,
+} from '../auth/useAuth'
+
+import type {
+    AfspraakDetail,
+    AfspraakStatus,
+} from '../types/afspraak'
+
+interface AfspraakStatusSectionProps {
+    afspraak: AfspraakDetail
+    onAfspraakGewijzigd: (
+        afspraak: AfspraakDetail,
+    ) => void
+}
+
+function statusLabel(
+    status: AfspraakStatus,
+) {
+    switch (status) {
+        case 'OPEN':
+            return 'Open'
+
+        case 'IN_BEHANDELING':
+            return 'In behandeling'
+
+        case 'AFGEROND':
+            return 'Afgerond'
+    }
+}
+
+export function AfspraakStatusSection({
+                                          afspraak,
+                                          onAfspraakGewijzigd,
+                                      }: AfspraakStatusSectionProps) {
+    const {
+        gebruiker,
+    } = useAuth()
+
+    const [
+        nieuweStatus,
+        setNieuweStatus,
+    ] = useState<AfspraakStatus | ''>('')
+
+    const [
+        opslaan,
+        setOpslaan,
+    ] = useState(false)
+
+    const [
+        foutmelding,
+        setFoutmelding,
+    ] = useState<string | null>(null)
+
+    const huidigeProcesstap =
+        afspraak.processtappen.find(
+            (processtap) =>
+                processtap.status !== 'AFGEROND',
+        )
+        ?? afspraak.processtappen[
+        afspraak.processtappen.length - 1
+            ]
+
+    const magWijzigen =
+        gebruiker !== null
+        && huidigeProcesstap !== undefined
+        && gebruiker.id
+        === huidigeProcesstap.verantwoordelijke.id
+
+    async function handleOpslaan() {
+        if (nieuweStatus === '') {
+            return
+        }
+
+        try {
+            setOpslaan(true)
+            setFoutmelding(null)
+
+            const bijgewerkteAfspraak =
+                await wijzigAfspraakStatus(
+                    afspraak.id,
+                    nieuweStatus,
+                )
+
+            onAfspraakGewijzigd(
+                bijgewerkteAfspraak,
+            )
+
+            setNieuweStatus('')
+        } catch (error) {
+            setFoutmelding(
+                error instanceof Error
+                    ? error.message
+                    : 'Status kon niet worden gewijzigd',
+            )
+        } finally {
+            setOpslaan(false)
+        }
+    }
+
+    return (
+        <section className="content-card afspraak-status-section">
+            <div>
+                <h2>
+                    Afspraakstatus
+                </h2>
+
+                <p>
+                    Huidige status:{' '}
+                    <strong>
+                        {statusLabel(
+                            afspraak.status,
+                        )}
+                    </strong>
+                </p>
+
+                {huidigeProcesstap !== undefined && (
+                    <p>
+                        Huidige verantwoordelijke:{' '}
+                        <strong>
+                            {
+                                huidigeProcesstap
+                                    .verantwoordelijke
+                                    .naam
+                            }
+                        </strong>
+                    </p>
+                )}
+            </div>
+
+            {magWijzigen && (
+                <div className="status-change-controls">
+                    <select
+                        value={nieuweStatus}
+                        onChange={(event) =>
+                            setNieuweStatus(
+                                event.target.value as AfspraakStatus | '',
+                            )
+                        }
+                    >
+                        <option value="">
+                            Kies nieuwe status
+                        </option>
+
+                        {afspraak.status !== 'OPEN' && (
+                            <option value="OPEN">
+                                Open
+                            </option>
+                        )}
+
+                        {afspraak.status !== 'IN_BEHANDELING' && (
+                            <option value="IN_BEHANDELING">
+                                In behandeling
+                            </option>
+                        )}
+
+                        {afspraak.status !== 'AFGEROND' && (
+                            <option value="AFGEROND">
+                                Afgerond
+                            </option>
+                        )}
+                    </select>
+
+                    <button
+                        type="button"
+                        className="primary-button"
+                        disabled={
+                            opslaan
+                            || nieuweStatus === ''
+                        }
+                        onClick={() =>
+                            void handleOpslaan()
+                        }
+                    >
+                        {opslaan
+                            ? 'Opslaan...'
+                            : 'Status wijzigen'}
+                    </button>
+                </div>
+            )}
+
+            {!magWijzigen && (
+                <p className="muted-text">
+                    Alleen de huidige verantwoordelijke
+                    kan de afspraakstatus wijzigen.
+                </p>
+            )}
+
+            {foutmelding !== null && (
+                <div className="alert-error">
+                    {foutmelding}
+                </div>
+            )}
+        </section>
+    )
+}

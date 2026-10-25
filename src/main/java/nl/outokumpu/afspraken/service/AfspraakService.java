@@ -29,6 +29,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.HashSet;
+import java.util.Set;
 
 @Service
 @Transactional
@@ -250,13 +252,28 @@ public class AfspraakService {
             );
         }
 
-        afspraakRepository.save(
-                afspraak
-        );
-
+        /*
+         * De afspraak is al managed omdat hij binnen deze
+         * transaction via findById() is geladen.
+         *
+         * Daarom géén afspraakRepository.save(afspraak).
+         * JPA dirty checking slaat de gewijzigde afspraak
+         * automatisch op.
+         *
+         * De nieuwe historie-items slaan we expliciet op.
+         */
         wijzigingRepository.saveAll(
                 wijzigingen
         );
+
+        /*
+         * Flush zodat:
+         * - de afspraakwijzigingen naar de database gaan;
+         * - @PreUpdate wordt uitgevoerd;
+         * - de nieuwe historie-items hun id/timestamp krijgen;
+         * voordat we de response mappen.
+         */
+        afspraakRepository.flush();
 
         return afspraakMapper.naarDetailResponse(
                 afspraak
@@ -318,52 +335,80 @@ public class AfspraakService {
                         nieuweGoedkeurders
                 );
 
-        /*
-         * PUT blijft idempotent:
-         * als precies dezelfde goedkeurders worden gestuurd,
-         * hoeven we niets te wijzigen of in de historie op te nemen.
-         */
         if (huidigeIds.equals(
                 nieuweIds
         )) {
-
             return afspraakMapper.naarDetailResponse(
                     afspraak
             );
         }
 
-        List<Betrokkenheid> huidigeBetrokkenheden =
-                new ArrayList<>(
-                        afspraak.getBetrokkenheden()
+        Set<UUID> nieuweGoedkeurderIds =
+                new HashSet<>(
+                        nieuweIds
                 );
 
-        huidigeBetrokkenheden.stream()
-                .filter(betrokkenheid ->
-                        betrokkenheid.getRol()
-                                == BetrokkenRol.GOEDKEURDER
-                )
-                .forEach(
-                        afspraak::verwijderBetrokkenheid
+        List<Betrokkenheid> teVerwijderenGoedkeurders =
+                afspraak.getBetrokkenheden()
+                        .stream()
+                        .filter(betrokkenheid ->
+                                betrokkenheid.getRol()
+                                        == BetrokkenRol.GOEDKEURDER
+                        )
+                        .filter(betrokkenheid ->
+                                !nieuweGoedkeurderIds.contains(
+                                        betrokkenheid
+                                                .getGebruiker()
+                                                .getId()
+                                )
+                        )
+                        .toList();
+
+        for (
+                Betrokkenheid betrokkenheid
+                : teVerwijderenGoedkeurders
+        ) {
+            afspraak.verwijderBetrokkenheid(
+                    betrokkenheid
+            );
+        }
+
+        Set<UUID> huidigeGoedkeurderIds =
+                new HashSet<>(
+                        afspraak.getBetrokkenheden()
+                                .stream()
+                                .filter(betrokkenheid ->
+                                        betrokkenheid.getRol()
+                                                == BetrokkenRol.GOEDKEURDER
+                                )
+                                .map(
+                                        Betrokkenheid::getGebruiker
+                                )
+                                .map(
+                                        Gebruiker::getId
+                                )
+                                .toList()
                 );
 
         for (Gebruiker goedkeurder : nieuweGoedkeurders) {
 
-            afspraak.voegBetrokkenheidToe(
-                    goedkeurder,
-                    BetrokkenRol.GOEDKEURDER
-            );
+            if (!huidigeGoedkeurderIds.contains(
+                    goedkeurder.getId()
+            )) {
+                afspraak.voegBetrokkenheidToe(
+                        goedkeurder,
+                        BetrokkenRol.GOEDKEURDER
+                );
 
-            /*
-             * Een gebruiker kan al BETROKKENE zijn en daardoor
-             * al een bevestiging hebben.
-             *
-             * In dat geval maken we geen dubbele bevestiging.
-             */
+                huidigeGoedkeurderIds.add(
+                        goedkeurder.getId()
+                );
+            }
+
             if (!heeftBevestiging(
                     afspraak,
                     goedkeurder
             )) {
-
                 afspraak.voegBevestigingToe(
                         goedkeurder
                 );
@@ -378,13 +423,22 @@ public class AfspraakService {
                         nieuweIds.toString()
                 );
 
-        afspraakRepository.save(
-                afspraak
-        );
-
+        /*
+         * De afspraak is binnen deze transactie al managed.
+         * Daarom niet opnieuw save(afspraak) uitvoeren.
+         *
+         * De gewijzigde betrokkenheden worden via dirty checking
+         * en orphanRemoval verwerkt.
+         */
         wijzigingRepository.save(
                 wijziging
         );
+
+        /*
+         * Forceer de databasewijzigingen voordat de response
+         * wordt gemapt.
+         */
+        afspraakRepository.flush();
 
         return afspraakMapper.naarDetailResponse(
                 afspraak

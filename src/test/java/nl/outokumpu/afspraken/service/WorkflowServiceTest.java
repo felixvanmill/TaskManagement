@@ -15,7 +15,9 @@ import nl.outokumpu.afspraken.repository.GebruikerRepository;
 import nl.outokumpu.afspraken.repository.OperationeleAfspraakRepository;
 import nl.outokumpu.afspraken.repository.ProcesstapRepository;
 import nl.outokumpu.afspraken.repository.WijzigingRepository;
-
+import nl.outokumpu.afspraken.dto.request.UpdateToewijzingRequest;
+import nl.outokumpu.afspraken.entity.Betrokkenheid;
+import nl.outokumpu.afspraken.enums.BetrokkenRol;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -839,6 +841,190 @@ class WorkflowServiceTest {
                 wijzigingRepository,
                 afspraakMapper
         );
+    }
+
+    @Test
+    void bestaandeBetrokkeneBlijftBehoudenBijWijzigenToewijzing() {
+
+        UUID afspraakId = UUID.randomUUID();
+        UUID processtapId = UUID.randomUUID();
+        UUID initiatiefnemerId = UUID.randomUUID();
+        UUID bestaandeBetrokkeneId = UUID.randomUUID();
+        UUID nieuweBetrokkeneId = UUID.randomUUID();
+        UUID oudeVerantwoordelijkeId = UUID.randomUUID();
+        UUID nieuweVerantwoordelijkeId = UUID.randomUUID();
+
+        Gebruiker initiatiefnemer =
+                mock(Gebruiker.class);
+
+        Gebruiker bestaandeBetrokkene =
+                mock(Gebruiker.class);
+
+        Gebruiker nieuweBetrokkene =
+                mock(Gebruiker.class);
+
+        Gebruiker oudeVerantwoordelijke =
+                mock(Gebruiker.class);
+
+        Gebruiker nieuweVerantwoordelijke =
+                mock(Gebruiker.class);
+
+        when(initiatiefnemer.getId())
+                .thenReturn(initiatiefnemerId);
+
+        when(bestaandeBetrokkene.getId())
+                .thenReturn(bestaandeBetrokkeneId);
+
+        when(nieuweBetrokkene.getId())
+                .thenReturn(nieuweBetrokkeneId);
+
+        when(oudeVerantwoordelijke.getId())
+                .thenReturn(oudeVerantwoordelijkeId);
+
+        when(nieuweVerantwoordelijke.getId())
+                .thenReturn(nieuweVerantwoordelijkeId);
+
+        OperationeleAfspraak afspraak =
+                maakAfspraak(initiatiefnemer);
+
+        afspraak.voegBetrokkenheidToe(
+                bestaandeBetrokkene,
+                BetrokkenRol.BETROKKENE
+        );
+
+        Betrokkenheid bestaandeRelatie =
+                afspraak.getBetrokkenheden().get(0);
+
+        Processtap processtap =
+                afspraak.voegProcesstapToe(
+                        "Eerste beoordeling",
+                        1,
+                        LocalDate.of(2026, 10, 20),
+                        oudeVerantwoordelijke
+                );
+
+        UpdateToewijzingRequest request =
+                new UpdateToewijzingRequest(
+                        java.util.List.of(
+                                bestaandeBetrokkeneId,
+                                nieuweBetrokkeneId
+                        ),
+                        java.util.List.of(),
+                        processtapId,
+                        nieuweVerantwoordelijkeId
+                );
+
+        when(afspraakRepository.findById(afspraakId))
+                .thenReturn(Optional.of(afspraak));
+
+        when(
+                gebruikerRepository.findAllById(
+                        request.betrokkeneIds()
+                )
+        ).thenReturn(
+                java.util.List.of(
+                        bestaandeBetrokkene,
+                        nieuweBetrokkene
+                )
+        );
+
+        when(
+                afdelingRepository.findAllById(
+                        request.afdelingIds()
+                )
+        ).thenReturn(
+                java.util.List.of()
+        );
+
+        when(processtapRepository.findById(processtapId))
+                .thenReturn(Optional.of(processtap));
+
+        when(
+                gebruikerRepository.findById(
+                        nieuweVerantwoordelijkeId
+                )
+        ).thenReturn(
+                Optional.of(nieuweVerantwoordelijke)
+        );
+
+        AfspraakDetailResponse response =
+                mock(AfspraakDetailResponse.class);
+
+        when(afspraakMapper.naarDetailResponse(afspraak))
+                .thenReturn(response);
+
+        AfspraakDetailResponse resultaat =
+                workflowService.updateToewijzing(
+                        afspraakId,
+                        request,
+                        initiatiefnemerId
+                );
+
+        assertSame(
+                response,
+                resultaat
+        );
+
+        assertEquals(
+                2,
+                afspraak.getBetrokkenheden().size()
+        );
+
+        Betrokkenheid behoudenRelatie =
+                afspraak.getBetrokkenheden()
+                        .stream()
+                        .filter(betrokkenheid ->
+                                bestaandeBetrokkeneId.equals(
+                                        betrokkenheid
+                                                .getGebruiker()
+                                                .getId()
+                                )
+                        )
+                        .findFirst()
+                        .orElseThrow();
+
+        assertSame(
+                bestaandeRelatie,
+                behoudenRelatie
+        );
+
+        assertTrue(
+                afspraak.getBetrokkenheden()
+                        .stream()
+                        .anyMatch(betrokkenheid ->
+                                nieuweBetrokkeneId.equals(
+                                        betrokkenheid
+                                                .getGebruiker()
+                                                .getId()
+                                )
+                        )
+        );
+
+        assertSame(
+                nieuweVerantwoordelijke,
+                processtap.getVerantwoordelijke()
+        );
+
+        assertEquals(
+                1,
+                afspraak.getWijzigingen().size()
+        );
+
+        assertEquals(
+                "Toewijzing",
+                afspraak.getWijzigingen()
+                        .get(0)
+                        .getOnderdeel()
+        );
+
+        verify(afspraakRepository)
+                .save(afspraak);
+
+        verify(processtapRepository)
+                .save(processtap);
+
+        verify(wijzigingRepository)
+                .save(any(Wijziging.class));
     }
 
     private OperationeleAfspraak maakAfspraak(

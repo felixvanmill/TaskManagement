@@ -6,19 +6,23 @@ import nl.outokumpu.afspraken.service.GebruikerService;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
 import org.springframework.http.MediaType;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.util.List;
 import java.util.UUID;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+
 import static org.mockito.Mockito.*;
+
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 class GebruikerControllerTest {
@@ -39,12 +43,15 @@ class GebruikerControllerTest {
 
         mockMvc =
                 MockMvcBuilders
-                        .standaloneSetup(controller)
+                        .standaloneSetup(
+                                controller
+                        )
                         .build();
     }
 
     @Test
-    void haaltAlleGebruikersOp() throws Exception {
+    void haaltAlleGebruikersOp()
+            throws Exception {
 
         UUID afdelingId =
                 UUID.randomUUID();
@@ -78,7 +85,8 @@ class GebruikerControllerTest {
                 );
 
         when(
-                gebruikerService.vindAlleGebruikers()
+                gebruikerService
+                        .vindAlleGebruikers()
         ).thenReturn(
                 List.of(
                         eersteGebruiker,
@@ -87,7 +95,9 @@ class GebruikerControllerTest {
         );
 
         mockMvc.perform(
-                        get("/api/gebruikers")
+                        get(
+                                "/api/gebruikers"
+                        )
                 )
                 .andExpect(
                         status().isOk()
@@ -101,7 +111,8 @@ class GebruikerControllerTest {
                 .andExpect(
                         jsonPath("$[0].id")
                                 .value(
-                                        eersteGebruikerId.toString()
+                                        eersteGebruikerId
+                                                .toString()
                                 )
                 )
                 .andExpect(
@@ -119,7 +130,8 @@ class GebruikerControllerTest {
                 .andExpect(
                         jsonPath("$[0].afdeling.id")
                                 .value(
-                                        afdelingId.toString()
+                                        afdelingId
+                                                .toString()
                                 )
                 )
                 .andExpect(
@@ -131,7 +143,8 @@ class GebruikerControllerTest {
                 .andExpect(
                         jsonPath("$[1].id")
                                 .value(
-                                        tweedeGebruikerId.toString()
+                                        tweedeGebruikerId
+                                                .toString()
                                 )
                 )
                 .andExpect(
@@ -155,13 +168,16 @@ class GebruikerControllerTest {
             throws Exception {
 
         when(
-                gebruikerService.vindAlleGebruikers()
+                gebruikerService
+                        .vindAlleGebruikers()
         ).thenReturn(
                 List.of()
         );
 
         mockMvc.perform(
-                        get("/api/gebruikers")
+                        get(
+                                "/api/gebruikers"
+                        )
                 )
                 .andExpect(
                         status().isOk()
@@ -217,12 +233,11 @@ class GebruikerControllerTest {
                 UUID.randomUUID();
 
         String json = """
-            {
-              "rol": "BEHEERDER",
-              "actief": true,
-              "nieuwWachtwoord": "NieuwWachtwoord123!"
-            }
-            """;
+                {
+                  "rol": "BEHEERDER",
+                  "actief": true
+                }
+                """;
 
         mockMvc.perform(
                         put(
@@ -232,7 +247,9 @@ class GebruikerControllerTest {
                                 .contentType(
                                         MediaType.APPLICATION_JSON
                                 )
-                                .content(json)
+                                .content(
+                                        json
+                                )
                 )
                 .andExpect(
                         status().isOk()
@@ -241,7 +258,9 @@ class GebruikerControllerTest {
         verify(
                 gebruikerService
         ).wijzigToegang(
-                eq(gebruikerId),
+                eq(
+                        gebruikerId
+                ),
                 any()
         );
     }
