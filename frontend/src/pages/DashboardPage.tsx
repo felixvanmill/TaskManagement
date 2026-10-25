@@ -131,7 +131,6 @@ export function DashboardPage() {
 
     const {
         gebruiker,
-        logout,
     } = useAuth()
 
     const [
@@ -321,45 +320,6 @@ export function DashboardPage() {
 
     return (
         <main className="dashboard-page">
-            <header className="dashboard-header">
-                <div>
-                    <p className="eyebrow">
-                        Outokumpu
-                    </p>
-
-                    <h1>
-                        Afsprakenmanagement
-                    </h1>
-
-                    <p className="dashboard-subtitle">
-                        Operationele afspraken centraal
-                        beheren en opvolgen.
-                    </p>
-                </div>
-
-                <div className="user-actions">
-                    <div className="current-user">
-                        <strong>
-                            {gebruiker.naam}
-                        </strong>
-
-                        <span>
-                            {gebruiker.rol}
-                        </span>
-                    </div>
-
-                    <button
-                        type="button"
-                        className="secondary-button"
-                        onClick={() =>
-                            void logout()
-                        }
-                    >
-                        Uitloggen
-                    </button>
-                </div>
-            </header>
-
             <section className="overview-header">
                 <div>
                     <h2>

@@ -285,11 +285,6 @@ h3 {
   background: var(--background);
 }
 
-/* oude dashboard-header zit nu in de vaste shell */
-.app-shell .dashboard-header {
-  display: none;
-}
-
 /* =========================================================
    LOGIN
    ========================================================= */

@@ -84,13 +84,6 @@ async function leesAfspraken(
     return response.json() as Promise<AfspraakSummary[]>
 }
 
-export async function getAfspraken():
-    Promise<AfspraakSummary[]> {
-    return leesAfspraken(
-        '/api/afspraken',
-    )
-}
-
 export async function getActieveAfspraken():
     Promise<AfspraakSummary[]> {
     return leesAfspraken(
