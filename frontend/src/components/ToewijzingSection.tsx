@@ -3,6 +3,10 @@ import {
     useState,
 } from 'react'
 
+import type {
+    Afdeling,
+} from '../types/afdeling'
+
 import {
     wijzigSelectie,
 } from '../utils/selectie'
@@ -29,7 +33,6 @@ import {
 } from '../auth/useAuth'
 
 import type {
-    Afdeling,
     AfspraakDetail,
     AfspraakGebruiker,
 } from '../types/afspraak'

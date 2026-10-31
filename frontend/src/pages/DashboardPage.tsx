@@ -3,6 +3,10 @@ import {
     useState,
 } from 'react'
 
+import type {
+    Afdeling,
+} from '../types/afdeling'
+
 import {
     statusLabel,
     typeLabel,
@@ -41,7 +45,6 @@ import {
 } from '../auth/useAuth'
 
 import type {
-    Afdeling,
     AfspraakGebruiker,
     AfspraakSummary,
 } from '../types/afspraak'

@@ -1,3 +1,7 @@
+import type {
+    Afdeling,
+} from './afdeling'
+
 export type AfspraakType =
     | 'ALGEMEEN'
     | 'CAPACITEITSWISSEL'
@@ -22,11 +26,6 @@ export type UitvoeringsStatus =
     | 'NIET_UITGEVOERD'
     | 'IN_UITVOERING'
     | 'UITGEVOERD'
-
-export interface Afdeling {
-    id: string
-    naam: string
-}
 
 export interface AfspraakGebruiker {
     id: string

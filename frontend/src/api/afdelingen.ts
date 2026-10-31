@@ -2,7 +2,7 @@ import { apiFetch } from './http'
 
 import type {
     Afdeling,
-} from '../types/afspraak'
+} from '../types/afdeling'
 
 export async function getAfdelingen():
     Promise<Afdeling[]> {

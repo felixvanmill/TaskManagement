@@ -2,6 +2,10 @@ import {
     useState,
 } from 'react'
 
+import type {
+    Afdeling,
+} from '../types/afdeling'
+
 import {
     statusLabel,
     typeLabel,
@@ -12,7 +16,6 @@ import type {
 } from 'react'
 
 import type {
-    Afdeling,
     AfspraakGebruiker,
     AfspraakStatus,
     AfspraakType,
