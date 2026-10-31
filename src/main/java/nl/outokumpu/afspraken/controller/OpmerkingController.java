@@ -28,25 +28,13 @@ public class OpmerkingController {
 
     private final OpmerkingService opmerkingService;
 
-    public OpmerkingController(
-            OpmerkingService opmerkingService
-    ) {
-        this.opmerkingService =
-                opmerkingService;
+    public OpmerkingController(OpmerkingService opmerkingService) {
+        this.opmerkingService = opmerkingService;
     }
 
     @GetMapping
-    public ResponseEntity<List<OpmerkingResponse>>
-    vindOpmerkingen(
-            @PathVariable UUID afspraakId
-    ) {
-
-        return ResponseEntity.ok(
-                opmerkingService
-                        .vindOpmerkingen(
-                                afspraakId
-                        )
-        );
+    public ResponseEntity<List<OpmerkingResponse>> vindOpmerkingen(@PathVariable UUID afspraakId) {
+        return ResponseEntity.ok(opmerkingService.vindOpmerkingen(afspraakId));
     }
 
     /**
@@ -58,35 +46,14 @@ public class OpmerkingController {
      * @return HTTP 201 with the stored comment and author details
      */
     @PostMapping
-    public ResponseEntity<OpmerkingResponse>
-    voegOpmerkingToe(
+    public ResponseEntity<OpmerkingResponse> voegOpmerkingToe(
             @PathVariable UUID afspraakId,
-            @Valid
-            @RequestBody
-            CreateOpmerkingRequest request,
-            Authentication authentication
-    ) {
+            @Valid @RequestBody CreateOpmerkingRequest request,
+            Authentication authentication) {
+        UUID auteurId = SecurityGebruiker.gebruikerId(authentication);
 
-        UUID auteurId =
-                SecurityGebruiker
-                        .gebruikerId(
-                                authentication
-                        );
+        OpmerkingResponse response = opmerkingService.voegOpmerkingToe(afspraakId, auteurId, request);
 
-        OpmerkingResponse response =
-                opmerkingService
-                        .voegOpmerkingToe(
-                                afspraakId,
-                                auteurId,
-                                request
-                        );
-
-        return ResponseEntity
-                .status(
-                        HttpStatus.CREATED
-                )
-                .body(
-                        response
-                );
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 }

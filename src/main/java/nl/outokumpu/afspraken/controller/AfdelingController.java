@@ -19,18 +19,12 @@ public class AfdelingController {
 
     private final AfdelingService afdelingService;
 
-    public AfdelingController(
-            AfdelingService afdelingService
-    ) {
+    public AfdelingController(AfdelingService afdelingService) {
         this.afdelingService = afdelingService;
     }
 
     @GetMapping
-    public ResponseEntity<List<AfdelingResponse>>
-    vindAlleAfdelingen() {
-
-        return ResponseEntity.ok(
-                afdelingService.vindAlleAfdelingen()
-        );
+    public ResponseEntity<List<AfdelingResponse>> vindAlleAfdelingen() {
+        return ResponseEntity.ok(afdelingService.vindAlleAfdelingen());
     }
 }

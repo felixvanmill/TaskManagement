@@ -24,11 +24,8 @@ public class BevestigingController {
 
     private final BevestigingService bevestigingService;
 
-    public BevestigingController(
-            BevestigingService bevestigingService
-    ) {
-        this.bevestigingService =
-                bevestigingService;
+    public BevestigingController(BevestigingService bevestigingService) {
+        this.bevestigingService = bevestigingService;
     }
 
     /**
@@ -42,20 +39,10 @@ public class BevestigingController {
     @PutMapping("/gezien")
     public ResponseEntity<BevestigingResponse> markeerGezien(
             @PathVariable UUID afspraakId,
-            Authentication authentication
-    ) {
+            Authentication authentication) {
+        UUID gebruikerId = SecurityGebruiker.gebruikerId(authentication);
 
-        UUID gebruikerId =
-                SecurityGebruiker.gebruikerId(
-                        authentication
-                );
-
-        return ResponseEntity.ok(
-                bevestigingService.markeerGezien(
-                        afspraakId,
-                        gebruikerId
-                )
-        );
+        return ResponseEntity.ok(bevestigingService.markeerGezien(afspraakId, gebruikerId));
     }
 
     /**
@@ -71,20 +58,10 @@ public class BevestigingController {
     public ResponseEntity<BevestigingResponse> registreerBeslissing(
             @PathVariable UUID afspraakId,
             @Valid @RequestBody BeslissingRequest request,
-            Authentication authentication
-    ) {
-
-        UUID gebruikerId =
-                SecurityGebruiker.gebruikerId(
-                        authentication
-                );
+            Authentication authentication) {
+        UUID gebruikerId = SecurityGebruiker.gebruikerId(authentication);
 
         return ResponseEntity.ok(
-                bevestigingService.registreerBeslissing(
-                        afspraakId,
-                        gebruikerId,
-                        request.beslissing()
-                )
-        );
+                bevestigingService.registreerBeslissing(afspraakId, gebruikerId, request.beslissing()));
     }
 }

@@ -34,11 +34,8 @@ public class AfspraakController {
 
     private final AfspraakService afspraakService;
 
-    public AfspraakController(
-            AfspraakService afspraakService
-    ) {
-        this.afspraakService =
-                afspraakService;
+    public AfspraakController(AfspraakService afspraakService) {
+        this.afspraakService = afspraakService;
     }
 
     /**
@@ -52,67 +49,32 @@ public class AfspraakController {
     @PostMapping
     public ResponseEntity<AfspraakDetailResponse> maakAfspraak(
             @Valid @RequestBody CreateAfspraakRequest request,
-            Authentication authentication
-    ) {
+            Authentication authentication) {
+        UUID gebruikerId = SecurityGebruiker.gebruikerId(authentication);
 
-        UUID gebruikerId =
-                SecurityGebruiker.gebruikerId(
-                        authentication
-                );
+        AfspraakDetailResponse response = afspraakService.createAfspraak(request, gebruikerId);
 
-        AfspraakDetailResponse response =
-                afspraakService.createAfspraak(
-                        request,
-                        gebruikerId
-                );
-
-        return ResponseEntity
-                .status(
-                        HttpStatus.CREATED
-                )
-                .body(response);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<AfspraakDetailResponse> vindAfspraak(
-            @PathVariable UUID id
-    ) {
-
-        return ResponseEntity.ok(
-                afspraakService.vindAfspraak(
-                        id
-                )
-        );
+    public ResponseEntity<AfspraakDetailResponse> vindAfspraak(@PathVariable UUID id) {
+        return ResponseEntity.ok(afspraakService.vindAfspraak(id));
     }
 
     @GetMapping
-    public ResponseEntity<List<AfspraakSummaryResponse>>
-    vindAlleAfspraken() {
-
-        return ResponseEntity.ok(
-                afspraakService
-                        .vindAlleAfspraken()
-        );
+    public ResponseEntity<List<AfspraakSummaryResponse>> vindAlleAfspraken() {
+        return ResponseEntity.ok(afspraakService.vindAlleAfspraken());
     }
 
     @GetMapping("/actief")
-    public ResponseEntity<List<AfspraakSummaryResponse>>
-    vindActieveAfspraken() {
-
-        return ResponseEntity.ok(
-                afspraakService
-                        .vindActieveAfspraken()
-        );
+    public ResponseEntity<List<AfspraakSummaryResponse>> vindActieveAfspraken() {
+        return ResponseEntity.ok(afspraakService.vindActieveAfspraken());
     }
 
     @GetMapping("/archief")
-    public ResponseEntity<List<AfspraakSummaryResponse>>
-    vindAfgerondeAfspraken() {
-
-        return ResponseEntity.ok(
-                afspraakService
-                        .vindAfgerondeAfspraken()
-        );
+    public ResponseEntity<List<AfspraakSummaryResponse>> vindAfgerondeAfspraken() {
+        return ResponseEntity.ok(afspraakService.vindAfgerondeAfspraken());
     }
 
     /**
@@ -122,16 +84,8 @@ public class AfspraakController {
      * @return matching agreement summaries, most recently modified first
      */
     @GetMapping("/zoeken")
-    public ResponseEntity<List<AfspraakSummaryResponse>>
-    zoekAfspraken(
-            @RequestParam String zoekterm
-    ) {
-
-        return ResponseEntity.ok(
-                afspraakService.zoekAfspraken(
-                        zoekterm
-                )
-        );
+    public ResponseEntity<List<AfspraakSummaryResponse>> zoekAfspraken(@RequestParam String zoekterm) {
+        return ResponseEntity.ok(afspraakService.zoekAfspraken(zoekterm));
     }
 
     /**
@@ -149,53 +103,26 @@ public class AfspraakController {
      * @return matching agreement summaries, most recently modified first
      */
     @GetMapping("/filter")
-    public ResponseEntity<List<AfspraakSummaryResponse>>
-    filterAfspraken(
-
+    public ResponseEntity<List<AfspraakSummaryResponse>> filterAfspraken(
+            @RequestParam(required = false) AfspraakType type,
+            @RequestParam(required = false) AfspraakStatus status,
+            @RequestParam(required = false) UUID verantwoordelijkeId,
+            @RequestParam(required = false) UUID afdelingId,
+            @RequestParam(required = false) String fabriek,
             @RequestParam(required = false)
-            AfspraakType type,
-
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate periodeVan,
             @RequestParam(required = false)
-            AfspraakStatus status,
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate periodeTot) {
+        AfspraakFilterRequest filter = new AfspraakFilterRequest(
+                type,
+                status,
+                verantwoordelijkeId,
+                afdelingId,
+                fabriek,
+                periodeVan,
+                periodeTot);
 
-            @RequestParam(required = false)
-            UUID verantwoordelijkeId,
-
-            @RequestParam(required = false)
-            UUID afdelingId,
-
-            @RequestParam(required = false)
-            String fabriek,
-
-            @RequestParam(required = false)
-            @DateTimeFormat(
-                    iso = DateTimeFormat.ISO.DATE
-            )
-            LocalDate periodeVan,
-
-            @RequestParam(required = false)
-            @DateTimeFormat(
-                    iso = DateTimeFormat.ISO.DATE
-            )
-            LocalDate periodeTot
-    ) {
-
-        AfspraakFilterRequest filter =
-                new AfspraakFilterRequest(
-                        type,
-                        status,
-                        verantwoordelijkeId,
-                        afdelingId,
-                        fabriek,
-                        periodeVan,
-                        periodeTot
-                );
-
-        return ResponseEntity.ok(
-                afspraakService.filterAfspraken(
-                        filter
-                )
-        );
+        return ResponseEntity.ok(afspraakService.filterAfspraken(filter));
     }
 
     /**
@@ -212,21 +139,10 @@ public class AfspraakController {
     public ResponseEntity<AfspraakDetailResponse> updateAfspraak(
             @PathVariable UUID id,
             @Valid @RequestBody UpdateAfspraakRequest request,
-            Authentication authentication
-    ) {
+            Authentication authentication) {
+        UUID gebruikerId = SecurityGebruiker.gebruikerId(authentication);
 
-        UUID gebruikerId =
-                SecurityGebruiker.gebruikerId(
-                        authentication
-                );
-
-        return ResponseEntity.ok(
-                afspraakService.updateAfspraak(
-                        id,
-                        request,
-                        gebruikerId
-                )
-        );
+        return ResponseEntity.ok(afspraakService.updateAfspraak(id, request, gebruikerId));
     }
 
     /**
@@ -242,20 +158,9 @@ public class AfspraakController {
     public ResponseEntity<AfspraakDetailResponse> wijzigGoedkeurders(
             @PathVariable UUID id,
             @Valid @RequestBody UpdateGoedkeurdersRequest request,
-            Authentication authentication
-    ) {
+            Authentication authentication) {
+        UUID gebruikerId = SecurityGebruiker.gebruikerId(authentication);
 
-        UUID gebruikerId =
-                SecurityGebruiker.gebruikerId(
-                        authentication
-                );
-
-        return ResponseEntity.ok(
-                afspraakService.wijzigGoedkeurders(
-                        id,
-                        request,
-                        gebruikerId
-                )
-        );
+        return ResponseEntity.ok(afspraakService.wijzigGoedkeurders(id, request, gebruikerId));
     }
 }

@@ -28,11 +28,8 @@ public class AuthController {
 
     private final AuthService authService;
 
-    public AuthController(
-            AuthService authService
-    ) {
-        this.authService =
-                authService;
+    public AuthController(AuthService authService) {
+        this.authService = authService;
     }
 
     /**
@@ -47,68 +44,33 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(
             @Valid @RequestBody LoginRequest request,
-            HttpServletRequest servletRequest
-    ) {
+            HttpServletRequest servletRequest) {
+        Authentication authentication = authService.login(request);
 
-        Authentication authentication =
-                authService.login(
-                        request
-                );
-
-        HttpSession bestaandeSessie =
-                servletRequest.getSession(
-                        false
-                );
+        HttpSession bestaandeSessie = servletRequest.getSession(false);
 
         if (bestaandeSessie != null) {
             bestaandeSessie.invalidate();
         }
 
-        SecurityContext context =
-                SecurityContextHolder
-                        .createEmptyContext();
+        SecurityContext context = SecurityContextHolder.createEmptyContext();
 
-        context.setAuthentication(
-                authentication
-        );
+        context.setAuthentication(authentication);
 
-        SecurityContextHolder.setContext(
-                context
-        );
+        SecurityContextHolder.setContext(context);
 
-        HttpSession nieuweSessie =
-                servletRequest.getSession(
-                        true
-                );
+        HttpSession nieuweSessie = servletRequest.getSession(true);
 
-        nieuweSessie.setAttribute(
-                HttpSessionSecurityContextRepository
-                        .SPRING_SECURITY_CONTEXT_KEY,
-                context
-        );
+        nieuweSessie.setAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY, context);
 
-        AuthResponse response =
-                authService
-                        .vindIngelogdeGebruiker(
-                                authentication.getName()
-                        );
+        AuthResponse response = authService.vindIngelogdeGebruiker(authentication.getName());
 
-        return ResponseEntity.ok(
-                response
-        );
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/me")
-    public ResponseEntity<AuthResponse> huidigeGebruiker(
-            Authentication authentication
-    ) {
-
-        return ResponseEntity.ok(
-                authService
-                        .vindIngelogdeGebruiker(
-                                authentication.getName()
-                        )
-        );
+    public ResponseEntity<AuthResponse> huidigeGebruiker(Authentication authentication) {
+        return ResponseEntity.ok(authService.vindIngelogdeGebruiker(authentication.getName()));
     }
 
     /**
@@ -120,37 +82,18 @@ public class AuthController {
      * @throws IllegalStateException if the security filter has not made a token available
      */
     @GetMapping("/csrf")
-    public ResponseEntity<CsrfResponse> csrf(
-            HttpServletRequest request
-    ) {
-
-        CsrfToken token =
-                (CsrfToken) request.getAttribute(
-                        CsrfToken.class.getName()
-                );
+    public ResponseEntity<CsrfResponse> csrf(HttpServletRequest request) {
+        CsrfToken token = (CsrfToken) request.getAttribute(CsrfToken.class.getName());
 
         if (token == null) {
-
-            token =
-                    (CsrfToken) request.getAttribute(
-                            "_csrf"
-                    );
+            token = (CsrfToken) request.getAttribute("_csrf");
         }
 
         if (token == null) {
-
-            throw new IllegalStateException(
-                    "CSRF-token is niet beschikbaar"
-            );
+            throw new IllegalStateException("CSRF-token is niet beschikbaar");
         }
 
-        return ResponseEntity.ok(
-                new CsrfResponse(
-                        token.getHeaderName(),
-                        token.getParameterName(),
-                        token.getToken()
-                )
-        );
+        return ResponseEntity.ok(new CsrfResponse(token.getHeaderName(), token.getParameterName(), token.getToken()));
     }
 
     /**
@@ -161,24 +104,15 @@ public class AuthController {
      * @return HTTP 204 without a response body
      */
     @PostMapping("/logout")
-    public ResponseEntity<Void> logout(
-            HttpServletRequest servletRequest
-    ) {
-
-        HttpSession session =
-                servletRequest.getSession(
-                        false
-                );
+    public ResponseEntity<Void> logout(HttpServletRequest servletRequest) {
+        HttpSession session = servletRequest.getSession(false);
 
         if (session != null) {
             session.invalidate();
         }
 
-        SecurityContextHolder
-                .clearContext();
+        SecurityContextHolder.clearContext();
 
-        return ResponseEntity
-                .noContent()
-                .build();
+        return ResponseEntity.noContent().build();
     }
 }

@@ -22,21 +22,13 @@ public class GebruikerController {
 
     private final GebruikerService gebruikerService;
 
-    public GebruikerController(
-            GebruikerService gebruikerService
-    ) {
-        this.gebruikerService =
-                gebruikerService;
+    public GebruikerController(GebruikerService gebruikerService) {
+        this.gebruikerService = gebruikerService;
     }
 
     @GetMapping
-    public ResponseEntity<List<GebruikerResponse>>
-    vindAlleGebruikers() {
-
-        return ResponseEntity.ok(
-                gebruikerService
-                        .vindAlleGebruikers()
-        );
+    public ResponseEntity<List<GebruikerResponse>> vindAlleGebruikers() {
+        return ResponseEntity.ok(gebruikerService.vindAlleGebruikers());
     }
 
     /**
@@ -46,13 +38,8 @@ public class GebruikerController {
      * @return all users with their administrative account details
      */
     @GetMapping("/beheer")
-    public ResponseEntity<List<GebruikerBeheerResponse>>
-    vindAlleGebruikersVoorBeheer() {
-
-        return ResponseEntity.ok(
-                gebruikerService
-                        .vindAlleGebruikersVoorBeheer()
-        );
+    public ResponseEntity<List<GebruikerBeheerResponse>> vindAlleGebruikersVoorBeheer() {
+        return ResponseEntity.ok(gebruikerService.vindAlleGebruikersVoorBeheer());
     }
 
     /**
@@ -64,19 +51,9 @@ public class GebruikerController {
      * @return the updated administrative account details
      */
     @PutMapping("/{id}/toegang")
-    public ResponseEntity<GebruikerBeheerResponse>
-    wijzigToegang(
+    public ResponseEntity<GebruikerBeheerResponse> wijzigToegang(
             @PathVariable UUID id,
-            @Valid
-            @RequestBody
-            UpdateGebruikerToegangRequest request
-    ) {
-
-        return ResponseEntity.ok(
-                gebruikerService.wijzigToegang(
-                        id,
-                        request
-                )
-        );
+            @Valid @RequestBody UpdateGebruikerToegangRequest request) {
+        return ResponseEntity.ok(gebruikerService.wijzigToegang(id, request));
     }
 }
