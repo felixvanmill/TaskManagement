@@ -4,6 +4,10 @@ import {
 } from 'react'
 
 import {
+    wijzigSelectie,
+} from '../utils/selectie'
+
+import {
     typeLabel,
 } from '../utils/afspraak'
 
@@ -30,22 +34,6 @@ import type {
     AfspraakType,
     CreateAfspraakRequest,
 } from '../types/afspraak'
-
-function wijzigSelectie(
-    huidigeIds: string[],
-    id: string,
-) {
-    if (huidigeIds.includes(id)) {
-        return huidigeIds.filter(
-            (huidigId) => huidigId !== id,
-        )
-    }
-
-    return [
-        ...huidigeIds,
-        id,
-    ]
-}
 
 export function NieuweAfspraakPage() {
     const navigate =

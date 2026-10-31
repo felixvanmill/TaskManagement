@@ -4,6 +4,10 @@ import {
 } from 'react'
 
 import {
+    wijzigSelectie,
+} from '../utils/selectie'
+
+import {
     bepaalActieveProcesstap,
     bepaalHuidigeVerantwoordelijke,
 } from '../utils/afspraak'
@@ -35,23 +39,6 @@ interface ToewijzingSectionProps {
     onAfspraakGewijzigd: (
         afspraak: AfspraakDetail,
     ) => void
-}
-
-function wijzigSelectie(
-    huidigeIds: string[],
-    id: string,
-) {
-    if (huidigeIds.includes(id)) {
-        return huidigeIds.filter(
-            (huidigId) =>
-                huidigId !== id,
-        )
-    }
-
-    return [
-        ...huidigeIds,
-        id,
-    ]
 }
 
 function bepaalStandaardProcesstap(
