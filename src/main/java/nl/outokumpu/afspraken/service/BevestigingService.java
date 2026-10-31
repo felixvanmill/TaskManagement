@@ -25,16 +25,10 @@ import java.util.UUID;
 public class BevestigingService {
 
     private final AfspraakMapper afspraakMapper;
-
     private final BevestigingRepository bevestigingRepository;
 
-    public BevestigingService(
-            BevestigingRepository bevestigingRepository,
-            AfspraakMapper afspraakMapper
-    ) {
-        this.bevestigingRepository =
-                bevestigingRepository;
-
+    public BevestigingService(BevestigingRepository bevestigingRepository, AfspraakMapper afspraakMapper) {
+        this.bevestigingRepository = bevestigingRepository;
         this.afspraakMapper = afspraakMapper;
     }
 
@@ -48,27 +42,14 @@ public class BevestigingService {
      * @throws IllegalArgumentException if no confirmation exists for the agreement and user
      * @throws IllegalStateException if the agreement has already been acknowledged by this user
      */
-    public BevestigingResponse markeerGezien(
-            UUID afspraakId,
-            UUID gebruikerId
-    ) {
-
-        Bevestiging bevestiging =
-                vindBevestiging(
-                        afspraakId,
-                        gebruikerId
-                );
+    public BevestigingResponse markeerGezien(UUID afspraakId, UUID gebruikerId) {
+        Bevestiging bevestiging = vindBevestiging(afspraakId, gebruikerId);
 
         bevestiging.markeerGezien();
 
-        Bevestiging opgeslagenBevestiging =
-                bevestigingRepository.save(
-                        bevestiging
-                );
+        Bevestiging opgeslagenBevestiging = bevestigingRepository.save(bevestiging);
 
-        return naarResponse(
-                opgeslagenBevestiging
-        );
+        return naarResponse(opgeslagenBevestiging);
     }
 
     /**
@@ -82,111 +63,46 @@ public class BevestigingService {
      * @throws ForbiddenOperationException if the user is not a designated approver
      * @throws IllegalArgumentException if no confirmation exists or the decision is null, GEEN, or unchanged
      */
-    public BevestigingResponse registreerBeslissing(
-            UUID afspraakId,
-            UUID gebruikerId,
-            Beslissing beslissing
-    ) {
+    public BevestigingResponse registreerBeslissing(UUID afspraakId, UUID gebruikerId, Beslissing beslissing) {
+        Bevestiging bevestiging = vindBevestiging(afspraakId, gebruikerId);
 
-        Bevestiging bevestiging =
-                vindBevestiging(
-                        afspraakId,
-                        gebruikerId
-                );
+        controleerGoedkeurder(bevestiging, gebruikerId);
 
-        controleerGoedkeurder(
-                bevestiging,
-                gebruikerId
-        );
+        bevestiging.registreerBeslissing(beslissing);
 
-        bevestiging.registreerBeslissing(
-                beslissing
-        );
+        Bevestiging opgeslagenBevestiging = bevestigingRepository.save(bevestiging);
 
-        Bevestiging opgeslagenBevestiging =
-                bevestigingRepository.save(
-                        bevestiging
-                );
-
-        return naarResponse(
-                opgeslagenBevestiging
-        );
+        return naarResponse(opgeslagenBevestiging);
     }
 
-    private Bevestiging vindBevestiging(
-            UUID afspraakId,
-            UUID gebruikerId
-    ) {
-
-        return bevestigingRepository
-                .findByAfspraakIdAndGebruikerId(
-                        afspraakId,
-                        gebruikerId
-                )
-                .orElseThrow(() ->
-                        new IllegalArgumentException(
-                                "Bevestiging niet gevonden"
-                        )
-                );
+    private Bevestiging vindBevestiging(UUID afspraakId, UUID gebruikerId) {
+        return bevestigingRepository.findByAfspraakIdAndGebruikerId(afspraakId, gebruikerId).orElseThrow(() ->
+                new IllegalArgumentException("Bevestiging niet gevonden"));
     }
 
-    private void controleerGoedkeurder(
-            Bevestiging bevestiging,
-            UUID gebruikerId
-    ) {
-
-        boolean isGoedkeurder =
-                bevestiging.getAfspraak()
-                        .getBetrokkenheden()
-                        .stream()
-                        .anyMatch(
-                                betrokkenheid ->
-                                        isGoedkeurder(
-                                                betrokkenheid,
-                                                gebruikerId
-                                        )
-                        );
+    private void controleerGoedkeurder(Bevestiging bevestiging, UUID gebruikerId) {
+        boolean isGoedkeurder = bevestiging.getAfspraak().getBetrokkenheden().stream()
+                .anyMatch(betrokkenheid -> isGoedkeurder(betrokkenheid, gebruikerId));
 
         if (!isGoedkeurder) {
-            throw new ForbiddenOperationException(
-                    "Alleen een aangewezen goedkeurder kan een beslissing registreren"
-            );
+            throw new ForbiddenOperationException("Alleen een aangewezen goedkeurder kan een beslissing registreren");
         }
     }
 
-    private boolean isGoedkeurder(
-            Betrokkenheid betrokkenheid,
-            UUID gebruikerId
-    ) {
+    private boolean isGoedkeurder(Betrokkenheid betrokkenheid, UUID gebruikerId) {
+        Gebruiker gebruiker = betrokkenheid.getGebruiker();
 
-        Gebruiker gebruiker =
-                betrokkenheid.getGebruiker();
-
-        return betrokkenheid.getRol()
-                == BetrokkenRol.GOEDKEURDER
+        return betrokkenheid.getRol() == BetrokkenRol.GOEDKEURDER
                 && gebruikerId != null
-                && gebruikerId.equals(
-                gebruiker.getId()
-        );
+                && gebruikerId.equals(gebruiker.getId());
     }
 
-    private BevestigingResponse naarResponse(
-            Bevestiging bevestiging
-    ) {
+    private BevestigingResponse naarResponse(Bevestiging bevestiging) {
+        Gebruiker gebruiker = bevestiging.getGebruiker();
 
-        Gebruiker gebruiker =
-                bevestiging.getGebruiker();
+        AfdelingResponse afdelingResponse = naarAfdelingResponse(gebruiker.getAfdeling());
 
-        AfdelingResponse afdelingResponse =
-                naarAfdelingResponse(
-                        gebruiker.getAfdeling()
-                );
-
-        GebruikerResponse gebruikerResponse =
-                afspraakMapper.naarGebruikerResponse(
-                        gebruiker,
-                        afdelingResponse
-                );
+        GebruikerResponse gebruikerResponse = afspraakMapper.naarGebruikerResponse(gebruiker, afdelingResponse);
 
         return new BevestigingResponse(
                 bevestiging.getId(),
@@ -194,20 +110,14 @@ public class BevestigingService {
                 bevestiging.isGezien(),
                 bevestiging.getGezienOp(),
                 bevestiging.getBeslissing(),
-                bevestiging.getBeslistOp()
-        );
+                bevestiging.getBeslistOp());
     }
 
-    private AfdelingResponse naarAfdelingResponse(
-            Afdeling afdeling
-    ) {
-
+    private AfdelingResponse naarAfdelingResponse(Afdeling afdeling) {
         if (afdeling == null) {
             return null;
         }
 
-        return afspraakMapper.naarAfdelingResponse(
-                afdeling
-        );
+        return afspraakMapper.naarAfdelingResponse(afdeling);
     }
 }

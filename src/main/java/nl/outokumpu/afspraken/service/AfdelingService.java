@@ -17,21 +17,15 @@ import java.util.List;
 public class AfdelingService {
 
     private final AfspraakMapper afspraakMapper;
-
     private final AfdelingRepository afdelingRepository;
 
-    public AfdelingService(
-            AfdelingRepository afdelingRepository,
-            AfspraakMapper afspraakMapper
-    ) {
+    public AfdelingService(AfdelingRepository afdelingRepository, AfspraakMapper afspraakMapper) {
         this.afdelingRepository = afdelingRepository;
-
         this.afspraakMapper = afspraakMapper;
     }
 
     public List<AfdelingResponse> vindAlleAfdelingen() {
-        return afdelingRepository.findAll()
-                .stream()
+        return afdelingRepository.findAll().stream()
                 .map(afspraakMapper::naarAfdelingResponse)
                 .toList();
     }

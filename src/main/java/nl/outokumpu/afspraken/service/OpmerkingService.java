@@ -29,7 +29,6 @@ import java.util.UUID;
 public class OpmerkingService {
 
     private final AfspraakMapper afspraakMapper;
-
     private final OpmerkingRepository opmerkingRepository;
     private final OperationeleAfspraakRepository afspraakRepository;
     private final GebruikerRepository gebruikerRepository;
@@ -38,17 +37,10 @@ public class OpmerkingService {
             OpmerkingRepository opmerkingRepository,
             OperationeleAfspraakRepository afspraakRepository,
             GebruikerRepository gebruikerRepository,
-            AfspraakMapper afspraakMapper
-    ) {
-        this.opmerkingRepository =
-                opmerkingRepository;
-
-        this.afspraakRepository =
-                afspraakRepository;
-
-        this.gebruikerRepository =
-                gebruikerRepository;
-
+            AfspraakMapper afspraakMapper) {
+        this.opmerkingRepository = opmerkingRepository;
+        this.afspraakRepository = afspraakRepository;
+        this.gebruikerRepository = gebruikerRepository;
         this.afspraakMapper = afspraakMapper;
     }
 
@@ -62,49 +54,18 @@ public class OpmerkingService {
      * @return the stored comment, including its author
      * @throws IllegalArgumentException if the agreement or author is missing, or the comment text is invalid
      */
-    public OpmerkingResponse voegOpmerkingToe(
-            UUID afspraakId,
-            UUID auteurId,
-            CreateOpmerkingRequest request
-    ) {
+    public OpmerkingResponse voegOpmerkingToe(UUID afspraakId, UUID auteurId, CreateOpmerkingRequest request) {
+        OperationeleAfspraak afspraak = afspraakRepository.findById(afspraakId).orElseThrow(() ->
+                new IllegalArgumentException("Afspraak niet gevonden"));
 
-        OperationeleAfspraak afspraak =
-                afspraakRepository
-                        .findById(
-                                afspraakId
-                        )
-                        .orElseThrow(() ->
-                                new IllegalArgumentException(
-                                        "Afspraak niet gevonden"
-                                )
-                        );
+        Gebruiker auteur = gebruikerRepository.findById(auteurId).orElseThrow(() ->
+                new IllegalArgumentException("Auteur niet gevonden"));
 
-        Gebruiker auteur =
-                gebruikerRepository
-                        .findById(
-                                auteurId
-                        )
-                        .orElseThrow(() ->
-                                new IllegalArgumentException(
-                                        "Auteur niet gevonden"
-                                )
-                        );
+        Opmerking opmerking = new Opmerking(afspraak, auteur, request.tekst());
 
-        Opmerking opmerking =
-                new Opmerking(
-                        afspraak,
-                        auteur,
-                        request.tekst()
-                );
+        Opmerking opgeslagenOpmerking = opmerkingRepository.save(opmerking);
 
-        Opmerking opgeslagenOpmerking =
-                opmerkingRepository.save(
-                        opmerking
-                );
-
-        return naarResponse(
-                opgeslagenOpmerking
-        );
+        return naarResponse(opgeslagenOpmerking);
     }
 
     /**
@@ -115,66 +76,33 @@ public class OpmerkingService {
      * @throws IllegalArgumentException if the agreement does not exist
      */
     @Transactional(readOnly = true)
-    public List<OpmerkingResponse> vindOpmerkingen(
-            UUID afspraakId
-    ) {
-
-        if (!afspraakRepository.existsById(
-                afspraakId
-        )) {
-
-            throw new IllegalArgumentException(
-                    "Afspraak niet gevonden"
-            );
+    public List<OpmerkingResponse> vindOpmerkingen(UUID afspraakId) {
+        if (!afspraakRepository.existsById(afspraakId)) {
+            throw new IllegalArgumentException("Afspraak niet gevonden");
         }
 
-        return opmerkingRepository
-                .findByAfspraakIdOrderByAangemaaktOpAsc(
-                        afspraakId
-                )
-                .stream()
-                .map(
-                        this::naarResponse
-                )
+        return opmerkingRepository.findByAfspraakIdOrderByAangemaaktOpAsc(afspraakId).stream()
+                .map(this::naarResponse)
                 .toList();
     }
 
-    private OpmerkingResponse naarResponse(
-            Opmerking opmerking
-    ) {
-
+    private OpmerkingResponse naarResponse(Opmerking opmerking) {
         return new OpmerkingResponse(
                 opmerking.getId(),
-                naarGebruikerResponse(
-                        opmerking.getAuteur()
-                ),
+                naarGebruikerResponse(opmerking.getAuteur()),
                 opmerking.getTekst(),
-                opmerking.getAangemaaktOp()
-        );
+                opmerking.getAangemaaktOp());
     }
 
-    private GebruikerResponse naarGebruikerResponse(
-            Gebruiker gebruiker
-    ) {
-
-        return afspraakMapper.naarGebruikerResponse(
-                gebruiker,
-                naarAfdelingResponse(
-                        gebruiker.getAfdeling()
-                )
-        );
+    private GebruikerResponse naarGebruikerResponse(Gebruiker gebruiker) {
+        return afspraakMapper.naarGebruikerResponse(gebruiker, naarAfdelingResponse(gebruiker.getAfdeling()));
     }
 
-    private AfdelingResponse naarAfdelingResponse(
-            Afdeling afdeling
-    ) {
-
+    private AfdelingResponse naarAfdelingResponse(Afdeling afdeling) {
         if (afdeling == null) {
             return null;
         }
 
-        return afspraakMapper.naarAfdelingResponse(
-                afdeling
-        );
+        return afspraakMapper.naarAfdelingResponse(afdeling);
     }
 }

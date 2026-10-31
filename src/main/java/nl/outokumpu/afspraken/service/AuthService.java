@@ -25,21 +25,15 @@ import org.springframework.transaction.annotation.Transactional;
 public class AuthService {
 
     private final AfspraakMapper afspraakMapper;
-
     private final AuthenticationManager authenticationManager;
     private final GebruikerRepository gebruikerRepository;
 
     public AuthService(
             AuthenticationManager authenticationManager,
             GebruikerRepository gebruikerRepository,
-            AfspraakMapper afspraakMapper
-    ) {
-        this.authenticationManager =
-                authenticationManager;
-
-        this.gebruikerRepository =
-                gebruikerRepository;
-
+            AfspraakMapper afspraakMapper) {
+        this.authenticationManager = authenticationManager;
+        this.gebruikerRepository = gebruikerRepository;
         this.afspraakMapper = afspraakMapper;
     }
 
@@ -51,28 +45,16 @@ public class AuthService {
      * @return the authenticated security identity
      * @throws AuthenticatieException if authentication fails
      */
-    public Authentication login(
-            LoginRequest request
-    ) {
-
+    public Authentication login(LoginRequest request) {
         try {
-
             return authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(
-                            request.email(),
-                            request.wachtwoord()
-                    )
-            );
-
+                    new UsernamePasswordAuthenticationToken(request.email(), request.wachtwoord()));
         } catch (AuthenticationException exception) {
-
             /*
              * Keep the failure generic so it does not reveal whether
              * the email address or password was incorrect.
              */
-            throw new AuthenticatieException(
-                    "Ongeldige inloggegevens"
-            );
+            throw new AuthenticatieException("Ongeldige inloggegevens");
         }
     }
 
@@ -83,45 +65,25 @@ public class AuthService {
      * @return the user's authentication response, including their role
      * @throws AuthenticatieException if the user no longer exists
      */
-    public AuthResponse vindIngelogdeGebruiker(
-            String email
-    ) {
+    public AuthResponse vindIngelogdeGebruiker(String email) {
+        Gebruiker gebruiker = gebruikerRepository.findByEmailIgnoreCase(email).orElseThrow(() ->
+                new AuthenticatieException("Ingelogde gebruiker niet gevonden"));
 
-        Gebruiker gebruiker =
-                gebruikerRepository
-                        .findByEmailIgnoreCase(
-                                email
-                        )
-                        .orElseThrow(() ->
-                                new AuthenticatieException(
-                                        "Ingelogde gebruiker niet gevonden"
-                                )
-                        );
-
-        AfdelingResponse afdelingResponse =
-                naarAfdelingResponse(
-                        gebruiker.getAfdeling()
-                );
+        AfdelingResponse afdelingResponse = naarAfdelingResponse(gebruiker.getAfdeling());
 
         return new AuthResponse(
                 gebruiker.getId(),
                 gebruiker.getNaam(),
                 gebruiker.getEmail(),
                 gebruiker.getRol(),
-                afdelingResponse
-        );
+                afdelingResponse);
     }
 
-    private AfdelingResponse naarAfdelingResponse(
-            Afdeling afdeling
-    ) {
-
+    private AfdelingResponse naarAfdelingResponse(Afdeling afdeling) {
         if (afdeling == null) {
             return null;
         }
 
-        return afspraakMapper.naarAfdelingResponse(
-                afdeling
-        );
+        return afspraakMapper.naarAfdelingResponse(afdeling);
     }
 }

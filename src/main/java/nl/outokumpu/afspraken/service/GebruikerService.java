@@ -25,24 +25,15 @@ import java.util.UUID;
 public class GebruikerService {
 
     private final AfspraakMapper afspraakMapper;
-
     private final GebruikerRepository gebruikerRepository;
 
-    public GebruikerService(
-            GebruikerRepository gebruikerRepository,
-            AfspraakMapper afspraakMapper
-    ) {
-        this.gebruikerRepository =
-                gebruikerRepository;
-
+    public GebruikerService(GebruikerRepository gebruikerRepository, AfspraakMapper afspraakMapper) {
+        this.gebruikerRepository = gebruikerRepository;
         this.afspraakMapper = afspraakMapper;
     }
 
     public List<GebruikerResponse> vindAlleGebruikers() {
-
-        return gebruikerRepository
-                .findAll()
-                .stream()
+        return gebruikerRepository.findAll().stream()
                 .map(afspraakMapper::naarGebruikerResponse)
                 .toList();
     }
@@ -53,12 +44,8 @@ public class GebruikerService {
      * @return all users with their roles, active flags and local-login availability
      */
     @PreAuthorize("hasRole('BEHEERDER')")
-    public List<GebruikerBeheerResponse>
-    vindAlleGebruikersVoorBeheer() {
-
-        return gebruikerRepository
-                .findAll()
-                .stream()
+    public List<GebruikerBeheerResponse> vindAlleGebruikersVoorBeheer() {
+        return gebruikerRepository.findAll().stream()
                 .map(this::naarBeheerResponse)
                 .toList();
     }
@@ -74,49 +61,21 @@ public class GebruikerService {
      */
     @Transactional
     @PreAuthorize("hasRole('BEHEERDER')")
-    public GebruikerBeheerResponse wijzigToegang(
-            UUID gebruikerId,
-            UpdateGebruikerToegangRequest request
-    ) {
+    public GebruikerBeheerResponse wijzigToegang(UUID gebruikerId, UpdateGebruikerToegangRequest request) {
+        Gebruiker gebruiker = gebruikerRepository.findById(gebruikerId).orElseThrow(() ->
+                new IllegalArgumentException("Gebruiker niet gevonden"));
 
-        Gebruiker gebruiker =
-                gebruikerRepository
-                        .findById(
-                                gebruikerId
-                        )
-                        .orElseThrow(() ->
-                                new IllegalArgumentException(
-                                        "Gebruiker niet gevonden"
-                                )
-                        );
+        gebruiker.wijzigRol(request.rol());
 
-        gebruiker.wijzigRol(
-                request.rol()
-        );
+        gebruiker.wijzigToegang(request.actief());
 
-        gebruiker.wijzigToegang(
-                request.actief()
-        );
+        Gebruiker opgeslagenGebruiker = gebruikerRepository.save(gebruiker);
 
-        Gebruiker opgeslagenGebruiker =
-                gebruikerRepository.save(
-                        gebruiker
-                );
-
-        return naarBeheerResponse(
-                opgeslagenGebruiker
-        );
+        return naarBeheerResponse(opgeslagenGebruiker);
     }
 
-    private GebruikerBeheerResponse naarBeheerResponse(
-            Gebruiker gebruiker
-    ) {
-
-        boolean lokaleToegang =
-                gebruiker.getWachtwoordHash() != null
-                        && !gebruiker
-                        .getWachtwoordHash()
-                        .isBlank();
+    private GebruikerBeheerResponse naarBeheerResponse(Gebruiker gebruiker) {
+        boolean lokaleToegang = gebruiker.getWachtwoordHash() != null && !gebruiker.getWachtwoordHash().isBlank();
 
         return new GebruikerBeheerResponse(
                 gebruiker.getId(),
@@ -125,18 +84,10 @@ public class GebruikerService {
                 gebruiker.getRol(),
                 gebruiker.isActief(),
                 lokaleToegang,
-                naarAfdelingResponse(
-                        gebruiker
-                )
-        );
+                naarAfdelingResponse(gebruiker));
     }
 
-    private AfdelingResponse naarAfdelingResponse(
-            Gebruiker gebruiker
-    ) {
-
-        return afspraakMapper.naarAfdelingResponse(
-                gebruiker.getAfdeling()
-        );
+    private AfdelingResponse naarAfdelingResponse(Gebruiker gebruiker) {
+        return afspraakMapper.naarAfdelingResponse(gebruiker.getAfdeling());
     }
 }
