@@ -25,6 +25,9 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * Exposes agreement creation, retrieval, search and updates, delegating business permissions to the service.
+ */
 @RestController
 @RequestMapping("/api/afspraken")
 public class AfspraakController {
@@ -38,6 +41,14 @@ public class AfspraakController {
                 afspraakService;
     }
 
+    /**
+     * Creates an agreement with the authenticated user as its initiator.
+     * The initiator's identity is taken from the security context rather than the request body.
+     *
+     * @param request the validated agreement details and initial assignments
+     * @param authentication the authenticated identity supplied by Spring Security
+     * @return HTTP 201 with the created agreement details
+     */
     @PostMapping
     public ResponseEntity<AfspraakDetailResponse> maakAfspraak(
             @Valid @RequestBody CreateAfspraakRequest request,
@@ -104,6 +115,12 @@ public class AfspraakController {
         );
     }
 
+    /**
+     * Searches agreement text with a trimmed, case-insensitive keyword match.
+     *
+     * @param zoekterm the required, non-blank search term
+     * @return matching agreement summaries, most recently modified first
+     */
     @GetMapping("/zoeken")
     public ResponseEntity<List<AfspraakSummaryResponse>>
     zoekAfspraken(
@@ -117,6 +134,20 @@ public class AfspraakController {
         );
     }
 
+    /**
+     * Combines optional filters; omitted criteria do not restrict the results.
+     * Dates match overlapping agreement intervals, and the responsible-user criterion
+     * matches any process step rather than only the current step.
+     *
+     * @param type the agreement type, or null to include all types
+     * @param status the agreement status, or null to include all statuses
+     * @param verantwoordelijkeId the responsible user of any process step, or null
+     * @param afdelingId an involved department, or null
+     * @param fabriek a case-insensitive factory-name fragment, or null
+     * @param periodeVan the inclusive start of the overlap window, or null
+     * @param periodeTot the inclusive end of the overlap window, or null
+     * @return matching agreement summaries, most recently modified first
+     */
     @GetMapping("/filter")
     public ResponseEntity<List<AfspraakSummaryResponse>>
     filterAfspraken(
@@ -167,6 +198,16 @@ public class AfspraakController {
         );
     }
 
+    /**
+     * Updates editable agreement details on behalf of the authenticated user.
+     * The service permits only the initiator or current responsible user to edit,
+     * and rejects requests that do not change any editable values.
+     *
+     * @param id the agreement to update
+     * @param request the validated replacement values
+     * @param authentication the identity used for the permission check and change history
+     * @return the updated agreement details
+     */
     @PutMapping("/{id}")
     public ResponseEntity<AfspraakDetailResponse> updateAfspraak(
             @PathVariable UUID id,
@@ -188,6 +229,15 @@ public class AfspraakController {
         );
     }
 
+    /**
+     * Replaces the agreement's approver set; the service restricts this to its initiator.
+     * Existing confirmations remain available when approvers are removed.
+     *
+     * @param id the agreement whose approvers are being replaced
+     * @param request the complete set of desired approver IDs
+     * @param authentication the identity used for the initiator check
+     * @return the agreement details with the resulting approver set
+     */
     @PutMapping("/{id}/goedkeurders")
     public ResponseEntity<AfspraakDetailResponse> wijzigGoedkeurders(
             @PathVariable UUID id,

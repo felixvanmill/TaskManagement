@@ -10,6 +10,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
+/**
+ * Exposes department reference data for authenticated agreement-management clients.
+ */
 @RestController
 @RequestMapping("/api/afdelingen")
 public class AfdelingController {

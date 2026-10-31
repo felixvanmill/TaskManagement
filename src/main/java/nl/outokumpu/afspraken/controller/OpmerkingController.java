@@ -19,6 +19,9 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * Exposes chronological agreement comments and attributes new comments to the authenticated user.
+ */
 @RestController
 @RequestMapping("/api/afspraken/{afspraakId}/opmerkingen")
 public class OpmerkingController {
@@ -46,6 +49,14 @@ public class OpmerkingController {
         );
     }
 
+    /**
+     * Adds a comment using the authenticated user as its author, preventing client-selected authorship.
+     *
+     * @param afspraakId the agreement receiving the comment
+     * @param request the validated comment text
+     * @param authentication the identity recorded as the comment's author
+     * @return HTTP 201 with the stored comment and author details
+     */
     @PostMapping
     public ResponseEntity<OpmerkingResponse>
     voegOpmerkingToe(

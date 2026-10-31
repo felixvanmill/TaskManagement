@@ -13,6 +13,9 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * Exposes user reference data and administrator-only account management through the service layer.
+ */
 @RestController
 @RequestMapping("/api/gebruikers")
 public class GebruikerController {
@@ -36,6 +39,12 @@ public class GebruikerController {
         );
     }
 
+    /**
+     * Returns account-management details, including active flags and local-login availability.
+     * Administrator access is enforced by the service's method-level security.
+     *
+     * @return all users with their administrative account details
+     */
     @GetMapping("/beheer")
     public ResponseEntity<List<GebruikerBeheerResponse>>
     vindAlleGebruikersVoorBeheer() {
@@ -46,6 +55,14 @@ public class GebruikerController {
         );
     }
 
+    /**
+     * Updates an account's role and active flag without changing its password or department.
+     * Administrator access is enforced by the service's method-level security.
+     *
+     * @param id the account to update
+     * @param request the validated role and active flag
+     * @return the updated administrative account details
+     */
     @PutMapping("/{id}/toegang")
     public ResponseEntity<GebruikerBeheerResponse>
     wijzigToegang(

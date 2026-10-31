@@ -19,6 +19,9 @@ import org.springframework.security.web.csrf.CsrfToken;
 
 import org.springframework.web.bind.annotation.*;
 
+/**
+ * Manages session-based login, current-user details, CSRF token retrieval and logout.
+ */
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
@@ -32,6 +35,15 @@ public class AuthController {
                 authService;
     }
 
+    /**
+     * Authenticates local credentials and replaces any existing session to prevent session fixation.
+     * Login is available without prior authentication and is exempt from CSRF validation;
+     * clients should retrieve a CSRF token after the new session is established.
+     *
+     * @param request the validated login credentials
+     * @param servletRequest the request whose session will hold the authenticated security context
+     * @return the authenticated user's details; the servlet container manages the session cookie
+     */
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(
             @Valid @RequestBody LoginRequest request,
@@ -99,6 +111,14 @@ public class AuthController {
         );
     }
 
+    /**
+     * Returns the CSRF token and its header and parameter names for subsequent state-changing requests.
+     * This endpoint is available before login so clients can obtain a token without prior authentication.
+     *
+     * @param request the request carrying the token supplied by Spring Security
+     * @return the current CSRF token metadata
+     * @throws IllegalStateException if the security filter has not made a token available
+     */
     @GetMapping("/csrf")
     public ResponseEntity<CsrfResponse> csrf(
             HttpServletRequest request
@@ -133,6 +153,13 @@ public class AuthController {
         );
     }
 
+    /**
+     * Invalidates the current session, if present, and clears the thread's security context.
+     * The endpoint requires authentication and a valid CSRF token under the security configuration.
+     *
+     * @param servletRequest the request carrying the session to invalidate
+     * @return HTTP 204 without a response body
+     */
     @PostMapping("/logout")
     public ResponseEntity<Void> logout(
             HttpServletRequest servletRequest
