@@ -8,6 +8,7 @@ import nl.outokumpu.afspraken.entity.Gebruiker;
 import nl.outokumpu.afspraken.entity.OperationeleAfspraak;
 import nl.outokumpu.afspraken.entity.Opmerking;
 
+import nl.outokumpu.afspraken.mapper.AfspraakMapper;
 import nl.outokumpu.afspraken.repository.GebruikerRepository;
 import nl.outokumpu.afspraken.repository.OperationeleAfspraakRepository;
 import nl.outokumpu.afspraken.repository.OpmerkingRepository;
@@ -54,7 +55,8 @@ class OpmerkingServiceTest {
                 new OpmerkingService(
                         opmerkingRepository,
                         afspraakRepository,
-                        gebruikerRepository
+                        gebruikerRepository,
+                        new AfspraakMapper()
                 );
     }
 
@@ -377,5 +379,30 @@ class OpmerkingServiceTest {
         verifyNoInteractions(
                 opmerkingRepository
         );
+    }
+
+    @Test
+    void geeftOpmerkingMetAuteurZonderAfdelingTerug() {
+        UUID afspraakId = UUID.randomUUID();
+        UUID auteurId = UUID.randomUUID();
+        Gebruiker auteur = mock(Gebruiker.class);
+        when(auteur.getId()).thenReturn(auteurId);
+        when(auteur.getNaam()).thenReturn("Felix");
+        when(auteur.getEmail()).thenReturn("felix@example.com");
+        when(auteur.getAfdeling()).thenReturn(null);
+
+        Opmerking opmerking = new Opmerking(mock(OperationeleAfspraak.class), auteur, "Afstemmen");
+        when(afspraakRepository.existsById(afspraakId)).thenReturn(true);
+        when(opmerkingRepository.findByAfspraakIdOrderByAangemaaktOpAsc(afspraakId))
+                .thenReturn(List.of(opmerking));
+
+        List<OpmerkingResponse> resultaat = opmerkingService.vindOpmerkingen(afspraakId);
+
+        assertEquals(1, resultaat.size());
+        assertEquals("Afstemmen", resultaat.get(0).tekst());
+        assertEquals(auteurId, resultaat.get(0).auteur().id());
+        assertEquals("Felix", resultaat.get(0).auteur().naam());
+        assertEquals("felix@example.com", resultaat.get(0).auteur().email());
+        assertNull(resultaat.get(0).auteur().afdeling());
     }
 }

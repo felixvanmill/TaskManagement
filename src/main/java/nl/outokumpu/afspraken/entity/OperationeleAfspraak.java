@@ -17,6 +17,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Comparator;
 
+/**
+ * Represents an operational agreement and manages its participants, process steps and history.
+ * Also serves as the root of the joined inheritance hierarchy for specialized agreement types.
+ * Participant roles are removed with orphan removal; other child associations do not cascade removal.
+ */
 @Entity
 @Table(name = "operationele_afspraken")
 @Inheritance(strategy = InheritanceType.JOINED)
@@ -116,7 +121,7 @@ public class OperationeleAfspraak {
     private List<Wijziging> wijzigingen = new ArrayList<>();
 
     protected OperationeleAfspraak() {
-        // Vereist door JPA
+        // Required by JPA.
     }
 
     public OperationeleAfspraak(
@@ -172,11 +177,22 @@ public class OperationeleAfspraak {
         this.laatstGewijzigdOp = nu;
     }
 
+    /**
+     * Updates the modification timestamp when JPA updates the agreement row.
+     * Changes confined to associated collections do not necessarily trigger this callback.
+     */
     @PreUpdate
     protected void bijWijzigen() {
         this.laatstGewijzigdOp = Instant.now();
     }
 
+    /**
+     * Changes the agreement status, recording completion time only for {@code AFGEROND}.
+     * Moving away from completion clears that timestamp without changing process-step statuses.
+     *
+     * @param nieuweStatus the desired agreement status
+     * @throws IllegalArgumentException if the status is null or unchanged
+     */
     public void wijzigStatus(AfspraakStatus nieuweStatus) {
 
         if (nieuweStatus == null) {
@@ -332,6 +348,14 @@ public class OperationeleAfspraak {
         return Collections.unmodifiableList(betrokkenheden);
     }
 
+    /**
+     * Adds a participant role while allowing the same user to hold other roles in this agreement.
+     * Duplicates are detected by object identity or a matching non-null user ID.
+     *
+     * @param gebruiker the user receiving the role
+     * @param rol the role within this agreement
+     * @throws IllegalArgumentException if either argument is null or the user already holds this role
+     */
     public void voegBetrokkenheidToe(
             Gebruiker gebruiker,
             BetrokkenRol rol
@@ -374,6 +398,13 @@ public class OperationeleAfspraak {
         );
     }
 
+    /**
+     * Removes a participant role; JPA orphan removal deletes the corresponding relationship record.
+     * This does not remove the user's confirmation or other roles.
+     *
+     * @param betrokkenheid the relationship to remove from this agreement
+     * @throws IllegalArgumentException if the relationship is null or does not belong to this agreement
+     */
     public void verwijderBetrokkenheid(
             Betrokkenheid betrokkenheid
     ) {
@@ -398,6 +429,17 @@ public class OperationeleAfspraak {
                 .toList();
     }
 
+    /**
+     * Creates a process step linked to this agreement with a unique, positive order value.
+     * Order values need not be consecutive, and returned process-step lists are sorted by this value.
+     *
+     * @param naam the non-blank step name
+     * @param volgorde the order within this agreement, starting at one
+     * @param deadline the required step deadline
+     * @param verantwoordelijke the required responsible user
+     * @return the newly associated process step
+     * @throws IllegalArgumentException if a required value is missing, the order is below one, or it is already used
+     */
     public Processtap voegProcesstapToe(
             String naam,
             int volgorde,
@@ -463,6 +505,14 @@ public class OperationeleAfspraak {
         return Collections.unmodifiableList(bevestigingen);
     }
 
+    /**
+     * Creates one confirmation per user, regardless of how many participant roles the user holds.
+     * Duplicates are detected by object identity or a matching non-null user ID.
+     *
+     * @param gebruiker the user whose acknowledgement and decision will be tracked
+     * @return the newly associated confirmation
+     * @throws IllegalArgumentException if the user is null or already has a confirmation
+     */
     public Bevestiging voegBevestigingToe(
             Gebruiker gebruiker
     ) {
@@ -507,6 +557,17 @@ public class OperationeleAfspraak {
         return Collections.unmodifiableList(wijzigingen);
     }
 
+    /**
+     * Appends a history entry only when the old and new values differ, including null comparisons.
+     * The entry's timestamp is assigned when it is first persisted.
+     *
+     * @param gewijzigdDoor the user performing the change
+     * @param onderdeel the non-blank label identifying the changed part
+     * @param oudeWaarde the previous value, which may be null
+     * @param nieuweWaarde the replacement value, which may be null
+     * @return the newly associated history entry
+     * @throws IllegalArgumentException if the actor is null, the label is blank, or the values are equal
+     */
     public Wijziging registreerWijziging(
             Gebruiker gewijzigdDoor,
             String onderdeel,

@@ -3,6 +3,14 @@ import {
 } from 'react'
 
 import {
+    bepaalHuidigeVerantwoordelijke,
+} from '../utils/afspraak'
+
+import {
+    formatteerDatum,
+} from '../utils/datum'
+
+import {
     wijzigUitvoeringsstatus,
 } from '../api/workflow'
 
@@ -22,21 +30,6 @@ interface TypespecifiekeDetailsSectionProps {
     ) => void
 }
 
-function formatteerDatum(
-    datum: string,
-) {
-    return new Intl.DateTimeFormat(
-        'nl-NL',
-        {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric',
-        },
-    ).format(
-        new Date(`${datum}T00:00:00`),
-    )
-}
-
 function uitvoeringsstatusLabel(
     status: UitvoeringsStatus | null,
 ) {
@@ -53,28 +46,6 @@ function uitvoeringsstatusLabel(
         default:
             return 'Niet ingesteld'
     }
-}
-
-function bepaalHuidigeVerantwoordelijke(
-    afspraak: AfspraakDetail,
-) {
-    if (afspraak.processtappen.length === 0) {
-        return null
-    }
-
-    const actieveProcesstap =
-        afspraak.processtappen.find(
-            (processtap) =>
-                processtap.status !== 'AFGEROND',
-        )
-
-    if (actieveProcesstap !== undefined) {
-        return actieveProcesstap.verantwoordelijke
-    }
-
-    return afspraak.processtappen[
-    afspraak.processtappen.length - 1
-        ].verantwoordelijke
 }
 
 export function TypespecifiekeDetailsSection({

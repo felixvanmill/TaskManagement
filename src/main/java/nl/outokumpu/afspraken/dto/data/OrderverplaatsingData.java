@@ -10,6 +10,10 @@ import nl.outokumpu.afspraken.enums.UitvoeringsStatus;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
+/**
+ * Carries order relocation details in requests and responses.
+ * Execution status must be null in validated input; responses include the current domain status.
+ */
 public record OrderverplaatsingData(
 
         @NotBlank

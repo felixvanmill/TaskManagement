@@ -6,6 +6,9 @@ import nl.outokumpu.afspraken.enums.GebruikersRol;
 
 import java.util.UUID;
 
+/**
+ * Represents a department member with a role, active flag and optional local-login credentials.
+ */
 @Entity
 @Table(name = "gebruikers")
 public class Gebruiker {
@@ -28,10 +31,9 @@ public class Gebruiker {
     private String email;
 
     /*
-     * Nullable zodat bestaande gebruikers/data niet direct breken.
-     *
-     * Een gebruiker zonder wachtwoordHash kan niet lokaal inloggen.
-     * Een echt wachtwoord slaan we hier NOOIT op.
+     * Nullable to keep existing user records compatible.
+     * A user without a password hash cannot log in locally.
+     * Never store a plaintext password here.
      */
     @Column(
             name = "wachtwoord_hash",
@@ -60,7 +62,7 @@ public class Gebruiker {
     private Afdeling afdeling;
 
     protected Gebruiker() {
-        // Vereist door JPA
+        // Required by JPA.
     }
 
     public Gebruiker(
@@ -75,6 +77,15 @@ public class Gebruiker {
         this.actief = true;
     }
 
+    /**
+     * Configures local-login credentials and access flags without encoding the supplied password hash.
+     * The caller is responsible for supplying an encoded password rather than plaintext.
+     *
+     * @param wachtwoordHash the non-blank encoded password
+     * @param rol the required application role
+     * @param actief whether the account is enabled
+     * @throws IllegalArgumentException if the hash is null or blank, or the role is null
+     */
     public void configureerToegang(
             String wachtwoordHash,
             GebruikersRol rol,

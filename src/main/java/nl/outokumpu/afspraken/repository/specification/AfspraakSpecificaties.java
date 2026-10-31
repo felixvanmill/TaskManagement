@@ -16,168 +16,83 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
+/**
+ * Combines optional agreement filters and removes duplicate results introduced by collection joins.
+ */
 public final class AfspraakSpecificaties {
 
     private AfspraakSpecificaties() {
     }
 
-    public static Specification<OperationeleAfspraak> metFilters(
-            AfspraakFilterRequest filter
-    ) {
-
+    public static Specification<OperationeleAfspraak> metFilters(AfspraakFilterRequest filter) {
         return (root, query, criteriaBuilder) -> {
-
-            List<Predicate> predicates =
-                    new ArrayList<>();
+            List<Predicate> predicates = new ArrayList<>();
 
             /*
-             * Door joins met processtappen en afdelingen kunnen
-             * dezelfde afspraken meerdere keren in het SQL-resultaat
-             * voorkomen.
+             * Joining process steps and departments can produce duplicate agreement rows.
              */
             query.distinct(true);
 
             if (filter.type() != null) {
-
-                predicates.add(
-                        criteriaBuilder.equal(
-                                root.get("type"),
-                                filter.type()
-                        )
-                );
+                predicates.add(criteriaBuilder.equal(root.get("type"), filter.type()));
             }
 
             if (filter.status() != null) {
-
-                predicates.add(
-                        criteriaBuilder.equal(
-                                root.get("status"),
-                                filter.status()
-                        )
-                );
+                predicates.add(criteriaBuilder.equal(root.get("status"), filter.status()));
             }
 
             if (filter.verantwoordelijkeId() != null) {
-
                 predicates.add(
                         criteriaBuilder.equal(
-                                root.join(
-                                                "processtappen",
-                                                JoinType.INNER
-                                        )
-                                        .get("verantwoordelijke")
-                                        .get("id"),
-                                filter.verantwoordelijkeId()
-                        )
-                );
+                                root.join("processtappen", JoinType.INNER).get("verantwoordelijke").get("id"),
+                                filter.verantwoordelijkeId()));
             }
 
             if (filter.afdelingId() != null) {
-
                 predicates.add(
                         criteriaBuilder.equal(
-                                root.join(
-                                                "betrokkenAfdelingen",
-                                                JoinType.INNER
-                                        )
-                                        .get("id"),
-                                filter.afdelingId()
-                        )
-                );
+                                root.join("betrokkenAfdelingen", JoinType.INNER).get("id"),
+                                filter.afdelingId()));
             }
 
-            if (filter.fabriek() != null
-                    && !filter.fabriek().isBlank()) {
+            if (filter.fabriek() != null && !filter.fabriek().isBlank()) {
+                String patroon = "%" + filter.fabriek().trim().toLowerCase(Locale.ROOT)
+                        + "%";
 
-                String patroon =
-                        "%"
-                                + filter.fabriek()
-                                .trim()
-                                .toLowerCase(Locale.ROOT)
-                                + "%";
+                Root<Capaciteitswissel> capaciteitswissel = criteriaBuilder.treat(root, Capaciteitswissel.class);
 
-                Root<Capaciteitswissel> capaciteitswissel =
-                        criteriaBuilder.treat(
-                                root,
-                                Capaciteitswissel.class
-                        );
+                Root<Orderverplaatsing> orderverplaatsing = criteriaBuilder.treat(root, Orderverplaatsing.class);
 
-                Root<Orderverplaatsing> orderverplaatsing =
-                        criteriaBuilder.treat(
-                                root,
-                                Orderverplaatsing.class
-                        );
+                Predicate capaciteitFabriek = criteriaBuilder.like(
+                        criteriaBuilder.lower(capaciteitswissel.<String>get("fabriek")),
+                        patroon);
 
-                Predicate capaciteitFabriek =
-                        criteriaBuilder.like(
-                                criteriaBuilder.lower(
-                                        capaciteitswissel
-                                                .<String>get("fabriek")
-                                ),
-                                patroon
-                        );
+                Predicate orderVanFabriek = criteriaBuilder.like(
+                        criteriaBuilder.lower(orderverplaatsing.<String>get("vanFabriek")),
+                        patroon);
 
-                Predicate orderVanFabriek =
-                        criteriaBuilder.like(
-                                criteriaBuilder.lower(
-                                        orderverplaatsing
-                                                .<String>get("vanFabriek")
-                                ),
-                                patroon
-                        );
+                Predicate orderNaarFabriek = criteriaBuilder.like(
+                        criteriaBuilder.lower(orderverplaatsing.<String>get("naarFabriek")),
+                        patroon);
 
-                Predicate orderNaarFabriek =
-                        criteriaBuilder.like(
-                                criteriaBuilder.lower(
-                                        orderverplaatsing
-                                                .<String>get("naarFabriek")
-                                ),
-                                patroon
-                        );
-
-                predicates.add(
-                        criteriaBuilder.or(
-                                capaciteitFabriek,
-                                orderVanFabriek,
-                                orderNaarFabriek
-                        )
-                );
+                predicates.add(criteriaBuilder.or(capaciteitFabriek, orderVanFabriek, orderNaarFabriek));
             }
 
             /*
-             * Periode werkt als overlap:
-             *
-             * afspraak:  |----------|
-             * filter:        |----------|
-             *
-             * Ook zo'n afspraak hoort dus bij de resultaten.
+             * Date filtering uses interval overlap, so partially overlapping agreements are included.
              */
 
             if (filter.periodeVan() != null) {
-
                 predicates.add(
-                        criteriaBuilder.greaterThanOrEqualTo(
-                                root.<LocalDate>get("deadline"),
-                                filter.periodeVan()
-                        )
-                );
+                        criteriaBuilder.greaterThanOrEqualTo(root.<LocalDate>get("deadline"), filter.periodeVan()));
             }
 
             if (filter.periodeTot() != null) {
-
                 predicates.add(
-                        criteriaBuilder.lessThanOrEqualTo(
-                                root.<LocalDate>get("ingangsdatum"),
-                                filter.periodeTot()
-                        )
-                );
+                        criteriaBuilder.lessThanOrEqualTo(root.<LocalDate>get("ingangsdatum"), filter.periodeTot()));
             }
 
-            return criteriaBuilder.and(
-                    predicates.toArray(
-                            new Predicate[0]
-                    )
-            );
+            return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
         };
     }
 }

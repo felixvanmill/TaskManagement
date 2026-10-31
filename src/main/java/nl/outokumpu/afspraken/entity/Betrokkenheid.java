@@ -5,6 +5,10 @@ import nl.outokumpu.afspraken.enums.BetrokkenRol;
 
 import java.util.UUID;
 
+/**
+ * Associates a user with a role in an agreement.
+ * The same user may hold different roles, but each agreement-user-role combination is unique.
+ */
 @Entity
 @Table(
         name = "betrokkenheden",
@@ -38,7 +42,7 @@ public class Betrokkenheid {
     private BetrokkenRol rol;
 
     protected Betrokkenheid() {
-        // Vereist door JPA
+        // Required by JPA.
     }
 
     public Betrokkenheid(

@@ -1,6 +1,8 @@
 package nl.outokumpu.afspraken.mapper;
 
 import nl.outokumpu.afspraken.dto.response.AfspraakDetailResponse;
+import nl.outokumpu.afspraken.dto.response.AfdelingResponse;
+import nl.outokumpu.afspraken.dto.response.GebruikerResponse;
 import nl.outokumpu.afspraken.entity.Afdeling;
 import nl.outokumpu.afspraken.entity.Gebruiker;
 import nl.outokumpu.afspraken.entity.OperationeleAfspraak;
@@ -13,8 +15,11 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDate;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 class AfspraakMapperTest {
 
@@ -217,5 +222,56 @@ class AfspraakMapperTest {
         assertNull(
                 response.orderverplaatsing()
         );
+    }
+
+    @Test
+    void gebruikersmappingVereistEenAfdeling() {
+        Gebruiker gebruiker = new Gebruiker("Felix", "felix@example.com", null);
+
+        assertThrows(
+                NullPointerException.class,
+                () -> afspraakMapper.naarGebruikerResponse(gebruiker)
+        );
+    }
+
+    @Test
+    void gebruikersmappingVereistEenGebruiker() {
+        assertThrows(
+                NullPointerException.class,
+                () -> afspraakMapper.naarGebruikerResponse(null)
+        );
+        assertThrows(
+                NullPointerException.class,
+                () -> afspraakMapper.naarGebruikerResponse(null, null)
+        );
+    }
+
+    @Test
+    void gebruikersmappingKanEenOntbrekendeAfdelingresponseBehouden() {
+        UUID gebruikerId = UUID.randomUUID();
+        Gebruiker gebruiker = mock(Gebruiker.class);
+        when(gebruiker.getId()).thenReturn(gebruikerId);
+        when(gebruiker.getNaam()).thenReturn("Felix");
+        when(gebruiker.getEmail()).thenReturn("felix@example.com");
+
+        GebruikerResponse resultaat = afspraakMapper.naarGebruikerResponse(gebruiker, null);
+
+        assertEquals(gebruikerId, resultaat.id());
+        assertEquals("Felix", resultaat.naam());
+        assertEquals("felix@example.com", resultaat.email());
+        assertNull(resultaat.afdeling());
+    }
+
+    @Test
+    void gebruikersmappingBehoudtDeMeegegevenAfdelingresponse() {
+        Gebruiker gebruiker = new Gebruiker("Felix", "felix@example.com", null);
+        AfdelingResponse afdeling = new AfdelingResponse(UUID.randomUUID(), "Planning");
+
+        GebruikerResponse resultaat = afspraakMapper.naarGebruikerResponse(gebruiker, afdeling);
+
+        assertEquals(gebruiker.getId(), resultaat.id());
+        assertEquals("Felix", resultaat.naam());
+        assertEquals("felix@example.com", resultaat.email());
+        assertSame(afdeling, resultaat.afdeling());
     }
 }

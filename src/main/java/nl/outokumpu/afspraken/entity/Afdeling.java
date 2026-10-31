@@ -4,6 +4,9 @@ package nl.outokumpu.afspraken.entity;
 import jakarta.persistence.*;
 import java.util.UUID;
 
+/**
+ * Represents a department to which users belong and which can participate in agreements.
+ */
 @Entity
 @Table(name = "afdelingen")
 public class Afdeling {
@@ -16,7 +19,7 @@ public class Afdeling {
     private String naam;
 
     protected Afdeling() {
-        // Vereist door JPA
+        // Required by JPA.
     }
 
     public Afdeling(String naam) {

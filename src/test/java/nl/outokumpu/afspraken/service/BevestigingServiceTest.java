@@ -6,6 +6,7 @@ import nl.outokumpu.afspraken.entity.Gebruiker;
 import nl.outokumpu.afspraken.entity.OperationeleAfspraak;
 import nl.outokumpu.afspraken.enums.Beslissing;
 import nl.outokumpu.afspraken.enums.BetrokkenRol;
+import nl.outokumpu.afspraken.mapper.AfspraakMapper;
 import nl.outokumpu.afspraken.repository.BevestigingRepository;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -32,7 +33,8 @@ class BevestigingServiceTest {
 
         bevestigingService =
                 new BevestigingService(
-                        bevestigingRepository
+                        bevestigingRepository,
+                        new AfspraakMapper()
                 );
     }
 
@@ -355,5 +357,31 @@ class BevestigingServiceTest {
                 LocalDate.of(2026, 10, 31),
                 initiatiefnemer
         );
+    }
+
+    @Test
+    void geeftBevestigingMetGebruikerZonderAfdelingTerug() {
+        UUID afspraakId = UUID.randomUUID();
+        UUID gebruikerId = UUID.randomUUID();
+        Gebruiker gebruiker = mock(Gebruiker.class);
+        when(gebruiker.getId()).thenReturn(gebruikerId);
+        when(gebruiker.getNaam()).thenReturn("Felix");
+        when(gebruiker.getEmail()).thenReturn("felix@example.com");
+        when(gebruiker.getAfdeling()).thenReturn(null);
+
+        Bevestiging bevestiging = new Bevestiging(mock(OperationeleAfspraak.class), gebruiker);
+        when(bevestigingRepository.findByAfspraakIdAndGebruikerId(afspraakId, gebruikerId))
+                .thenReturn(Optional.of(bevestiging));
+        when(bevestigingRepository.save(bevestiging)).thenReturn(bevestiging);
+
+        BevestigingResponse resultaat = bevestigingService.markeerGezien(afspraakId, gebruikerId);
+
+        assertTrue(resultaat.gezien());
+        assertNotNull(resultaat.gezienOp());
+        assertEquals(gebruikerId, resultaat.gebruiker().id());
+        assertEquals("Felix", resultaat.gebruiker().naam());
+        assertEquals("felix@example.com", resultaat.gebruiker().email());
+        assertNull(resultaat.gebruiker().afdeling());
+        verify(bevestigingRepository).save(bevestiging);
     }
 }

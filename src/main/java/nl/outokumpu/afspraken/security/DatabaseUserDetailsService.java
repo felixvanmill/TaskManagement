@@ -6,44 +6,27 @@ import nl.outokumpu.afspraken.repository.GebruikerRepository;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
-
 import org.springframework.stereotype.Service;
 
+/**
+ * Loads local-login identities by case-insensitive email and rejects accounts without a password hash.
+ */
 @Service
-public class DatabaseUserDetailsService
-        implements UserDetailsService {
+public class DatabaseUserDetailsService implements UserDetailsService {
 
     private final GebruikerRepository gebruikerRepository;
 
-    public DatabaseUserDetailsService(
-            GebruikerRepository gebruikerRepository
-    ) {
-        this.gebruikerRepository =
-                gebruikerRepository;
+    public DatabaseUserDetailsService(GebruikerRepository gebruikerRepository) {
+        this.gebruikerRepository = gebruikerRepository;
     }
 
     @Override
-    public UserDetails loadUserByUsername(
-            String email
-    ) throws UsernameNotFoundException {
+    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
+        Gebruiker gebruiker = gebruikerRepository.findByEmailIgnoreCase(email).orElseThrow(() ->
+                new UsernameNotFoundException("Gebruiker niet gevonden"));
 
-        Gebruiker gebruiker =
-                gebruikerRepository
-                        .findByEmailIgnoreCase(
-                                email
-                        )
-                        .orElseThrow(() ->
-                                new UsernameNotFoundException(
-                                        "Gebruiker niet gevonden"
-                                )
-                        );
-
-        if (gebruiker.getWachtwoordHash() == null
-                || gebruiker.getWachtwoordHash().isBlank()) {
-
-            throw new UsernameNotFoundException(
-                    "Gebruiker heeft geen lokale inloggegevens"
-            );
+        if (gebruiker.getWachtwoordHash() == null || gebruiker.getWachtwoordHash().isBlank()) {
+            throw new UsernameNotFoundException("Gebruiker heeft geen lokale inloggegevens");
         }
 
         return new GebruikerPrincipal(
@@ -51,7 +34,6 @@ public class DatabaseUserDetailsService
                 gebruiker.getEmail(),
                 gebruiker.getWachtwoordHash(),
                 gebruiker.getRol(),
-                gebruiker.isActief()
-        );
+                gebruiker.isActief());
     }
 }

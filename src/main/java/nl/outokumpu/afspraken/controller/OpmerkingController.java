@@ -19,63 +19,41 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * Exposes chronological agreement comments and attributes new comments to the authenticated user.
+ */
 @RestController
 @RequestMapping("/api/afspraken/{afspraakId}/opmerkingen")
 public class OpmerkingController {
 
     private final OpmerkingService opmerkingService;
 
-    public OpmerkingController(
-            OpmerkingService opmerkingService
-    ) {
-        this.opmerkingService =
-                opmerkingService;
+    public OpmerkingController(OpmerkingService opmerkingService) {
+        this.opmerkingService = opmerkingService;
     }
 
     @GetMapping
-    public ResponseEntity<List<OpmerkingResponse>>
-    vindOpmerkingen(
-            @PathVariable UUID afspraakId
-    ) {
-
-        return ResponseEntity.ok(
-                opmerkingService
-                        .vindOpmerkingen(
-                                afspraakId
-                        )
-        );
+    public ResponseEntity<List<OpmerkingResponse>> vindOpmerkingen(@PathVariable UUID afspraakId) {
+        return ResponseEntity.ok(opmerkingService.vindOpmerkingen(afspraakId));
     }
 
+    /**
+     * Adds a comment using the authenticated user as its author, preventing client-selected authorship.
+     *
+     * @param afspraakId the agreement receiving the comment
+     * @param request the validated comment text
+     * @param authentication the identity recorded as the comment's author
+     * @return HTTP 201 with the stored comment and author details
+     */
     @PostMapping
-    public ResponseEntity<OpmerkingResponse>
-    voegOpmerkingToe(
+    public ResponseEntity<OpmerkingResponse> voegOpmerkingToe(
             @PathVariable UUID afspraakId,
-            @Valid
-            @RequestBody
-            CreateOpmerkingRequest request,
-            Authentication authentication
-    ) {
+            @Valid @RequestBody CreateOpmerkingRequest request,
+            Authentication authentication) {
+        UUID auteurId = SecurityGebruiker.gebruikerId(authentication);
 
-        UUID auteurId =
-                SecurityGebruiker
-                        .gebruikerId(
-                                authentication
-                        );
+        OpmerkingResponse response = opmerkingService.voegOpmerkingToe(afspraakId, auteurId, request);
 
-        OpmerkingResponse response =
-                opmerkingService
-                        .voegOpmerkingToe(
-                                afspraakId,
-                                auteurId,
-                                request
-                        );
-
-        return ResponseEntity
-                .status(
-                        HttpStatus.CREATED
-                )
-                .body(
-                        response
-                );
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 }

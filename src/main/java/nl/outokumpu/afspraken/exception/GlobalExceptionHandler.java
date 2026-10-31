@@ -10,9 +10,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
-
 import org.springframework.security.access.AccessDeniedException;
-
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingRequestHeaderException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -23,196 +21,109 @@ import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+/**
+ * Maps controller exceptions to structured API errors and logs unexpected failures without exposing details.
+ */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    private static final Logger logger =
-            LoggerFactory.getLogger(
-                    GlobalExceptionHandler.class
-            );
+    private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
-    @ExceptionHandler(
-            MethodArgumentNotValidException.class
-    )
+    @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiErrorResponse> handleValidation(
             MethodArgumentNotValidException exception,
-            HttpServletRequest request
-    ) {
+            HttpServletRequest request) {
+        Map<String, String> veldFouten = new LinkedHashMap<>();
 
-        Map<String, String> veldFouten =
-                new LinkedHashMap<>();
+        exception.getBindingResult().getFieldErrors().forEach(fieldError ->
+                veldFouten.putIfAbsent(fieldError.getField(), fieldError.getDefaultMessage()));
 
-        exception.getBindingResult()
-                .getFieldErrors()
-                .forEach(fieldError ->
-                        veldFouten.putIfAbsent(
-                                fieldError.getField(),
-                                fieldError.getDefaultMessage()
-                        )
-                );
+        ApiErrorResponse response = new ApiErrorResponse(
+                Instant.now(),
+                HttpStatus.BAD_REQUEST.value(),
+                HttpStatus.BAD_REQUEST.getReasonPhrase(),
+                "Validatie mislukt",
+                request.getRequestURI(),
+                veldFouten);
 
-        ApiErrorResponse response =
-                new ApiErrorResponse(
-                        Instant.now(),
-                        HttpStatus.BAD_REQUEST.value(),
-                        HttpStatus.BAD_REQUEST.getReasonPhrase(),
-                        "Validatie mislukt",
-                        request.getRequestURI(),
-                        veldFouten
-                );
-
-        return ResponseEntity
-                .badRequest()
-                .body(response);
+        return ResponseEntity.badRequest().body(response);
     }
 
-    @ExceptionHandler(
-            AuthenticatieException.class
-    )
+    @ExceptionHandler(AuthenticatieException.class)
     public ResponseEntity<ApiErrorResponse> handleAuthenticatie(
             AuthenticatieException exception,
-            HttpServletRequest request
-    ) {
-
-        return maakResponse(
-                HttpStatus.UNAUTHORIZED,
-                exception.getMessage(),
-                request
-        );
+            HttpServletRequest request) {
+        return maakResponse(HttpStatus.UNAUTHORIZED, exception.getMessage(), request);
     }
 
-    @ExceptionHandler(
-            AccessDeniedException.class
-    )
+    @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<ApiErrorResponse> handleAccessDenied(
             AccessDeniedException exception,
-            HttpServletRequest request
-    ) {
-
-        return maakResponse(
-                HttpStatus.FORBIDDEN,
-                "Onvoldoende rechten voor deze actie",
-                request
-        );
+            HttpServletRequest request) {
+        return maakResponse(HttpStatus.FORBIDDEN, "Onvoldoende rechten voor deze actie", request);
     }
 
-    @ExceptionHandler(
-            ForbiddenOperationException.class
-    )
+    @ExceptionHandler(ForbiddenOperationException.class)
     public ResponseEntity<ApiErrorResponse> handleForbiddenOperation(
             ForbiddenOperationException exception,
-            HttpServletRequest request
-    ) {
-
-        return maakResponse(
-                HttpStatus.FORBIDDEN,
-                exception.getMessage(),
-                request
-        );
+            HttpServletRequest request) {
+        return maakResponse(HttpStatus.FORBIDDEN, exception.getMessage(), request);
     }
 
-    @ExceptionHandler(
-            IllegalArgumentException.class
-    )
+    @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ApiErrorResponse> handleIllegalArgument(
             IllegalArgumentException exception,
-            HttpServletRequest request
-    ) {
-
-        return maakResponse(
-                HttpStatus.BAD_REQUEST,
-                exception.getMessage(),
-                request
-        );
+            HttpServletRequest request) {
+        return maakResponse(HttpStatus.BAD_REQUEST, exception.getMessage(), request);
     }
 
-    @ExceptionHandler(
-            MissingRequestHeaderException.class
-    )
+    @ExceptionHandler(MissingRequestHeaderException.class)
     public ResponseEntity<ApiErrorResponse> handleMissingHeader(
             MissingRequestHeaderException exception,
-            HttpServletRequest request
-    ) {
-
+            HttpServletRequest request) {
         return maakResponse(
                 HttpStatus.BAD_REQUEST,
-                "Verplichte header ontbreekt: "
-                        + exception.getHeaderName(),
-                request
-        );
+                "Verplichte header ontbreekt: " + exception.getHeaderName(),
+                request);
     }
 
-    @ExceptionHandler(
-            MethodArgumentTypeMismatchException.class
-    )
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     public ResponseEntity<ApiErrorResponse> handleTypeMismatch(
             MethodArgumentTypeMismatchException exception,
-            HttpServletRequest request
-    ) {
-
-        return maakResponse(
-                HttpStatus.BAD_REQUEST,
-                "Ongeldige waarde voor parameter: "
-                        + exception.getName(),
-                request
-        );
+            HttpServletRequest request) {
+        return maakResponse(HttpStatus.BAD_REQUEST, "Ongeldige waarde voor parameter: " + exception.getName(), request);
     }
 
-    @ExceptionHandler(
-            HttpMessageNotReadableException.class
-    )
+    @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<ApiErrorResponse> handleOnleesbareRequest(
             HttpMessageNotReadableException exception,
-            HttpServletRequest request
-    ) {
-
-        return maakResponse(
-                HttpStatus.BAD_REQUEST,
-                "Request body bevat ongeldige gegevens",
-                request
-        );
+            HttpServletRequest request) {
+        return maakResponse(HttpStatus.BAD_REQUEST, "Request body bevat ongeldige gegevens", request);
     }
 
-    @ExceptionHandler(
-            Exception.class
-    )
-    public ResponseEntity<ApiErrorResponse> handleOnverwachteFout(
-            Exception exception,
-            HttpServletRequest request
-    ) {
-
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ApiErrorResponse> handleOnverwachteFout(Exception exception, HttpServletRequest request) {
         logger.error(
                 "Onverwachte fout bij {} {}",
                 request.getMethod(),
                 request.getRequestURI(),
-                exception
-        );
+                exception);
 
-        return maakResponse(
-                HttpStatus.INTERNAL_SERVER_ERROR,
-                "Er is een onverwachte fout opgetreden",
-                request
-        );
+        return maakResponse(HttpStatus.INTERNAL_SERVER_ERROR, "Er is een onverwachte fout opgetreden", request);
     }
 
     private ResponseEntity<ApiErrorResponse> maakResponse(
             HttpStatus status,
             String message,
-            HttpServletRequest request
-    ) {
+            HttpServletRequest request) {
+        ApiErrorResponse response = new ApiErrorResponse(
+                Instant.now(),
+                status.value(),
+                status.getReasonPhrase(),
+                message,
+                request.getRequestURI(),
+                Map.of());
 
-        ApiErrorResponse response =
-                new ApiErrorResponse(
-                        Instant.now(),
-                        status.value(),
-                        status.getReasonPhrase(),
-                        message,
-                        request.getRequestURI(),
-                        Map.of()
-                );
-
-        return ResponseEntity
-                .status(status)
-                .body(response);
+        return ResponseEntity.status(status).body(response);
     }
 }

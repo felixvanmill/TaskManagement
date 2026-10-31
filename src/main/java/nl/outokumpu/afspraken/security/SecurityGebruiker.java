@@ -6,32 +6,23 @@ import org.springframework.security.core.Authentication;
 
 import java.util.UUID;
 
+/**
+ * Extracts application user IDs only from authenticated application principals.
+ */
 public final class SecurityGebruiker {
 
     private SecurityGebruiker() {
     }
 
-    public static UUID gebruikerId(
-            Authentication authentication
-    ) {
-
-        if (authentication == null
-                || !authentication.isAuthenticated()) {
-
-            throw new AuthenticatieException(
-                    "Gebruiker is niet geauthenticeerd"
-            );
+    public static UUID gebruikerId(Authentication authentication) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw new AuthenticatieException("Gebruiker is niet geauthenticeerd");
         }
 
-        Object principal =
-                authentication.getPrincipal();
+        Object principal = authentication.getPrincipal();
 
-        if (!(principal
-                instanceof GebruikerPrincipal gebruikerPrincipal)) {
-
-            throw new AuthenticatieException(
-                    "Gebruiker is niet geauthenticeerd"
-            );
+        if (!(principal instanceof GebruikerPrincipal gebruikerPrincipal)) {
+            throw new AuthenticatieException("Gebruiker is niet geauthenticeerd");
         }
 
         return gebruikerPrincipal.getId();

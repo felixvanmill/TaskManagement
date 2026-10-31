@@ -6,6 +6,10 @@ import nl.outokumpu.afspraken.enums.Beslissing;
 import java.time.Instant;
 import java.util.UUID;
 
+/**
+ * Tracks one user's read acknowledgement and approval decision for an agreement.
+ * A single confirmation is shared across the user's roles within that agreement.
+ */
 @Entity
 @Table(
         name = "bevestigingen",
@@ -45,7 +49,7 @@ public class Bevestiging {
     private Long versie;
 
     protected Bevestiging() {
-        // Vereist door JPA
+        // Required by JPA.
     }
 
     public Bevestiging(
@@ -58,6 +62,11 @@ public class Bevestiging {
         this.beslissing = Beslissing.GEEN;
     }
 
+    /**
+     * Records the first read acknowledgement and its timestamp independently of an approval decision.
+     *
+     * @throws IllegalStateException if this confirmation has already been marked as seen
+     */
     public void markeerGezien() {
 
         if (this.gezien) {
@@ -70,6 +79,13 @@ public class Bevestiging {
         this.gezienOp = Instant.now();
     }
 
+    /**
+     * Records an approval or rejection and replaces the decision timestamp.
+     * A previous decision may be changed, but repeating it is rejected; the read acknowledgement is unaffected.
+     *
+     * @param nieuweBeslissing the approval or rejection to record
+     * @throws IllegalArgumentException if the decision is null, {@code GEEN}, or unchanged
+     */
     public void registreerBeslissing(
             Beslissing nieuweBeslissing
     ) {

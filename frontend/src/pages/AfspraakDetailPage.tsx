@@ -4,6 +4,17 @@ import {
 } from 'react'
 
 import {
+    bepaalActieveProcesstap,
+    statusLabel,
+    typeLabel,
+} from '../utils/afspraak'
+
+import {
+    formatteerDatum,
+    formatteerDatumTijd,
+} from '../utils/datum'
+
+import {
     useAuth,
 } from '../auth/useAuth'
 
@@ -42,8 +53,6 @@ import {
 
 import type {
     AfspraakDetail,
-    AfspraakStatus,
-    AfspraakType,
     Beslissing,
 } from '../types/afspraak'
 
@@ -58,68 +67,6 @@ type ToewijzingVerschil = {
     label: string
     oudeWaarde: string
     nieuweWaarde: string
-}
-
-function formatteerDatum(
-    datum: string,
-) {
-    return new Intl.DateTimeFormat(
-        'nl-NL',
-        {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric',
-        },
-    ).format(
-        new Date(`${datum}T00:00:00`),
-    )
-}
-
-function formatteerDatumTijd(
-    datum: string,
-) {
-    return new Intl.DateTimeFormat(
-        'nl-NL',
-        {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit',
-        },
-    ).format(
-        new Date(datum),
-    )
-}
-
-function statusLabel(
-    status: AfspraakStatus,
-) {
-    switch (status) {
-        case 'OPEN':
-            return 'Open'
-
-        case 'IN_BEHANDELING':
-            return 'In behandeling'
-
-        case 'AFGEROND':
-            return 'Afgerond'
-    }
-}
-
-function typeLabel(
-    type: AfspraakType,
-) {
-    switch (type) {
-        case 'ALGEMEEN':
-            return 'Algemeen'
-
-        case 'CAPACITEITSWISSEL':
-            return 'Capaciteitswissel'
-
-        case 'ORDERVERPLAATSING':
-            return 'Orderverplaatsing'
-    }
 }
 
 function beslissingLabel(
@@ -336,9 +283,8 @@ export function AfspraakDetailPage() {
     }
 
     const actieveProcesstap =
-        afspraak.processtappen.find(
-            (processtap) =>
-                processtap.status !== 'AFGEROND',
+        bepaalActieveProcesstap(
+            afspraak,
         )
 
     const laatsteProcesstap =

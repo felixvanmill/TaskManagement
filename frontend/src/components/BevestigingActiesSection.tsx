@@ -3,6 +3,10 @@ import {
 } from 'react'
 
 import {
+    formatteerDatumTijd,
+} from '../utils/datum'
+
+import {
     markeerAfspraakGezien,
     registreerBeslissing,
 } from '../api/bevestigingen'
@@ -21,23 +25,6 @@ interface BevestigingActiesSectionProps {
     onAfspraakGewijzigd: (
         afspraak: AfspraakDetail,
     ) => void
-}
-
-function formatteerDatumTijd(
-    datum: string,
-) {
-    return new Intl.DateTimeFormat(
-        'nl-NL',
-        {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit',
-        },
-    ).format(
-        new Date(datum),
-    )
 }
 
 export function BevestigingActiesSection({

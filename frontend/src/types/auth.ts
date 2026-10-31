@@ -1,11 +1,10 @@
+import type {
+    Afdeling,
+} from './afdeling'
+
 export type GebruikersRol =
     | 'GEBRUIKER'
     | 'BEHEERDER'
-
-export interface Afdeling {
-    id: string
-    naam: string
-}
 
 export interface AuthUser {
     id: string

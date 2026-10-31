@@ -4,6 +4,15 @@ import {
 } from 'react'
 
 import {
+    wijzigSelectie,
+} from '../utils/selectie'
+
+import {
+    bepaalHuidigeVerantwoordelijke,
+    typeLabel,
+} from '../utils/afspraak'
+
+import {
     Link,
     useNavigate,
     useParams,
@@ -30,62 +39,7 @@ import {
 import type {
     AfspraakDetail,
     AfspraakGebruiker,
-    AfspraakType,
 } from '../types/afspraak'
-
-function typeLabel(
-    type: AfspraakType,
-) {
-    switch (type) {
-        case 'ALGEMEEN':
-            return 'Algemeen'
-
-        case 'CAPACITEITSWISSEL':
-            return 'Capaciteitswissel'
-
-        case 'ORDERVERPLAATSING':
-            return 'Orderverplaatsing'
-    }
-}
-
-function bepaalHuidigeVerantwoordelijke(
-    afspraak: AfspraakDetail,
-) {
-    if (afspraak.processtappen.length === 0) {
-        return null
-    }
-
-    const actieveProcesstap =
-        afspraak.processtappen.find(
-            (processtap) =>
-                processtap.status !== 'AFGEROND',
-        )
-
-    if (actieveProcesstap !== undefined) {
-        return actieveProcesstap.verantwoordelijke
-    }
-
-    return afspraak.processtappen[
-    afspraak.processtappen.length - 1
-        ].verantwoordelijke
-}
-
-function wijzigSelectie(
-    huidigeIds: string[],
-    id: string,
-) {
-    if (huidigeIds.includes(id)) {
-        return huidigeIds.filter(
-            (huidigId) =>
-                huidigId !== id,
-        )
-    }
-
-    return [
-        ...huidigeIds,
-        id,
-    ]
-}
 
 function maakUpdateRequestVanAfspraak(
     afspraak: AfspraakDetail,

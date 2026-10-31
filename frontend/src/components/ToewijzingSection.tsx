@@ -3,6 +3,19 @@ import {
     useState,
 } from 'react'
 
+import type {
+    Afdeling,
+} from '../types/afdeling'
+
+import {
+    wijzigSelectie,
+} from '../utils/selectie'
+
+import {
+    bepaalActieveProcesstap,
+    bepaalHuidigeVerantwoordelijke,
+} from '../utils/afspraak'
+
 import {
     getAfdelingen,
 } from '../api/afdelingen'
@@ -20,7 +33,6 @@ import {
 } from '../auth/useAuth'
 
 import type {
-    Afdeling,
     AfspraakDetail,
     AfspraakGebruiker,
 } from '../types/afspraak'
@@ -32,52 +44,12 @@ interface ToewijzingSectionProps {
     ) => void
 }
 
-function wijzigSelectie(
-    huidigeIds: string[],
-    id: string,
-) {
-    if (huidigeIds.includes(id)) {
-        return huidigeIds.filter(
-            (huidigId) =>
-                huidigId !== id,
-        )
-    }
-
-    return [
-        ...huidigeIds,
-        id,
-    ]
-}
-
-function bepaalHuidigeVerantwoordelijke(
-    afspraak: AfspraakDetail,
-) {
-    if (afspraak.processtappen.length === 0) {
-        return null
-    }
-
-    const actieveProcesstap =
-        afspraak.processtappen.find(
-            (processtap) =>
-                processtap.status !== 'AFGEROND',
-        )
-
-    if (actieveProcesstap !== undefined) {
-        return actieveProcesstap.verantwoordelijke
-    }
-
-    return afspraak.processtappen[
-    afspraak.processtappen.length - 1
-        ].verantwoordelijke
-}
-
 function bepaalStandaardProcesstap(
     afspraak: AfspraakDetail,
 ) {
     const actieveProcesstap =
-        afspraak.processtappen.find(
-            (processtap) =>
-                processtap.status !== 'AFGEROND',
+        bepaalActieveProcesstap(
+            afspraak,
         )
 
     if (actieveProcesstap !== undefined) {

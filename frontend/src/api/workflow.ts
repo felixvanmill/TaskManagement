@@ -1,3 +1,4 @@
+import { leesApiFout } from './errors'
 import { apiFetch } from './http'
 
 import type {
@@ -5,10 +6,6 @@ import type {
     AfspraakStatus,
     UitvoeringsStatus,
 } from '../types/afspraak'
-
-interface ApiErrorResponse {
-    message?: string
-}
 
 export interface UpdateToewijzingRequest {
     betrokkeneIds: string[]
@@ -34,21 +31,15 @@ async function voerWorkflowActieUit(
     )
 
     if (!response.ok) {
-        let melding =
-            `Workflowactie mislukt (${response.status})`
-
-        try {
-            const fout =
-                await response.json() as ApiErrorResponse
-
-            if (fout.message) {
-                melding = fout.message
-            }
-        } catch {
-            // Gebruik standaardmelding.
-        }
-
-        throw new Error(melding)
+        throw new Error(
+            await leesApiFout(
+                response,
+                `Workflowactie mislukt (${response.status})`,
+                {
+                    gebruikStandaardBijLegeMelding: true,
+                },
+            ),
+        )
     }
 
     return response.json() as Promise<AfspraakDetail>

@@ -6,6 +6,7 @@ import nl.outokumpu.afspraken.dto.response.GebruikerResponse;
 import nl.outokumpu.afspraken.entity.Afdeling;
 import nl.outokumpu.afspraken.entity.Gebruiker;
 import nl.outokumpu.afspraken.enums.GebruikersRol;
+import nl.outokumpu.afspraken.mapper.AfspraakMapper;
 import nl.outokumpu.afspraken.repository.GebruikerRepository;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -31,7 +32,8 @@ class GebruikerServiceTest {
 
         gebruikerService =
                 new GebruikerService(
-                        gebruikerRepository
+                        gebruikerRepository,
+                        new AfspraakMapper()
                 );
     }
 
@@ -313,6 +315,17 @@ class GebruikerServiceTest {
         assertEquals(
                 "Gebruiker niet gevonden",
                 exception.getMessage()
+        );
+    }
+
+    @Test
+    void gebruikersoverzichtBlijftEenAfdelingVereisen() {
+        Gebruiker gebruiker = new Gebruiker("Felix", "felix@example.com", null);
+        when(gebruikerRepository.findAll()).thenReturn(List.of(gebruiker));
+
+        assertThrows(
+                NullPointerException.class,
+                () -> gebruikerService.vindAlleGebruikers()
         );
     }
 }

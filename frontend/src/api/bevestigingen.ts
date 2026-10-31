@@ -1,28 +1,10 @@
+import { leesApiFout } from './errors'
 import { apiFetch } from './http'
 
 import type {
     Beslissing,
     Bevestiging,
 } from '../types/afspraak'
-
-interface ApiErrorResponse {
-    message?: string
-}
-
-async function leesFoutmelding(
-    response: Response,
-    standaardMelding: string,
-) {
-    try {
-        const fout =
-            await response.json() as ApiErrorResponse
-
-        return fout.message
-            ?? standaardMelding
-    } catch {
-        return standaardMelding
-    }
-}
 
 export async function markeerAfspraakGezien(
     afspraakId: string,
@@ -36,7 +18,7 @@ export async function markeerAfspraakGezien(
 
     if (!response.ok) {
         throw new Error(
-            await leesFoutmelding(
+            await leesApiFout(
                 response,
                 `Gezien bevestigen mislukt (${response.status})`,
             ),
@@ -62,7 +44,7 @@ export async function registreerBeslissing(
 
     if (!response.ok) {
         throw new Error(
-            await leesFoutmelding(
+            await leesApiFout(
                 response,
                 `Beslissing registreren mislukt (${response.status})`,
             ),

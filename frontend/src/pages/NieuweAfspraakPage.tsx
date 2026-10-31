@@ -3,6 +3,18 @@ import {
     useState,
 } from 'react'
 
+import type {
+    Afdeling,
+} from '../types/afdeling'
+
+import {
+    wijzigSelectie,
+} from '../utils/selectie'
+
+import {
+    typeLabel,
+} from '../utils/afspraak'
+
 import {
     Link,
     useNavigate,
@@ -21,27 +33,10 @@ import {
 } from '../api/gebruikers'
 
 import type {
-    Afdeling,
     AfspraakGebruiker,
     AfspraakType,
     CreateAfspraakRequest,
 } from '../types/afspraak'
-
-function wijzigSelectie(
-    huidigeIds: string[],
-    id: string,
-) {
-    if (huidigeIds.includes(id)) {
-        return huidigeIds.filter(
-            (huidigId) => huidigId !== id,
-        )
-    }
-
-    return [
-        ...huidigeIds,
-        id,
-    ]
-}
 
 export function NieuweAfspraakPage() {
     const navigate =
@@ -391,15 +386,15 @@ export function NieuweAfspraakPage() {
                                 required
                             >
                                 <option value="ALGEMEEN">
-                                    Algemeen
+                                    {typeLabel('ALGEMEEN')}
                                 </option>
 
                                 <option value="CAPACITEITSWISSEL">
-                                    Capaciteitswissel
+                                    {typeLabel('CAPACITEITSWISSEL')}
                                 </option>
 
                                 <option value="ORDERVERPLAATSING">
-                                    Orderverplaatsing
+                                    {typeLabel('ORDERVERPLAATSING')}
                                 </option>
                             </select>
                         </label>

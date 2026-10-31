@@ -1,3 +1,7 @@
+import type {
+    Afdeling,
+} from './afdeling'
+
 export type AfspraakType =
     | 'ALGEMEEN'
     | 'CAPACITEITSWISSEL'
@@ -22,11 +26,6 @@ export type UitvoeringsStatus =
     | 'NIET_UITGEVOERD'
     | 'IN_UITVOERING'
     | 'UITGEVOERD'
-
-export interface Afdeling {
-    id: string
-    naam: string
-}
 
 export interface AfspraakGebruiker {
     id: string
@@ -120,16 +119,7 @@ export interface AfspraakDetail {
     orderverplaatsing: OrderverplaatsingData | null
 }
 
-export interface CapaciteitswisselInput {
-    fabriek: string
-    finishType: string
-    grade: string
-    capaciteitVan: number
-    capaciteitNaar: number
-    capaciteitEenheid: string
-    periodeVan: string
-    periodeTot: string
-}
+export type CapaciteitswisselInput = CapaciteitswisselData
 
 export interface OrderverplaatsingInput {
     vanFabriek: string

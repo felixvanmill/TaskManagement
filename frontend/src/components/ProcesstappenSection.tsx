@@ -3,6 +3,15 @@ import {
 } from 'react'
 
 import {
+    processtapStatusLabel,
+} from '../utils/afspraak'
+
+import {
+    formatteerDatum,
+    formatteerDatumTijd,
+} from '../utils/datum'
+
+import {
     rondProcesstapAf,
     startProcesstap,
 } from '../api/workflow'
@@ -13,7 +22,6 @@ import {
 
 import type {
     AfspraakDetail,
-    ProcesstapStatus,
 } from '../types/afspraak'
 
 interface ProcesstappenSectionProps {
@@ -21,53 +29,6 @@ interface ProcesstappenSectionProps {
     onAfspraakGewijzigd: (
         afspraak: AfspraakDetail,
     ) => void
-}
-
-function formatteerDatum(
-    datum: string,
-) {
-    return new Intl.DateTimeFormat(
-        'nl-NL',
-        {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric',
-        },
-    ).format(
-        new Date(`${datum}T00:00:00`),
-    )
-}
-
-function formatteerDatumTijd(
-    datum: string,
-) {
-    return new Intl.DateTimeFormat(
-        'nl-NL',
-        {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit',
-        },
-    ).format(
-        new Date(datum),
-    )
-}
-
-function processtapStatusLabel(
-    status: ProcesstapStatus,
-) {
-    switch (status) {
-        case 'NIET_GESTART':
-            return 'Niet gestart'
-
-        case 'IN_UITVOERING':
-            return 'In uitvoering'
-
-        case 'AFGEROND':
-            return 'Afgerond'
-    }
 }
 
 export function ProcesstappenSection({

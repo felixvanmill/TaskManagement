@@ -5,6 +5,10 @@ import jakarta.persistence.*;
 import java.time.Instant;
 import java.util.UUID;
 
+/**
+ * An authored comment on an agreement, with text and authorship mapped as non-updatable.
+ * Its creation timestamp is assigned on first persistence if not already set.
+ */
 @Entity
 @Table(name = "opmerkingen")
 public class Opmerking {
@@ -44,7 +48,7 @@ public class Opmerking {
     private Instant aangemaaktOp;
 
     protected Opmerking() {
-        // Vereist door JPA
+        // Required by JPA.
     }
 
     public Opmerking(
