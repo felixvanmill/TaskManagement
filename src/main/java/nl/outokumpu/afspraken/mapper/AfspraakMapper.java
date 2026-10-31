@@ -185,7 +185,7 @@ public class AfspraakMapper {
         );
     }
 
-    private AfdelingResponse naarAfdelingResponse(
+    public AfdelingResponse naarAfdelingResponse(
             Afdeling afdeling
     ) {
         return new AfdelingResponse(

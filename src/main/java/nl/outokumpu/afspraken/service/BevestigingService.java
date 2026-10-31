@@ -9,6 +9,7 @@ import nl.outokumpu.afspraken.entity.Betrokkenheid;
 import nl.outokumpu.afspraken.entity.Gebruiker;
 import nl.outokumpu.afspraken.enums.Beslissing;
 import nl.outokumpu.afspraken.enums.BetrokkenRol;
+import nl.outokumpu.afspraken.mapper.AfspraakMapper;
 import nl.outokumpu.afspraken.repository.BevestigingRepository;
 import nl.outokumpu.afspraken.exception.ForbiddenOperationException;
 import org.springframework.stereotype.Service;
@@ -20,13 +21,18 @@ import java.util.UUID;
 @Transactional
 public class BevestigingService {
 
+    private final AfspraakMapper afspraakMapper;
+
     private final BevestigingRepository bevestigingRepository;
 
     public BevestigingService(
-            BevestigingRepository bevestigingRepository
+            BevestigingRepository bevestigingRepository,
+            AfspraakMapper afspraakMapper
     ) {
         this.bevestigingRepository =
                 bevestigingRepository;
+
+        this.afspraakMapper = afspraakMapper;
     }
 
     public BevestigingResponse markeerGezien(
@@ -178,9 +184,8 @@ public class BevestigingService {
             return null;
         }
 
-        return new AfdelingResponse(
-                afdeling.getId(),
-                afdeling.getNaam()
+        return afspraakMapper.naarAfdelingResponse(
+                afdeling
         );
     }
 }

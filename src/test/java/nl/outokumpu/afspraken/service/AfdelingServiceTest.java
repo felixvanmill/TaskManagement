@@ -2,6 +2,7 @@ package nl.outokumpu.afspraken.service;
 
 import nl.outokumpu.afspraken.dto.response.AfdelingResponse;
 import nl.outokumpu.afspraken.entity.Afdeling;
+import nl.outokumpu.afspraken.mapper.AfspraakMapper;
 import nl.outokumpu.afspraken.repository.AfdelingRepository;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -22,7 +23,10 @@ class AfdelingServiceTest {
     @BeforeEach
     void setUp() {
         afdelingRepository = mock(AfdelingRepository.class);
-        afdelingService = new AfdelingService(afdelingRepository);
+        afdelingService = new AfdelingService(
+                afdelingRepository,
+                new AfspraakMapper()
+        );
     }
 
     @Test

@@ -6,6 +6,7 @@ import nl.outokumpu.afspraken.entity.Afdeling;
 import nl.outokumpu.afspraken.entity.Gebruiker;
 import nl.outokumpu.afspraken.enums.GebruikersRol;
 import nl.outokumpu.afspraken.exception.AuthenticatieException;
+import nl.outokumpu.afspraken.mapper.AfspraakMapper;
 import nl.outokumpu.afspraken.repository.GebruikerRepository;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -41,7 +42,8 @@ class AuthServiceTest {
         authService =
                 new AuthService(
                         authenticationManager,
-                        gebruikerRepository
+                        gebruikerRepository,
+                        new AfspraakMapper()
                 );
     }
 

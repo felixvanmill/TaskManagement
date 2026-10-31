@@ -5,6 +5,7 @@ import nl.outokumpu.afspraken.dto.response.AfdelingResponse;
 import nl.outokumpu.afspraken.dto.response.GebruikerBeheerResponse;
 import nl.outokumpu.afspraken.dto.response.GebruikerResponse;
 import nl.outokumpu.afspraken.entity.Gebruiker;
+import nl.outokumpu.afspraken.mapper.AfspraakMapper;
 import nl.outokumpu.afspraken.repository.GebruikerRepository;
 
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -20,13 +21,18 @@ import java.util.UUID;
 @Transactional(readOnly = true)
 public class GebruikerService {
 
+    private final AfspraakMapper afspraakMapper;
+
     private final GebruikerRepository gebruikerRepository;
 
     public GebruikerService(
-            GebruikerRepository gebruikerRepository
+            GebruikerRepository gebruikerRepository,
+            AfspraakMapper afspraakMapper
     ) {
         this.gebruikerRepository =
                 gebruikerRepository;
+
+        this.afspraakMapper = afspraakMapper;
     }
 
     public List<GebruikerResponse> vindAlleGebruikers() {
@@ -129,11 +135,8 @@ public class GebruikerService {
             Gebruiker gebruiker
     ) {
 
-        return new AfdelingResponse(
+        return afspraakMapper.naarAfdelingResponse(
                 gebruiker.getAfdeling()
-                        .getId(),
-                gebruiker.getAfdeling()
-                        .getNaam()
         );
     }
 }

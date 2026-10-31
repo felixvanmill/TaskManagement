@@ -6,6 +6,7 @@ import nl.outokumpu.afspraken.entity.Gebruiker;
 import nl.outokumpu.afspraken.entity.OperationeleAfspraak;
 import nl.outokumpu.afspraken.enums.Beslissing;
 import nl.outokumpu.afspraken.enums.BetrokkenRol;
+import nl.outokumpu.afspraken.mapper.AfspraakMapper;
 import nl.outokumpu.afspraken.repository.BevestigingRepository;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -32,7 +33,8 @@ class BevestigingServiceTest {
 
         bevestigingService =
                 new BevestigingService(
-                        bevestigingRepository
+                        bevestigingRepository,
+                        new AfspraakMapper()
                 );
     }
 

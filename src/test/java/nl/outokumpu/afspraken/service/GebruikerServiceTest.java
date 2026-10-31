@@ -6,6 +6,7 @@ import nl.outokumpu.afspraken.dto.response.GebruikerResponse;
 import nl.outokumpu.afspraken.entity.Afdeling;
 import nl.outokumpu.afspraken.entity.Gebruiker;
 import nl.outokumpu.afspraken.enums.GebruikersRol;
+import nl.outokumpu.afspraken.mapper.AfspraakMapper;
 import nl.outokumpu.afspraken.repository.GebruikerRepository;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -31,7 +32,8 @@ class GebruikerServiceTest {
 
         gebruikerService =
                 new GebruikerService(
-                        gebruikerRepository
+                        gebruikerRepository,
+                        new AfspraakMapper()
                 );
     }
 

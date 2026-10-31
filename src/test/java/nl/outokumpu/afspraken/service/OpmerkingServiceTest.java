@@ -8,6 +8,7 @@ import nl.outokumpu.afspraken.entity.Gebruiker;
 import nl.outokumpu.afspraken.entity.OperationeleAfspraak;
 import nl.outokumpu.afspraken.entity.Opmerking;
 
+import nl.outokumpu.afspraken.mapper.AfspraakMapper;
 import nl.outokumpu.afspraken.repository.GebruikerRepository;
 import nl.outokumpu.afspraken.repository.OperationeleAfspraakRepository;
 import nl.outokumpu.afspraken.repository.OpmerkingRepository;
@@ -54,7 +55,8 @@ class OpmerkingServiceTest {
                 new OpmerkingService(
                         opmerkingRepository,
                         afspraakRepository,
-                        gebruikerRepository
+                        gebruikerRepository,
+                        new AfspraakMapper()
                 );
     }
 

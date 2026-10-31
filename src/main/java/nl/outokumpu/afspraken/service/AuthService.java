@@ -6,6 +6,7 @@ import nl.outokumpu.afspraken.dto.response.AuthResponse;
 import nl.outokumpu.afspraken.entity.Afdeling;
 import nl.outokumpu.afspraken.entity.Gebruiker;
 import nl.outokumpu.afspraken.exception.AuthenticatieException;
+import nl.outokumpu.afspraken.mapper.AfspraakMapper;
 import nl.outokumpu.afspraken.repository.GebruikerRepository;
 
 import org.springframework.security.authentication.AuthenticationManager;
@@ -20,18 +21,23 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 public class AuthService {
 
+    private final AfspraakMapper afspraakMapper;
+
     private final AuthenticationManager authenticationManager;
     private final GebruikerRepository gebruikerRepository;
 
     public AuthService(
             AuthenticationManager authenticationManager,
-            GebruikerRepository gebruikerRepository
+            GebruikerRepository gebruikerRepository,
+            AfspraakMapper afspraakMapper
     ) {
         this.authenticationManager =
                 authenticationManager;
 
         this.gebruikerRepository =
                 gebruikerRepository;
+
+        this.afspraakMapper = afspraakMapper;
     }
 
     public Authentication login(
@@ -97,9 +103,8 @@ public class AuthService {
             return null;
         }
 
-        return new AfdelingResponse(
-                afdeling.getId(),
-                afdeling.getNaam()
+        return afspraakMapper.naarAfdelingResponse(
+                afdeling
         );
     }
 }

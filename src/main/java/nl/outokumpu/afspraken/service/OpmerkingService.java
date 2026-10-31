@@ -10,6 +10,7 @@ import nl.outokumpu.afspraken.entity.Gebruiker;
 import nl.outokumpu.afspraken.entity.OperationeleAfspraak;
 import nl.outokumpu.afspraken.entity.Opmerking;
 
+import nl.outokumpu.afspraken.mapper.AfspraakMapper;
 import nl.outokumpu.afspraken.repository.GebruikerRepository;
 import nl.outokumpu.afspraken.repository.OperationeleAfspraakRepository;
 import nl.outokumpu.afspraken.repository.OpmerkingRepository;
@@ -24,6 +25,8 @@ import java.util.UUID;
 @Transactional
 public class OpmerkingService {
 
+    private final AfspraakMapper afspraakMapper;
+
     private final OpmerkingRepository opmerkingRepository;
     private final OperationeleAfspraakRepository afspraakRepository;
     private final GebruikerRepository gebruikerRepository;
@@ -31,7 +34,8 @@ public class OpmerkingService {
     public OpmerkingService(
             OpmerkingRepository opmerkingRepository,
             OperationeleAfspraakRepository afspraakRepository,
-            GebruikerRepository gebruikerRepository
+            GebruikerRepository gebruikerRepository,
+            AfspraakMapper afspraakMapper
     ) {
         this.opmerkingRepository =
                 opmerkingRepository;
@@ -41,6 +45,8 @@ public class OpmerkingService {
 
         this.gebruikerRepository =
                 gebruikerRepository;
+
+        this.afspraakMapper = afspraakMapper;
     }
 
     public OpmerkingResponse voegOpmerkingToe(
@@ -149,9 +155,8 @@ public class OpmerkingService {
             return null;
         }
 
-        return new AfdelingResponse(
-                afdeling.getId(),
-                afdeling.getNaam()
+        return afspraakMapper.naarAfdelingResponse(
+                afdeling
         );
     }
 }
