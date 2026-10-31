@@ -21,6 +21,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * Stores agreement comments and retrieves them in chronological order.
+ */
 @Service
 @Transactional
 public class OpmerkingService {
@@ -49,6 +52,16 @@ public class OpmerkingService {
         this.afspraakMapper = afspraakMapper;
     }
 
+    /**
+     * Adds a comment to an existing agreement on behalf of an existing user.
+     * The domain model trims the text and rejects blank or oversized comments.
+     *
+     * @param afspraakId the agreement receiving the comment
+     * @param auteurId the author of the comment
+     * @param request the comment text
+     * @return the stored comment, including its author
+     * @throws IllegalArgumentException if the agreement or author is missing, or the comment text is invalid
+     */
     public OpmerkingResponse voegOpmerkingToe(
             UUID afspraakId,
             UUID auteurId,
@@ -94,6 +107,13 @@ public class OpmerkingService {
         );
     }
 
+    /**
+     * Retrieves comments in creation order, distinguishing a missing agreement from one without comments.
+     *
+     * @param afspraakId the agreement whose comments are requested
+     * @return the comments in ascending creation order, or an empty list
+     * @throws IllegalArgumentException if the agreement does not exist
+     */
     @Transactional(readOnly = true)
     public List<OpmerkingResponse> vindOpmerkingen(
             UUID afspraakId

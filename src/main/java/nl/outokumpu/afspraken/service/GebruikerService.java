@@ -17,6 +17,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * Provides user reference data and administrator-only account access management.
+ */
 @Service
 @Transactional(readOnly = true)
 public class GebruikerService {
@@ -44,6 +47,11 @@ public class GebruikerService {
                 .toList();
     }
 
+    /**
+     * Returns administrator-only user details, including whether a local password hash is configured.
+     *
+     * @return all users with their roles, active flags and local-login availability
+     */
     @PreAuthorize("hasRole('BEHEERDER')")
     public List<GebruikerBeheerResponse>
     vindAlleGebruikersVoorBeheer() {
@@ -55,6 +63,15 @@ public class GebruikerService {
                 .toList();
     }
 
+    /**
+     * Replaces a user's role and active flag; access to this operation is restricted to administrators.
+     * The user's password and department are left unchanged.
+     *
+     * @param gebruikerId the account to update
+     * @param request the desired role and active flag
+     * @return the updated administrative user details
+     * @throws IllegalArgumentException if the user is missing or the requested role is null
+     */
     @Transactional
     @PreAuthorize("hasRole('BEHEERDER')")
     public GebruikerBeheerResponse wijzigToegang(

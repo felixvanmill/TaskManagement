@@ -9,6 +9,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+/**
+ * Provides department reference data for agreement assignment.
+ */
 @Service
 @Transactional(readOnly = true)
 public class AfdelingService {

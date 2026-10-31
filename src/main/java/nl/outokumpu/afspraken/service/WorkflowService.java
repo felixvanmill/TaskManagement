@@ -23,6 +23,9 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 
+/**
+ * Applies authorized workflow transitions and assignment changes with an audit trail.
+ */
 @Service
 @Transactional
 public class WorkflowService {
@@ -50,6 +53,16 @@ public class WorkflowService {
         this.afspraakMapper = afspraakMapper;
     }
 
+    /**
+     * Starts a not-yet-started process step on behalf of its responsible user and records the transition.
+     *
+     * @param processtapId the process step to start
+     * @param gebruikerId the user requesting the transition
+     * @return the agreement containing the updated process step
+     * @throws ForbiddenOperationException if the user is not responsible for this step
+     * @throws IllegalArgumentException if the process step does not exist
+     * @throws IllegalStateException if the step is not in NIET_GESTART
+     */
     public AfspraakDetailResponse startProcesstap(
             UUID processtapId,
             UUID gebruikerId
@@ -100,6 +113,17 @@ public class WorkflowService {
         );
     }
 
+    /**
+     * Completes an in-progress process step on behalf of its responsible user and records the transition.
+     * This does not automatically complete the agreement or start another step.
+     *
+     * @param processtapId the process step to complete
+     * @param gebruikerId the user requesting the transition
+     * @return the agreement containing the updated process step
+     * @throws ForbiddenOperationException if the user is not responsible for this step
+     * @throws IllegalArgumentException if the process step does not exist
+     * @throws IllegalStateException if the step is not in IN_UITVOERING
+     */
     public AfspraakDetailResponse rondProcesstapAf(
             UUID processtapId,
             UUID gebruikerId
@@ -150,6 +174,18 @@ public class WorkflowService {
         );
     }
 
+    /**
+     * Changes the agreement status on behalf of its current responsible user and records the change.
+     * The current responsible user belongs to the first unfinished step, or the last step if all are complete.
+     *
+     * @param afspraakId the agreement to update
+     * @param nieuweStatus the desired agreement status
+     * @param gebruikerId the user requesting the change
+     * @return the agreement with its updated status
+     * @throws ForbiddenOperationException if the user is not the current responsible user
+     * @throws IllegalArgumentException if the agreement is missing or the status is null or unchanged
+     * @throws IllegalStateException if the agreement has no process steps
+     */
     public AfspraakDetailResponse wijzigAfspraakStatus(
             UUID afspraakId,
             AfspraakStatus nieuweStatus,
@@ -201,6 +237,18 @@ public class WorkflowService {
         );
     }
 
+    /**
+     * Changes an order relocation's execution status on behalf of its current responsible user.
+     * The execution status is separate from the agreement status and is recorded in the change history.
+     *
+     * @param afspraakId the order relocation agreement to update
+     * @param nieuweStatus the desired execution status
+     * @param gebruikerId the user requesting the change
+     * @return the agreement with its updated execution status
+     * @throws ForbiddenOperationException if the user is not the current responsible user
+     * @throws IllegalArgumentException if the agreement is missing, is not an order relocation, or the status is null or unchanged
+     * @throws IllegalStateException if the agreement has no process steps
+     */
     public AfspraakDetailResponse wijzigUitvoeringsstatus(
             UUID afspraakId,
             UitvoeringsStatus nieuweStatus,
@@ -262,6 +310,19 @@ public class WorkflowService {
         );
     }
 
+    /**
+     * Replaces involved users and departments and assigns a responsible user to a selected process step.
+     * Only the initiator or current responsible user may change assignments. The selected step must
+     * belong to the agreement; confirmations of removed participants are retained.
+     *
+     * @param afspraakId the agreement whose assignments are being changed
+     * @param request the desired participants, departments, process step and responsible user
+     * @param gebruikerId the user performing the change
+     * @return the agreement with its updated assignments
+     * @throws ForbiddenOperationException if the user is neither the initiator nor the current responsible user
+     * @throws IllegalArgumentException if a referenced entity is missing or the step belongs to another agreement
+     * @throws IllegalStateException if a non-initiator's responsibility cannot be determined because there are no steps
+     */
     public AfspraakDetailResponse updateToewijzing(
             UUID afspraakId,
             UpdateToewijzingRequest request,

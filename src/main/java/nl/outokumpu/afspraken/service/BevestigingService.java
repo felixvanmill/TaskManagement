@@ -17,6 +17,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
+/**
+ * Records read confirmations and restricts approval decisions to designated approvers.
+ */
 @Service
 @Transactional
 public class BevestigingService {
@@ -35,6 +38,16 @@ public class BevestigingService {
         this.afspraakMapper = afspraakMapper;
     }
 
+    /**
+     * Records a read acknowledgement for an existing user confirmation.
+     * Acknowledging an agreement does not require the approver role.
+     *
+     * @param afspraakId the agreement being acknowledged
+     * @param gebruikerId the user whose confirmation is updated
+     * @return the updated confirmation with its read timestamp
+     * @throws IllegalArgumentException if no confirmation exists for the agreement and user
+     * @throws IllegalStateException if the agreement has already been acknowledged by this user
+     */
     public BevestigingResponse markeerGezien(
             UUID afspraakId,
             UUID gebruikerId
@@ -58,6 +71,17 @@ public class BevestigingService {
         );
     }
 
+    /**
+     * Records an approval or rejection only for a currently designated approver.
+     * A previous decision may be changed, but repeating the same decision is rejected.
+     *
+     * @param afspraakId the agreement being reviewed
+     * @param gebruikerId the user making the decision
+     * @param beslissing the approval or rejection to record
+     * @return the updated confirmation with its decision timestamp
+     * @throws ForbiddenOperationException if the user is not a designated approver
+     * @throws IllegalArgumentException if no confirmation exists or the decision is null, GEEN, or unchanged
+     */
     public BevestigingResponse registreerBeslissing(
             UUID afspraakId,
             UUID gebruikerId,

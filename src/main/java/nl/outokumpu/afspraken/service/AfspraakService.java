@@ -32,6 +32,9 @@ import java.util.UUID;
 import java.util.HashSet;
 import java.util.Set;
 
+/**
+ * Manages operational agreements, their participants and approvers, and field-level change history.
+ */
 @Service
 @Transactional
 public class AfspraakService {
@@ -56,6 +59,15 @@ public class AfspraakService {
         this.afspraakMapper = afspraakMapper;
     }
 
+    /**
+     * Creates a typed agreement with its first process step, participants, approvers and departments.
+     * Participants and approvers share one confirmation per user, even when a user holds both roles.
+     *
+     * @param request agreement details and references to existing users and departments
+     * @param initiatiefnemerId the user creating the agreement
+     * @return the created agreement with its related details
+     * @throws IllegalArgumentException if a referenced entity is missing or the supplied data does not match the agreement type
+     */
     public AfspraakDetailResponse createAfspraak(
             CreateAfspraakRequest request,
             UUID initiatiefnemerId
@@ -186,6 +198,18 @@ public class AfspraakService {
         );
     }
 
+    /**
+     * Updates editable fields and records a history entry for each changed value.
+     * Only the initiator or current responsible user may edit the agreement. If all process steps
+     * are completed, the responsible user of the last step is used.
+     *
+     * @param afspraakId the agreement to update
+     * @param request replacement values for the editable fields
+     * @param gebruikerId the user performing the update
+     * @return the updated agreement, mapped after persistence callbacks have run
+     * @throws ForbiddenOperationException if the user is neither the initiator nor the current responsible user
+     * @throws IllegalArgumentException if the agreement is missing, the data is invalid, or no values have changed
+     */
     public AfspraakDetailResponse updateAfspraak(
             UUID afspraakId,
             UpdateAfspraakRequest request,
@@ -253,25 +277,18 @@ public class AfspraakService {
         }
 
         /*
-         * De afspraak is al managed omdat hij binnen deze
-         * transaction via findById() is geladen.
-         *
-         * Daarom géén afspraakRepository.save(afspraak).
-         * JPA dirty checking slaat de gewijzigde afspraak
-         * automatisch op.
-         *
-         * De nieuwe historie-items slaan we expliciet op.
+         * The agreement was loaded within this transaction and is already managed.
+         * JPA dirty checking persists its changes without another save call.
+         * New history entries are saved explicitly.
          */
         wijzigingRepository.saveAll(
                 wijzigingen
         );
 
         /*
-         * Flush zodat:
-         * - de afspraakwijzigingen naar de database gaan;
-         * - @PreUpdate wordt uitgevoerd;
-         * - de nieuwe historie-items hun id/timestamp krijgen;
-         * voordat we de response mappen.
+         * Flush before mapping so agreement changes and persistence callbacks,
+         * including @PreUpdate and history ID/timestamp generation, are reflected
+         * in the response.
          */
         afspraakRepository.flush();
 
@@ -280,6 +297,18 @@ public class AfspraakService {
         );
     }
 
+    /**
+     * Replaces the designated approvers; only the agreement's initiator may do so.
+     * Existing confirmations are retained, including those of removed approvers.
+     * An unchanged approver set returns the current details without a history entry.
+     *
+     * @param afspraakId the agreement whose approvers are being replaced
+     * @param request the complete set of desired approver IDs
+     * @param gebruikerId the user performing the change
+     * @return the agreement with its current approvers
+     * @throws ForbiddenOperationException if the user is not the initiator
+     * @throws IllegalArgumentException if the agreement or a requested approver is missing
+     */
     public AfspraakDetailResponse wijzigGoedkeurders(
             UUID afspraakId,
             UpdateGoedkeurdersRequest request,
@@ -424,19 +453,16 @@ public class AfspraakService {
                 );
 
         /*
-         * De afspraak is binnen deze transactie al managed.
-         * Daarom niet opnieuw save(afspraak) uitvoeren.
-         *
-         * De gewijzigde betrokkenheden worden via dirty checking
-         * en orphanRemoval verwerkt.
+         * The agreement is already managed within this transaction.
+         * Dirty checking and orphanRemoval persist the changed participants
+         * without another save call for the agreement.
          */
         wijzigingRepository.save(
                 wijziging
         );
 
         /*
-         * Forceer de databasewijzigingen voordat de response
-         * wordt gemapt.
+         * Flush database changes before mapping the response.
          */
         afspraakRepository.flush();
 
@@ -504,6 +530,13 @@ public class AfspraakService {
                 .toList();
     }
 
+    /**
+     * Searches agreement text using a trimmed, case-insensitive keyword match.
+     *
+     * @param zoekterm the required, non-blank search term
+     * @return matching agreements ordered by most recent modification first
+     * @throws IllegalArgumentException if the search term is null or blank
+     */
     @Transactional(readOnly = true)
     public List<AfspraakSummaryResponse> zoekAfspraken(
             String zoekterm
@@ -528,6 +561,15 @@ public class AfspraakService {
                 .toList();
     }
 
+    /**
+     * Combines the supplied filters and orders results by most recent modification first.
+     * The date range matches agreements whose effective-date-to-deadline interval overlaps it.
+     * The responsible-user filter matches any process step, not only the current step.
+     *
+     * @param filter the filter criteria; individual criteria may be omitted
+     * @return agreements satisfying the supplied criteria
+     * @throws IllegalArgumentException if the filter is null or its start date is after its end date
+     */
     @Transactional(readOnly = true)
     public List<AfspraakSummaryResponse> filterAfspraken(
             AfspraakFilterRequest filter
