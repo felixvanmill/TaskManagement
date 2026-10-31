@@ -4,6 +4,11 @@ import {
 } from 'react'
 
 import {
+    formatteerDatum,
+    formatteerDatumTijd,
+} from '../utils/datum'
+
+import {
     useAuth,
 } from '../auth/useAuth'
 
@@ -58,38 +63,6 @@ type ToewijzingVerschil = {
     label: string
     oudeWaarde: string
     nieuweWaarde: string
-}
-
-function formatteerDatum(
-    datum: string,
-) {
-    return new Intl.DateTimeFormat(
-        'nl-NL',
-        {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric',
-        },
-    ).format(
-        new Date(`${datum}T00:00:00`),
-    )
-}
-
-function formatteerDatumTijd(
-    datum: string,
-) {
-    return new Intl.DateTimeFormat(
-        'nl-NL',
-        {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit',
-        },
-    ).format(
-        new Date(datum),
-    )
 }
 
 function statusLabel(
