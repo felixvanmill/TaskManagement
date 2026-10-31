@@ -137,10 +137,8 @@ public class OpmerkingService {
             Gebruiker gebruiker
     ) {
 
-        return new GebruikerResponse(
-                gebruiker.getId(),
-                gebruiker.getNaam(),
-                gebruiker.getEmail(),
+        return afspraakMapper.naarGebruikerResponse(
+                gebruiker,
                 naarAfdelingResponse(
                         gebruiker.getAfdeling()
                 )

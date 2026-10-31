@@ -40,7 +40,7 @@ public class GebruikerService {
         return gebruikerRepository
                 .findAll()
                 .stream()
-                .map(this::naarResponse)
+                .map(afspraakMapper::naarGebruikerResponse)
                 .toList();
     }
 
@@ -88,23 +88,6 @@ public class GebruikerService {
 
         return naarBeheerResponse(
                 opgeslagenGebruiker
-        );
-    }
-
-    private GebruikerResponse naarResponse(
-            Gebruiker gebruiker
-    ) {
-
-        AfdelingResponse afdelingResponse =
-                naarAfdelingResponse(
-                        gebruiker
-                );
-
-        return new GebruikerResponse(
-                gebruiker.getId(),
-                gebruiker.getNaam(),
-                gebruiker.getEmail(),
-                afdelingResponse
         );
     }
 

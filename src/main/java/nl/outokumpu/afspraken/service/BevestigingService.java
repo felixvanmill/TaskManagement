@@ -159,10 +159,8 @@ public class BevestigingService {
                 );
 
         GebruikerResponse gebruikerResponse =
-                new GebruikerResponse(
-                        gebruiker.getId(),
-                        gebruiker.getNaam(),
-                        gebruiker.getEmail(),
+                afspraakMapper.naarGebruikerResponse(
+                        gebruiker,
                         afdelingResponse
                 );
 

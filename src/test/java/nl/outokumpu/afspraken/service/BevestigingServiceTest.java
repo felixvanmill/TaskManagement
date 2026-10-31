@@ -358,4 +358,30 @@ class BevestigingServiceTest {
                 initiatiefnemer
         );
     }
+
+    @Test
+    void geeftBevestigingMetGebruikerZonderAfdelingTerug() {
+        UUID afspraakId = UUID.randomUUID();
+        UUID gebruikerId = UUID.randomUUID();
+        Gebruiker gebruiker = mock(Gebruiker.class);
+        when(gebruiker.getId()).thenReturn(gebruikerId);
+        when(gebruiker.getNaam()).thenReturn("Felix");
+        when(gebruiker.getEmail()).thenReturn("felix@example.com");
+        when(gebruiker.getAfdeling()).thenReturn(null);
+
+        Bevestiging bevestiging = new Bevestiging(mock(OperationeleAfspraak.class), gebruiker);
+        when(bevestigingRepository.findByAfspraakIdAndGebruikerId(afspraakId, gebruikerId))
+                .thenReturn(Optional.of(bevestiging));
+        when(bevestigingRepository.save(bevestiging)).thenReturn(bevestiging);
+
+        BevestigingResponse resultaat = bevestigingService.markeerGezien(afspraakId, gebruikerId);
+
+        assertTrue(resultaat.gezien());
+        assertNotNull(resultaat.gezienOp());
+        assertEquals(gebruikerId, resultaat.gebruiker().id());
+        assertEquals("Felix", resultaat.gebruiker().naam());
+        assertEquals("felix@example.com", resultaat.gebruiker().email());
+        assertNull(resultaat.gebruiker().afdeling());
+        verify(bevestigingRepository).save(bevestiging);
+    }
 }

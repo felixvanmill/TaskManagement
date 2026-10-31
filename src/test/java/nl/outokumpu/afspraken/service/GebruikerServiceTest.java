@@ -317,4 +317,15 @@ class GebruikerServiceTest {
                 exception.getMessage()
         );
     }
+
+    @Test
+    void gebruikersoverzichtBlijftEenAfdelingVereisen() {
+        Gebruiker gebruiker = new Gebruiker("Felix", "felix@example.com", null);
+        when(gebruikerRepository.findAll()).thenReturn(List.of(gebruiker));
+
+        assertThrows(
+                NullPointerException.class,
+                () -> gebruikerService.vindAlleGebruikers()
+        );
+    }
 }

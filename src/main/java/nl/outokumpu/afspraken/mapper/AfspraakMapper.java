@@ -172,16 +172,27 @@ public class AfspraakMapper {
         );
     }
 
-    private GebruikerResponse naarGebruikerResponse(
+    public GebruikerResponse naarGebruikerResponse(
             Gebruiker gebruiker
+    ) {
+        return naarGebruikerResponse(
+                gebruiker,
+                naarAfdelingResponse(
+                        gebruiker.getAfdeling()
+                )
+        );
+    }
+
+    /** Gebruikt de meegegeven afdelingresponse; deze mag null zijn. */
+    public GebruikerResponse naarGebruikerResponse(
+            Gebruiker gebruiker,
+            AfdelingResponse afdelingResponse
     ) {
         return new GebruikerResponse(
                 gebruiker.getId(),
                 gebruiker.getNaam(),
                 gebruiker.getEmail(),
-                naarAfdelingResponse(
-                        gebruiker.getAfdeling()
-                )
+                afdelingResponse
         );
     }
 
