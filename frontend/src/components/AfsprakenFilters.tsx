@@ -2,6 +2,11 @@ import {
     useState,
 } from 'react'
 
+import {
+    statusLabel,
+    typeLabel,
+} from '../utils/afspraak'
+
 import type {
     FormEvent,
 } from 'react'
@@ -238,15 +243,15 @@ export function AfsprakenFilters({
                             </option>
 
                             <option value="ALGEMEEN">
-                                Algemeen
+                                {typeLabel('ALGEMEEN')}
                             </option>
 
                             <option value="CAPACITEITSWISSEL">
-                                Capaciteitswissel
+                                {typeLabel('CAPACITEITSWISSEL')}
                             </option>
 
                             <option value="ORDERVERPLAATSING">
-                                Orderverplaatsing
+                                {typeLabel('ORDERVERPLAATSING')}
                             </option>
                         </select>
                     </label>
@@ -274,11 +279,11 @@ export function AfsprakenFilters({
                                 </option>
 
                                 <option value="OPEN">
-                                    Open
+                                    {statusLabel('OPEN')}
                                 </option>
 
                                 <option value="IN_BEHANDELING">
-                                    In behandeling
+                                    {statusLabel('IN_BEHANDELING')}
                                 </option>
                             </select>
                         </label>

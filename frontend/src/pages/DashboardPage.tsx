@@ -4,6 +4,11 @@ import {
 } from 'react'
 
 import {
+    statusLabel,
+    typeLabel,
+} from '../utils/afspraak'
+
+import {
     formatteerDatum,
     formatteerDatumTijd,
 } from '../utils/datum'
@@ -38,9 +43,7 @@ import {
 import type {
     Afdeling,
     AfspraakGebruiker,
-    AfspraakStatus,
     AfspraakSummary,
-    AfspraakType,
 } from '../types/afspraak'
 
 import type {
@@ -50,36 +53,6 @@ import type {
 type OverzichtWeergave =
     | 'actief'
     | 'archief'
-
-function statusLabel(
-    status: AfspraakStatus,
-) {
-    switch (status) {
-        case 'OPEN':
-            return 'Open'
-
-        case 'IN_BEHANDELING':
-            return 'In behandeling'
-
-        case 'AFGEROND':
-            return 'Afgerond'
-    }
-}
-
-function typeLabel(
-    type: AfspraakType,
-) {
-    switch (type) {
-        case 'ALGEMEEN':
-            return 'Algemeen'
-
-        case 'CAPACITEITSWISSEL':
-            return 'Capaciteitswissel'
-
-        case 'ORDERVERPLAATSING':
-            return 'Orderverplaatsing'
-    }
-}
 
 function filterOpWeergave(
     afspraken: AfspraakSummary[],

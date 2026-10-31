@@ -4,6 +4,10 @@ import {
 } from 'react'
 
 import {
+    typeLabel,
+} from '../utils/afspraak'
+
+import {
     Link,
     useNavigate,
     useParams,
@@ -30,23 +34,7 @@ import {
 import type {
     AfspraakDetail,
     AfspraakGebruiker,
-    AfspraakType,
 } from '../types/afspraak'
-
-function typeLabel(
-    type: AfspraakType,
-) {
-    switch (type) {
-        case 'ALGEMEEN':
-            return 'Algemeen'
-
-        case 'CAPACITEITSWISSEL':
-            return 'Capaciteitswissel'
-
-        case 'ORDERVERPLAATSING':
-            return 'Orderverplaatsing'
-    }
-}
 
 function bepaalHuidigeVerantwoordelijke(
     afspraak: AfspraakDetail,

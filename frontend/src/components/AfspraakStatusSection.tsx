@@ -3,6 +3,10 @@ import {
 } from 'react'
 
 import {
+    statusLabel,
+} from '../utils/afspraak'
+
+import {
     wijzigAfspraakStatus,
 } from '../api/workflow'
 
@@ -20,21 +24,6 @@ interface AfspraakStatusSectionProps {
     onAfspraakGewijzigd: (
         afspraak: AfspraakDetail,
     ) => void
-}
-
-function statusLabel(
-    status: AfspraakStatus,
-) {
-    switch (status) {
-        case 'OPEN':
-            return 'Open'
-
-        case 'IN_BEHANDELING':
-            return 'In behandeling'
-
-        case 'AFGEROND':
-            return 'Afgerond'
-    }
 }
 
 export function AfspraakStatusSection({
@@ -152,19 +141,19 @@ export function AfspraakStatusSection({
 
                         {afspraak.status !== 'OPEN' && (
                             <option value="OPEN">
-                                Open
+                                {statusLabel('OPEN')}
                             </option>
                         )}
 
                         {afspraak.status !== 'IN_BEHANDELING' && (
                             <option value="IN_BEHANDELING">
-                                In behandeling
+                                {statusLabel('IN_BEHANDELING')}
                             </option>
                         )}
 
                         {afspraak.status !== 'AFGEROND' && (
                             <option value="AFGEROND">
-                                Afgerond
+                                {statusLabel('AFGEROND')}
                             </option>
                         )}
                     </select>

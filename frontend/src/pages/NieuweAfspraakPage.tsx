@@ -4,6 +4,10 @@ import {
 } from 'react'
 
 import {
+    typeLabel,
+} from '../utils/afspraak'
+
+import {
     Link,
     useNavigate,
 } from 'react-router-dom'
@@ -391,15 +395,15 @@ export function NieuweAfspraakPage() {
                                 required
                             >
                                 <option value="ALGEMEEN">
-                                    Algemeen
+                                    {typeLabel('ALGEMEEN')}
                                 </option>
 
                                 <option value="CAPACITEITSWISSEL">
-                                    Capaciteitswissel
+                                    {typeLabel('CAPACITEITSWISSEL')}
                                 </option>
 
                                 <option value="ORDERVERPLAATSING">
-                                    Orderverplaatsing
+                                    {typeLabel('ORDERVERPLAATSING')}
                                 </option>
                             </select>
                         </label>

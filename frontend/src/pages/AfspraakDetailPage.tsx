@@ -4,6 +4,11 @@ import {
 } from 'react'
 
 import {
+    statusLabel,
+    typeLabel,
+} from '../utils/afspraak'
+
+import {
     formatteerDatum,
     formatteerDatumTijd,
 } from '../utils/datum'
@@ -47,8 +52,6 @@ import {
 
 import type {
     AfspraakDetail,
-    AfspraakStatus,
-    AfspraakType,
     Beslissing,
 } from '../types/afspraak'
 
@@ -63,36 +66,6 @@ type ToewijzingVerschil = {
     label: string
     oudeWaarde: string
     nieuweWaarde: string
-}
-
-function statusLabel(
-    status: AfspraakStatus,
-) {
-    switch (status) {
-        case 'OPEN':
-            return 'Open'
-
-        case 'IN_BEHANDELING':
-            return 'In behandeling'
-
-        case 'AFGEROND':
-            return 'Afgerond'
-    }
-}
-
-function typeLabel(
-    type: AfspraakType,
-) {
-    switch (type) {
-        case 'ALGEMEEN':
-            return 'Algemeen'
-
-        case 'CAPACITEITSWISSEL':
-            return 'Capaciteitswissel'
-
-        case 'ORDERVERPLAATSING':
-            return 'Orderverplaatsing'
-    }
 }
 
 function beslissingLabel(
