@@ -5,6 +5,10 @@ import jakarta.persistence.*;
 import java.time.Instant;
 import java.util.UUID;
 
+/**
+ * An audit entry recording who changed an agreement value and its before-and-after text.
+ * Audit fields are mapped as non-updatable; the timestamp is assigned on first persistence.
+ */
 @Entity
 @Table(name = "wijzigingen")
 public class Wijziging {
@@ -34,7 +38,7 @@ public class Wijziging {
     private String nieuweWaarde;
 
     protected Wijziging() {
-        // Vereist door JPA
+        // Required by JPA.
     }
 
     public Wijziging(

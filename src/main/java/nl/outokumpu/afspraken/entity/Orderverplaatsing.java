@@ -7,6 +7,10 @@ import nl.outokumpu.afspraken.enums.UitvoeringsStatus;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
+/**
+ * An agreement describing an order relocation between factories with a separate execution status.
+ * Its specialized data shares the base agreement's identity through joined inheritance.
+ */
 @Entity
 @Table(name = "orderverplaatsingen")
 @PrimaryKeyJoinColumn(name = "id")
@@ -32,7 +36,7 @@ public class Orderverplaatsing extends OperationeleAfspraak {
     private UitvoeringsStatus uitvoeringsstatus;
 
     protected Orderverplaatsing() {
-        // Vereist door JPA
+        // Required by JPA.
     }
 
     public Orderverplaatsing(
@@ -71,6 +75,12 @@ public class Orderverplaatsing extends OperationeleAfspraak {
                 UitvoeringsStatus.NIET_UITGEVOERD;
     }
 
+    /**
+     * Changes execution progress independently of the agreement's status and process steps.
+     *
+     * @param nieuweStatus the desired execution status
+     * @throws IllegalArgumentException if the status is null or unchanged
+     */
     public void wijzigUitvoeringsstatus(
             UitvoeringsStatus nieuweStatus
     ) {

@@ -7,6 +7,10 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.util.UUID;
 
+/**
+ * An ordered step in an agreement's workflow, assigned to a responsible user.
+ * Step order is unique within the agreement, and optimistic locking protects concurrent updates.
+ */
 @Entity
 @Table(
         name = "processtappen",
@@ -52,7 +56,7 @@ public class Processtap {
     private Gebruiker verantwoordelijke;
 
     protected Processtap() {
-        // Vereist door JPA
+        // Required by JPA.
     }
 
     public Processtap(
@@ -70,6 +74,11 @@ public class Processtap {
         this.status = ProcesstapStatus.NIET_GESTART;
     }
 
+    /**
+     * Transitions from {@code NIET_GESTART} to {@code IN_UITVOERING} and records the start time.
+     *
+     * @throws IllegalStateException if the step has already started or completed
+     */
     public void start() {
 
         if (this.status != ProcesstapStatus.NIET_GESTART) {
@@ -82,6 +91,12 @@ public class Processtap {
         this.gestartOp = Instant.now();
     }
 
+    /**
+     * Completes an in-progress step and records its completion time.
+     * This does not advance another step or change the agreement's status.
+     *
+     * @throws IllegalStateException if the step is not in {@code IN_UITVOERING}
+     */
     public void rondAf() {
 
         if (this.status != ProcesstapStatus.IN_UITVOERING) {
@@ -94,6 +109,13 @@ public class Processtap {
         this.afgerondOp = Instant.now();
     }
 
+    /**
+     * Reassigns the step without changing its progress or timestamps.
+     * The current user is recognized by object identity or a matching non-null user ID.
+     *
+     * @param nieuweVerantwoordelijke the replacement responsible user
+     * @throws IllegalArgumentException if the user is null or is already responsible for this step
+     */
     public void wijzigVerantwoordelijke(
             Gebruiker nieuweVerantwoordelijke
     ) {

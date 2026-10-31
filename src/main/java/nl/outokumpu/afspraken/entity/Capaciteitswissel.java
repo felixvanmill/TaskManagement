@@ -6,6 +6,10 @@ import nl.outokumpu.afspraken.enums.AfspraakType;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
+/**
+ * An agreement describing a capacity swap for a factory, product specification and period.
+ * Its specialized data shares the base agreement's identity through joined inheritance.
+ */
 @Entity
 @Table(name = "capaciteitswissels")
 @PrimaryKeyJoinColumn(name = "id")
@@ -36,7 +40,7 @@ public class Capaciteitswissel extends OperationeleAfspraak {
     private LocalDate periodeTot;
 
     protected Capaciteitswissel() {
-        // Vereist door JPA
+        // Required by JPA.
     }
 
     public Capaciteitswissel(

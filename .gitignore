@@ -39,3 +39,14 @@ build/
 
 # Local environment variables
 .env
+
+# Local Codex configuration
+.codex/
+
+# IntelliJ database and JPA configuration
+.idea/dataSources.xml
+.idea/dataSources.local.xml
+.idea/jpa.xml
+
+# Local PowerShell cache
+/Microsoft/
