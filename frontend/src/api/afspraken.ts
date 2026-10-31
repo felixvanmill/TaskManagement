@@ -1,3 +1,4 @@
+import { leesApiFout } from './errors'
 import { apiFetch } from './http'
 
 import type {
@@ -9,11 +10,6 @@ import type {
     CreateAfspraakRequest,
     OrderverplaatsingInput,
 } from '../types/afspraak'
-
-interface ApiErrorResponse {
-    message?: string
-    veldFouten?: Record<string, string>
-}
 
 export interface AfspraakFilterParams {
     type?: AfspraakType
@@ -41,30 +37,6 @@ export interface UpdateGoedkeurdersRequest {
     goedkeurderIds: string[]
 }
 
-async function leesApiFout(
-    response: Response,
-    standaardMelding: string,
-) {
-    try {
-        const fout =
-            await response.json() as ApiErrorResponse
-
-        if (
-            fout.veldFouten
-            && Object.keys(fout.veldFouten).length > 0
-        ) {
-            return Object.values(
-                fout.veldFouten,
-            ).join(', ')
-        }
-
-        return fout.message
-            || standaardMelding
-    } catch {
-        return standaardMelding
-    }
-}
-
 async function leesAfspraken(
     pad: string,
 ): Promise<AfspraakSummary[]> {
@@ -77,6 +49,10 @@ async function leesAfspraken(
             await leesApiFout(
                 response,
                 `Afspraken ophalen mislukt (${response.status})`,
+                {
+                    toonVeldFouten: true,
+                    gebruikStandaardBijLegeMelding: true,
+                },
             ),
         )
     }
@@ -194,6 +170,10 @@ export async function getAfspraak(
             await leesApiFout(
                 response,
                 `Afspraak ophalen mislukt (${response.status})`,
+                {
+                    toonVeldFouten: true,
+                    gebruikStandaardBijLegeMelding: true,
+                },
             ),
         )
     }
@@ -217,6 +197,10 @@ export async function createAfspraak(
             await leesApiFout(
                 response,
                 `Afspraak aanmaken mislukt (${response.status})`,
+                {
+                    toonVeldFouten: true,
+                    gebruikStandaardBijLegeMelding: true,
+                },
             )
 
         throw new Error(melding)
@@ -242,6 +226,10 @@ export async function updateAfspraak(
             await leesApiFout(
                 response,
                 `Afspraak bijwerken mislukt (${response.status})`,
+                {
+                    toonVeldFouten: true,
+                    gebruikStandaardBijLegeMelding: true,
+                },
             )
 
         throw new Error(melding)
@@ -267,6 +255,10 @@ export async function wijzigGoedkeurders(
             await leesApiFout(
                 response,
                 `Goedkeurders wijzigen mislukt (${response.status})`,
+                {
+                    toonVeldFouten: true,
+                    gebruikStandaardBijLegeMelding: true,
+                },
             )
 
         throw new Error(melding)
