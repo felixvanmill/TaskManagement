@@ -14,10 +14,13 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * Optionally creates a regular user for manual workflow testing outside the test profile.
+ * An existing email is left unchanged, so repeated startup does not reset the account.
+ */
 @Component
 @Profile("!test")
-public class BootstrapTestGebruikerInitializer
-        implements ApplicationRunner {
+public class BootstrapTestGebruikerInitializer implements ApplicationRunner {
 
     private final AfdelingRepository afdelingRepository;
     private final GebruikerRepository gebruikerRepository;
@@ -33,138 +36,59 @@ public class BootstrapTestGebruikerInitializer
             AfdelingRepository afdelingRepository,
             GebruikerRepository gebruikerRepository,
             PasswordEncoder passwordEncoder,
-
-            @Value("${app.bootstrap-test-user.enabled:false}")
-            boolean enabled,
-
-            @Value("${app.bootstrap-test-user.naam:}")
-            String naam,
-
-            @Value("${app.bootstrap-test-user.email:}")
-            String email,
-
-            @Value("${app.bootstrap-test-user.wachtwoord:}")
-            String wachtwoord,
-
-            @Value("${app.bootstrap-test-user.afdeling:}")
-            String afdelingNaam
-    ) {
-        this.afdelingRepository =
-                afdelingRepository;
-
-        this.gebruikerRepository =
-                gebruikerRepository;
-
-        this.passwordEncoder =
-                passwordEncoder;
-
-        this.enabled =
-                enabled;
-
-        this.naam =
-                naam;
-
-        this.email =
-                email;
-
-        this.wachtwoord =
-                wachtwoord;
-
-        this.afdelingNaam =
-                afdelingNaam;
+            @Value("${app.bootstrap-test-user.enabled:false}") boolean enabled,
+            @Value("${app.bootstrap-test-user.naam:}") String naam,
+            @Value("${app.bootstrap-test-user.email:}") String email,
+            @Value("${app.bootstrap-test-user.wachtwoord:}") String wachtwoord,
+            @Value("${app.bootstrap-test-user.afdeling:}") String afdelingNaam) {
+        this.afdelingRepository = afdelingRepository;
+        this.gebruikerRepository = gebruikerRepository;
+        this.passwordEncoder = passwordEncoder;
+        this.enabled = enabled;
+        this.naam = naam;
+        this.email = email;
+        this.wachtwoord = wachtwoord;
+        this.afdelingNaam = afdelingNaam;
     }
 
     @Override
     @Transactional
-    public void run(
-            ApplicationArguments args
-    ) {
-
+    public void run(ApplicationArguments args) {
         if (!enabled) {
             return;
         }
 
         controleerConfiguratie();
 
-        if (
-                gebruikerRepository
-                        .findByEmailIgnoreCase(
-                                email
-                        )
-                        .isPresent()
-        ) {
+        if (gebruikerRepository.findByEmailIgnoreCase(email).isPresent()) {
             return;
         }
 
-        Afdeling afdeling =
-                afdelingRepository
-                        .findByNaamIgnoreCase(
-                                afdelingNaam
-                        )
-                        .orElseGet(() ->
-                                afdelingRepository.save(
-                                        new Afdeling(
-                                                afdelingNaam
-                                        )
-                                )
-                        );
+        Afdeling afdeling = afdelingRepository.findByNaamIgnoreCase(afdelingNaam).orElseGet(() ->
+                afdelingRepository.save(new Afdeling(afdelingNaam)));
 
-        Gebruiker gebruiker =
-                new Gebruiker(
-                        naam,
-                        email,
-                        afdeling
-                );
+        Gebruiker gebruiker = new Gebruiker(naam, email, afdeling);
 
-        gebruiker.configureerToegang(
-                passwordEncoder.encode(
-                        wachtwoord
-                ),
-                GebruikersRol.GEBRUIKER,
-                true
-        );
+        gebruiker.configureerToegang(passwordEncoder.encode(wachtwoord), GebruikersRol.GEBRUIKER, true);
 
-        gebruikerRepository.save(
-                gebruiker
-        );
+        gebruikerRepository.save(gebruiker);
     }
 
     private void controleerConfiguratie() {
-
-        if (
-                naam == null
-                        || naam.isBlank()
-        ) {
-            throw new IllegalStateException(
-                    "BOOTSTRAP_TEST_USER_NAME is verplicht"
-            );
+        if (naam == null || naam.isBlank()) {
+            throw new IllegalStateException("BOOTSTRAP_TEST_USER_NAME is verplicht");
         }
 
-        if (
-                email == null
-                        || email.isBlank()
-        ) {
-            throw new IllegalStateException(
-                    "BOOTSTRAP_TEST_USER_EMAIL is verplicht"
-            );
+        if (email == null || email.isBlank()) {
+            throw new IllegalStateException("BOOTSTRAP_TEST_USER_EMAIL is verplicht");
         }
 
-        if (
-                wachtwoord == null
-                        || wachtwoord.length() < 12
-        ) {
-            throw new IllegalStateException(
-                    "BOOTSTRAP_TEST_USER_PASSWORD moet minimaal 12 tekens bevatten"
-            );
+        if (wachtwoord == null || wachtwoord.length() < 12) {
+            throw new IllegalStateException("BOOTSTRAP_TEST_USER_PASSWORD moet minimaal 12 tekens bevatten");
         }
 
-        if (
-                afdelingNaam == null
-                        || afdelingNaam.isBlank()
-        ) {
-            throw new IllegalStateException(
-                    "BOOTSTRAP_TEST_USER_DEPARTMENT is verplicht"
-            );
+        if (afdelingNaam == null || afdelingNaam.isBlank()) {
+            throw new IllegalStateException("BOOTSTRAP_TEST_USER_DEPARTMENT is verplicht");
         }
     }
 }

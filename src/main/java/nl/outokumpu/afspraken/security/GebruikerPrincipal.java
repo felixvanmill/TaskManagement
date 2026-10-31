@@ -10,8 +10,10 @@ import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 
-public class GebruikerPrincipal
-        implements UserDetails {
+/**
+ * Stores the session identity used by Spring Security, including role authorities and active status.
+ */
+public class GebruikerPrincipal implements UserDetails {
 
     private final UUID id;
     private final String email;
@@ -19,13 +21,7 @@ public class GebruikerPrincipal
     private final GebruikersRol rol;
     private final boolean actief;
 
-    public GebruikerPrincipal(
-            UUID id,
-            String email,
-            String wachtwoordHash,
-            GebruikersRol rol,
-            boolean actief
-    ) {
+    public GebruikerPrincipal(UUID id, String email, String wachtwoordHash, GebruikersRol rol, boolean actief) {
         this.id = id;
         this.email = email;
         this.wachtwoordHash = wachtwoordHash;
@@ -43,12 +39,7 @@ public class GebruikerPrincipal
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-
-        return List.of(
-                new SimpleGrantedAuthority(
-                        "ROLE_" + rol.name()
-                )
-        );
+        return List.of(new SimpleGrantedAuthority("ROLE_" + rol.name()));
     }
 
     @Override
