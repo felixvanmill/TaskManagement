@@ -1,4 +1,6 @@
 import type {
+    AfspraakDetail,
+    Processtap,
     AfspraakStatus,
     AfspraakType,
     ProcesstapStatus,
@@ -47,4 +49,43 @@ export function processtapStatusLabel(
         case 'AFGEROND':
             return 'Afgerond'
     }
+}
+
+export function bepaalActieveProcesstap(
+    afspraak: AfspraakDetail,
+): Processtap | undefined {
+    return afspraak.processtappen.find(
+        (processtap) =>
+            processtap.status !== 'AFGEROND',
+    )
+}
+
+export function bepaalHuidigeProcesstap(
+    afspraak: AfspraakDetail,
+): Processtap | undefined {
+    return bepaalActieveProcesstap(afspraak)
+        ?? afspraak.processtappen[
+            afspraak.processtappen.length - 1
+        ]
+}
+
+export function bepaalHuidigeVerantwoordelijke(
+    afspraak: AfspraakDetail,
+) {
+    if (afspraak.processtappen.length === 0) {
+        return null
+    }
+
+    const actieveProcesstap =
+        bepaalActieveProcesstap(
+            afspraak,
+        )
+
+    if (actieveProcesstap !== undefined) {
+        return actieveProcesstap.verantwoordelijke
+    }
+
+    return afspraak.processtappen[
+    afspraak.processtappen.length - 1
+        ].verantwoordelijke
 }

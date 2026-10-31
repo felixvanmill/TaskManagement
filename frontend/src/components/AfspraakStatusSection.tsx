@@ -3,6 +3,7 @@ import {
 } from 'react'
 
 import {
+    bepaalHuidigeProcesstap,
     statusLabel,
 } from '../utils/afspraak'
 
@@ -50,13 +51,9 @@ export function AfspraakStatusSection({
     ] = useState<string | null>(null)
 
     const huidigeProcesstap =
-        afspraak.processtappen.find(
-            (processtap) =>
-                processtap.status !== 'AFGEROND',
+        bepaalHuidigeProcesstap(
+            afspraak,
         )
-        ?? afspraak.processtappen[
-        afspraak.processtappen.length - 1
-            ]
 
     const magWijzigen =
         gebruiker !== null

@@ -4,6 +4,7 @@ import {
 } from 'react'
 
 import {
+    bepaalHuidigeVerantwoordelijke,
     typeLabel,
 } from '../utils/afspraak'
 
@@ -35,28 +36,6 @@ import type {
     AfspraakDetail,
     AfspraakGebruiker,
 } from '../types/afspraak'
-
-function bepaalHuidigeVerantwoordelijke(
-    afspraak: AfspraakDetail,
-) {
-    if (afspraak.processtappen.length === 0) {
-        return null
-    }
-
-    const actieveProcesstap =
-        afspraak.processtappen.find(
-            (processtap) =>
-                processtap.status !== 'AFGEROND',
-        )
-
-    if (actieveProcesstap !== undefined) {
-        return actieveProcesstap.verantwoordelijke
-    }
-
-    return afspraak.processtappen[
-    afspraak.processtappen.length - 1
-        ].verantwoordelijke
-}
 
 function wijzigSelectie(
     huidigeIds: string[],

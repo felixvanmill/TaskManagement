@@ -3,6 +3,10 @@ import {
 } from 'react'
 
 import {
+    bepaalHuidigeVerantwoordelijke,
+} from '../utils/afspraak'
+
+import {
     formatteerDatum,
 } from '../utils/datum'
 
@@ -42,28 +46,6 @@ function uitvoeringsstatusLabel(
         default:
             return 'Niet ingesteld'
     }
-}
-
-function bepaalHuidigeVerantwoordelijke(
-    afspraak: AfspraakDetail,
-) {
-    if (afspraak.processtappen.length === 0) {
-        return null
-    }
-
-    const actieveProcesstap =
-        afspraak.processtappen.find(
-            (processtap) =>
-                processtap.status !== 'AFGEROND',
-        )
-
-    if (actieveProcesstap !== undefined) {
-        return actieveProcesstap.verantwoordelijke
-    }
-
-    return afspraak.processtappen[
-    afspraak.processtappen.length - 1
-        ].verantwoordelijke
 }
 
 export function TypespecifiekeDetailsSection({

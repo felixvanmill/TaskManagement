@@ -4,6 +4,11 @@ import {
 } from 'react'
 
 import {
+    bepaalActieveProcesstap,
+    bepaalHuidigeVerantwoordelijke,
+} from '../utils/afspraak'
+
+import {
     getAfdelingen,
 } from '../api/afdelingen'
 
@@ -49,35 +54,12 @@ function wijzigSelectie(
     ]
 }
 
-function bepaalHuidigeVerantwoordelijke(
-    afspraak: AfspraakDetail,
-) {
-    if (afspraak.processtappen.length === 0) {
-        return null
-    }
-
-    const actieveProcesstap =
-        afspraak.processtappen.find(
-            (processtap) =>
-                processtap.status !== 'AFGEROND',
-        )
-
-    if (actieveProcesstap !== undefined) {
-        return actieveProcesstap.verantwoordelijke
-    }
-
-    return afspraak.processtappen[
-    afspraak.processtappen.length - 1
-        ].verantwoordelijke
-}
-
 function bepaalStandaardProcesstap(
     afspraak: AfspraakDetail,
 ) {
     const actieveProcesstap =
-        afspraak.processtappen.find(
-            (processtap) =>
-                processtap.status !== 'AFGEROND',
+        bepaalActieveProcesstap(
+            afspraak,
         )
 
     if (actieveProcesstap !== undefined) {

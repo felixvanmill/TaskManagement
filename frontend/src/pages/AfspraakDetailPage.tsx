@@ -4,6 +4,7 @@ import {
 } from 'react'
 
 import {
+    bepaalActieveProcesstap,
     statusLabel,
     typeLabel,
 } from '../utils/afspraak'
@@ -282,9 +283,8 @@ export function AfspraakDetailPage() {
     }
 
     const actieveProcesstap =
-        afspraak.processtappen.find(
-            (processtap) =>
-                processtap.status !== 'AFGEROND',
+        bepaalActieveProcesstap(
+            afspraak,
         )
 
     const laatsteProcesstap =
