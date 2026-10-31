@@ -119,16 +119,7 @@ export interface AfspraakDetail {
     orderverplaatsing: OrderverplaatsingData | null
 }
 
-export interface CapaciteitswisselInput {
-    fabriek: string
-    finishType: string
-    grade: string
-    capaciteitVan: number
-    capaciteitNaar: number
-    capaciteitEenheid: string
-    periodeVan: string
-    periodeTot: string
-}
+export type CapaciteitswisselInput = CapaciteitswisselData
 
 export interface OrderverplaatsingInput {
     vanFabriek: string
