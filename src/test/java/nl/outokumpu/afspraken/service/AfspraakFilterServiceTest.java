@@ -60,7 +60,8 @@ class AfspraakFilterServiceTest {
                         gebruikerRepository,
                         afdelingRepository,
                         wijzigingRepository,
-                        afspraakMapper
+                        afspraakMapper,
+                        mock(NotificatieService.class)
                 );
     }
 

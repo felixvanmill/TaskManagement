@@ -53,7 +53,8 @@ class AfspraakOverzichtServiceTest {
                         gebruikerRepository,
                         afdelingRepository,
                         wijzigingRepository,
-                        afspraakMapper
+                        afspraakMapper,
+                        mock(NotificatieService.class)
                 );
     }
 

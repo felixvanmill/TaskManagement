@@ -8,6 +8,8 @@ import {
     useAuth,
 } from '../auth/useAuth'
 
+import { NotificatieBel } from './NotificatieBel'
+
 function navigatieClassName({
                                 isActive,
                             }: {
@@ -118,7 +120,12 @@ export function AppLayout() {
                 </div>
             </aside>
 
+
             <div className="app-content">
+                <div className="notification-toolbar">
+                    <NotificatieBel />
+                </div>
+
                 <Outlet />
             </div>
         </div>

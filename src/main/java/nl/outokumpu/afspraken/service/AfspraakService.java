@@ -19,9 +19,12 @@ import nl.outokumpu.afspraken.repository.WijzigingRepository;
 import nl.outokumpu.afspraken.dto.request.AfspraakFilterRequest;
 import nl.outokumpu.afspraken.repository.specification.AfspraakSpecificaties;
 import nl.outokumpu.afspraken.exception.ForbiddenOperationException;
+import nl.outokumpu.afspraken.enums.Beslissing;
+
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import nl.outokumpu.afspraken.enums.NotificatieType;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -44,18 +47,21 @@ public class AfspraakService {
     private final AfdelingRepository afdelingRepository;
     private final WijzigingRepository wijzigingRepository;
     private final AfspraakMapper afspraakMapper;
+    private final NotificatieService notificatieService;
 
     public AfspraakService(
             OperationeleAfspraakRepository afspraakRepository,
             GebruikerRepository gebruikerRepository,
             AfdelingRepository afdelingRepository,
             WijzigingRepository wijzigingRepository,
-            AfspraakMapper afspraakMapper) {
+            AfspraakMapper afspraakMapper,
+            NotificatieService notificatieService) {
         this.afspraakRepository = afspraakRepository;
         this.gebruikerRepository = gebruikerRepository;
         this.afdelingRepository = afdelingRepository;
         this.wijzigingRepository = wijzigingRepository;
         this.afspraakMapper = afspraakMapper;
+        this.notificatieService = notificatieService;
     }
 
     /**
@@ -76,11 +82,14 @@ public class AfspraakService {
 
         OperationeleAfspraak afspraak = maakAfspraakOpBasisVanType(request, initiatiefnemer);
 
-        afspraak.voegProcesstapToe(
+
+        Processtap eersteProcesstap = afspraak.voegProcesstapToe(
                 request.eersteProcesstapNaam(),
                 1,
                 request.eersteProcesstapDeadline(),
-                verantwoordelijke);
+                verantwoordelijke
+        );
+
 
         List<Gebruiker> betrokkenGebruikers = gebruikerRepository.findAllById(request.betrokkeneIds());
 
@@ -127,9 +136,45 @@ public class AfspraakService {
             afspraak.voegAfdelingToe(afdeling);
         }
 
-        OperationeleAfspraak opgeslagenAfspraak = afspraakRepository.save(afspraak);
+
+        OperationeleAfspraak opgeslagenAfspraak =
+                afspraakRepository.save(afspraak);
+
+        notificatieService.maakTaakNotificatie(
+                verantwoordelijke,
+                opgeslagenAfspraak,
+                eersteProcesstap,
+                "Nieuwe processtap toegewezen: "
+                        + eersteProcesstap.getNaam()
+        );
+
+
+
+        // Betrokken gebruikers krijgen een leesverzoek.
+        for (Gebruiker betrokkene : betrokkenGebruikers) {
+            notificatieService.maakNotificatie(
+                    betrokkene,
+                    opgeslagenAfspraak,
+                    NotificatieType.LEESVERZOEK,
+                    "Nieuwe afspraak om te lezen: "
+                            + opgeslagenAfspraak.getTitel()
+            );
+        }
+
+// Goedkeurders krijgen een verzoek om de afspraak te beoordelen.
+        for (Gebruiker goedkeurder : goedkeurders) {
+            notificatieService.maakNotificatie(
+                    goedkeurder,
+                    opgeslagenAfspraak,
+                    NotificatieType.GOEDKEURING_GEVRAAGD,
+                    "Goedkeuring gevraagd voor: "
+                            + opgeslagenAfspraak.getTitel()
+            );
+        }
+
 
         return afspraakMapper.naarDetailResponse(opgeslagenAfspraak);
+
     }
 
     /**
@@ -259,11 +304,50 @@ public class AfspraakService {
             }
         }
 
+
+        for (Gebruiker oudeGoedkeurder : huidigeGoedkeurders) {
+            if (!nieuweGoedkeurderIds.contains(oudeGoedkeurder.getId())) {
+                notificatieService.handelNotificatiesVoorAfspraakAf(
+                        oudeGoedkeurder.getId(),
+                        afspraakId,
+                        NotificatieType.GOEDKEURING_GEVRAAGD
+                );
+            }
+        }
+
+
+        for (Gebruiker goedkeurder : nieuweGoedkeurders) {
+
+            boolean wasAlGoedkeurder =
+                    huidigeIds.contains(goedkeurder.getId());
+
+            boolean heeftAlBeslist =
+                    afspraak.getBevestigingen().stream()
+                            .anyMatch(bevestiging ->
+                                    Objects.equals(
+                                            bevestiging.getGebruiker().getId(),
+                                            goedkeurder.getId()
+                                    )
+                                            && bevestiging.getBeslissing() != Beslissing.GEEN
+                            );
+
+            if (!wasAlGoedkeurder && !heeftAlBeslist) {
+                notificatieService.maakNotificatie(
+                        goedkeurder,
+                        afspraak,
+                        NotificatieType.GOEDKEURING_GEVRAAGD,
+                        "Goedkeuring gevraagd voor: " + afspraak.getTitel()
+                );
+            }
+        }
+
+
         Wijziging wijziging = afspraak.registreerWijziging(
                 initiatiefnemer,
                 "Goedkeurders",
                 huidigeIds.toString(),
                 nieuweIds.toString());
+
 
         /*
          * The agreement is already managed within this transaction.

@@ -4,6 +4,7 @@ import nl.outokumpu.afspraken.dto.request.UpdateToewijzingRequest;
 import nl.outokumpu.afspraken.dto.response.AfspraakDetailResponse;
 import nl.outokumpu.afspraken.entity.*;
 import nl.outokumpu.afspraken.enums.BetrokkenRol;
+import nl.outokumpu.afspraken.enums.NotificatieType;
 import nl.outokumpu.afspraken.mapper.AfspraakMapper;
 import nl.outokumpu.afspraken.repository.AfdelingRepository;
 import nl.outokumpu.afspraken.repository.GebruikerRepository;
@@ -13,6 +14,7 @@ import nl.outokumpu.afspraken.repository.WijzigingRepository;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -33,6 +35,7 @@ class WorkflowToewijzingServiceTest {
     private AfspraakMapper afspraakMapper;
 
     private WorkflowService workflowService;
+    private NotificatieService notificatieService;
 
     @BeforeEach
     void setUp() {
@@ -55,6 +58,8 @@ class WorkflowToewijzingServiceTest {
         afspraakMapper =
                 mock(AfspraakMapper.class);
 
+        notificatieService = mock(NotificatieService.class);
+
         workflowService =
                 new WorkflowService(
                         processtapRepository,
@@ -62,7 +67,8 @@ class WorkflowToewijzingServiceTest {
                         gebruikerRepository,
                         afdelingRepository,
                         wijzigingRepository,
-                        afspraakMapper
+                        afspraakMapper,
+                        notificatieService
                 );
     }
 
@@ -150,6 +156,12 @@ class WorkflowToewijzingServiceTest {
                         LocalDate.of(2026, 10, 20),
                         oudeVerantwoordelijke
                 );
+
+        ReflectionTestUtils.setField(
+                processtap,
+                "id",
+                processtapId
+        );
 
         UpdateToewijzingRequest request =
                 new UpdateToewijzingRequest(
@@ -305,10 +317,38 @@ class WorkflowToewijzingServiceTest {
 
         verify(afspraakMapper)
                 .naarDetailResponse(afspraak);
+
+
+        verify(notificatieService).handelTaakNotificatiesAf(
+                oudeVerantwoordelijkeId,
+                processtapId
+        );
+
+        verify(notificatieService).maakTaakNotificatie(
+                nieuweVerantwoordelijke,
+                afspraak,
+                processtap,
+                "Processtap toegewezen: Eerste beoordeling"
+        );
+
+        verify(notificatieService).handelNotificatiesVoorAfspraakAf(
+                oudeBetrokkeneId,
+                afspraakId,
+                NotificatieType.LEESVERZOEK
+        );
+
+        verify(notificatieService).maakNotificatie(
+                nieuweBetrokkene,
+                afspraak,
+                NotificatieType.LEESVERZOEK,
+                "Nieuwe afspraak om te lezen: " + afspraak.getTitel()
+        );
+
+
     }
 
     @Test
-    void huidigeVerantwoordelijkeKanNieuweVerantwoordelijkeToewijzen() {
+    void afgerondeProcesstapKanWordenHerverdeeldZonderNieuweTaakmelding() {
 
         UUID afspraakId =
                 UUID.randomUUID();
@@ -359,6 +399,17 @@ class WorkflowToewijzingServiceTest {
                         LocalDate.of(2026, 10, 20),
                         huidigeVerantwoordelijke
                 );
+
+
+        ReflectionTestUtils.setField(
+                processtap,
+                "id",
+                processtapId
+        );
+
+        processtap.start();
+        processtap.rondAf();
+
 
         UpdateToewijzingRequest request =
                 new UpdateToewijzingRequest(
@@ -442,6 +493,19 @@ class WorkflowToewijzingServiceTest {
                 afspraak.getWijzigingen()
                         .get(0)
                         .getGewijzigdDoor()
+        );
+
+
+        verify(notificatieService).handelTaakNotificatiesAf(
+                huidigeVerantwoordelijkeId,
+                processtapId
+        );
+
+        verify(notificatieService, never()).maakTaakNotificatie(
+                any(),
+                any(),
+                any(),
+                anyString()
         );
     }
 

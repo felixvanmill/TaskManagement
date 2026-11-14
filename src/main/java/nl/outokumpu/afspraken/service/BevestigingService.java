@@ -12,6 +12,7 @@ import nl.outokumpu.afspraken.enums.BetrokkenRol;
 import nl.outokumpu.afspraken.mapper.AfspraakMapper;
 import nl.outokumpu.afspraken.repository.BevestigingRepository;
 import nl.outokumpu.afspraken.exception.ForbiddenOperationException;
+import nl.outokumpu.afspraken.enums.NotificatieType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,10 +27,12 @@ public class BevestigingService {
 
     private final AfspraakMapper afspraakMapper;
     private final BevestigingRepository bevestigingRepository;
+    private final NotificatieService notificatieService;
 
-    public BevestigingService(BevestigingRepository bevestigingRepository, AfspraakMapper afspraakMapper) {
+    public BevestigingService(BevestigingRepository bevestigingRepository, AfspraakMapper afspraakMapper, NotificatieService notificatieService) {
         this.bevestigingRepository = bevestigingRepository;
         this.afspraakMapper = afspraakMapper;
+        this.notificatieService = notificatieService;
     }
 
     /**
@@ -42,15 +45,28 @@ public class BevestigingService {
      * @throws IllegalArgumentException if no confirmation exists for the agreement and user
      * @throws IllegalStateException if the agreement has already been acknowledged by this user
      */
-    public BevestigingResponse markeerGezien(UUID afspraakId, UUID gebruikerId) {
-        Bevestiging bevestiging = vindBevestiging(afspraakId, gebruikerId);
+
+    public BevestigingResponse markeerGezien(
+            UUID afspraakId,
+            UUID gebruikerId
+    ) {
+        Bevestiging bevestiging =
+                vindBevestiging(afspraakId, gebruikerId);
 
         bevestiging.markeerGezien();
 
-        Bevestiging opgeslagenBevestiging = bevestigingRepository.save(bevestiging);
+        Bevestiging opgeslagenBevestiging =
+                bevestigingRepository.save(bevestiging);
+
+        notificatieService.handelNotificatiesVoorAfspraakAf(
+                gebruikerId,
+                afspraakId,
+                NotificatieType.LEESVERZOEK
+        );
 
         return naarResponse(opgeslagenBevestiging);
     }
+
 
     /**
      * Records an approval or rejection only for a currently designated approver.
@@ -63,17 +79,31 @@ public class BevestigingService {
      * @throws ForbiddenOperationException if the user is not a designated approver
      * @throws IllegalArgumentException if no confirmation exists or the decision is null, GEEN, or unchanged
      */
-    public BevestigingResponse registreerBeslissing(UUID afspraakId, UUID gebruikerId, Beslissing beslissing) {
-        Bevestiging bevestiging = vindBevestiging(afspraakId, gebruikerId);
+
+    public BevestigingResponse registreerBeslissing(
+            UUID afspraakId,
+            UUID gebruikerId,
+            Beslissing beslissing
+    ) {
+        Bevestiging bevestiging =
+                vindBevestiging(afspraakId, gebruikerId);
 
         controleerGoedkeurder(bevestiging, gebruikerId);
 
         bevestiging.registreerBeslissing(beslissing);
 
-        Bevestiging opgeslagenBevestiging = bevestigingRepository.save(bevestiging);
+        Bevestiging opgeslagenBevestiging =
+                bevestigingRepository.save(bevestiging);
+
+        notificatieService.handelNotificatiesVoorAfspraakAf(
+                gebruikerId,
+                afspraakId,
+                NotificatieType.GOEDKEURING_GEVRAAGD
+        );
 
         return naarResponse(opgeslagenBevestiging);
     }
+
 
     private Bevestiging vindBevestiging(UUID afspraakId, UUID gebruikerId) {
         return bevestigingRepository.findByAfspraakIdAndGebruikerId(afspraakId, gebruikerId).orElseThrow(() ->

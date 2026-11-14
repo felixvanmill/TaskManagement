@@ -308,14 +308,31 @@ h3 {
 }
 
 .login-card {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+
   width: 100%;
   max-width: 440px;
   padding: 40px;
+
   border: 0;
   border-radius: 14px;
   background: white;
-  box-shadow:
-          0 25px 70px rgba(0, 37, 61, 0.25);
+  box-shadow: 0 25px 70px rgba(0, 37, 61, 0.25);
+}
+
+.login-card h1 {
+  margin: 0;
+  font-size: clamp(1.3rem, 4vw, 1.8rem);
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 480px) {
+  .login-card {
+    padding: 28px 24px;
+  }
 }
 
 .eyebrow {
