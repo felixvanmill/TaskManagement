@@ -348,7 +348,7 @@ class WorkflowToewijzingServiceTest {
     }
 
     @Test
-    void huidigeVerantwoordelijkeKanNieuweVerantwoordelijkeToewijzen() {
+    void afgerondeProcesstapKanWordenHerverdeeldZonderNieuweTaakmelding() {
 
         UUID afspraakId =
                 UUID.randomUUID();
@@ -399,6 +399,17 @@ class WorkflowToewijzingServiceTest {
                         LocalDate.of(2026, 10, 20),
                         huidigeVerantwoordelijke
                 );
+
+
+        ReflectionTestUtils.setField(
+                processtap,
+                "id",
+                processtapId
+        );
+
+        processtap.start();
+        processtap.rondAf();
+
 
         UpdateToewijzingRequest request =
                 new UpdateToewijzingRequest(
@@ -482,6 +493,19 @@ class WorkflowToewijzingServiceTest {
                 afspraak.getWijzigingen()
                         .get(0)
                         .getGewijzigdDoor()
+        );
+
+
+        verify(notificatieService).handelTaakNotificatiesAf(
+                huidigeVerantwoordelijkeId,
+                processtapId
+        );
+
+        verify(notificatieService, never()).maakTaakNotificatie(
+                any(),
+                any(),
+                any(),
+                anyString()
         );
     }
 

@@ -367,6 +367,7 @@ public class WorkflowService {
         processtapRepository.save(processtap);
 
 
+
         if (verantwoordelijkeGewijzigd) {
 
             notificatieService.handelTaakNotificatiesAf(
@@ -374,13 +375,16 @@ public class WorkflowService {
                     processtap.getId()
             );
 
-            notificatieService.maakTaakNotificatie(
-                    nieuweVerantwoordelijke,
-                    afspraak,
-                    processtap,
-                    "Processtap toegewezen: " + processtap.getNaam()
-            );
+            if (processtap.getStatus() != ProcesstapStatus.AFGEROND) {
+                notificatieService.maakTaakNotificatie(
+                        nieuweVerantwoordelijke,
+                        afspraak,
+                        processtap,
+                        "Processtap toegewezen: " + processtap.getNaam()
+                );
+            }
         }
+
 
 
 
