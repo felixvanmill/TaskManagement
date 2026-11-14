@@ -1,3 +1,4 @@
+
 package nl.outokumpu.afspraken.entity;
 
 import jakarta.persistence.*;
@@ -22,6 +23,11 @@ public class Notificatie {
     @JoinColumn(name = "afspraak_id", nullable = false)
     private OperationeleAfspraak afspraak;
 
+    // Alleen taakmeldingen hebben een specifieke processtap.
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "processtap_id")
+    private Processtap processtap;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 40)
     private NotificatieType type;
@@ -40,6 +46,8 @@ public class Notificatie {
         // Vereist door JPA
     }
 
+    // Voor leesverzoeken en goedkeuringsverzoeken.
+    // Tijdelijk ook voor bestaande taakmeldingen.
     public Notificatie(
             Gebruiker ontvanger,
             OperationeleAfspraak afspraak,
@@ -59,6 +67,31 @@ public class Notificatie {
         this.type = type;
         this.bericht = bericht;
         this.aangemaaktOp = Instant.now();
+    }
+
+    // Voor taakmeldingen met een specifieke processtap.
+    public Notificatie(
+            Gebruiker ontvanger,
+            OperationeleAfspraak afspraak,
+            Processtap processtap,
+            NotificatieType type,
+            String bericht
+    ) {
+        this(ontvanger, afspraak, type, bericht);
+
+        if (processtap == null) {
+            throw new IllegalArgumentException(
+                    "Processtap is verplicht voor taakmeldingen"
+            );
+        }
+
+        if (type != NotificatieType.TAAK_TOEGEWEZEN) {
+            throw new IllegalArgumentException(
+                    "Processtap hoort alleen bij taakmeldingen"
+            );
+        }
+
+        this.processtap = processtap;
     }
 
     public void markeerGelezen() {
@@ -83,6 +116,10 @@ public class Notificatie {
 
     public OperationeleAfspraak getAfspraak() {
         return afspraak;
+    }
+
+    public Processtap getProcesstap() {
+        return processtap;
     }
 
     public NotificatieType getType() {

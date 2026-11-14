@@ -7,7 +7,8 @@ import nl.outokumpu.afspraken.entity.OperationeleAfspraak;
 import nl.outokumpu.afspraken.enums.NotificatieType;
 import nl.outokumpu.afspraken.repository.NotificatieRepository;
 import nl.outokumpu.afspraken.dto.response.NotificatieResponse;
-
+import nl.outokumpu.afspraken.entity.OperationeleAfspraak;
+import nl.outokumpu.afspraken.entity.Processtap;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -73,6 +74,26 @@ public class NotificatieService {
         return notificatieRepository.save(notificatie);
     }
 
+
+    @Transactional
+    public Notificatie maakTaakNotificatie(
+            Gebruiker ontvanger,
+            OperationeleAfspraak afspraak,
+            Processtap processtap,
+            String bericht
+    ) {
+        Notificatie notificatie = new Notificatie(
+                ontvanger,
+                afspraak,
+                processtap,
+                NotificatieType.TAAK_TOEGEWEZEN,
+                bericht
+        );
+
+        return notificatieRepository.save(notificatie);
+    }
+
+
     @Transactional
     public void markeerGelezen(
             UUID notificatieId,
@@ -114,6 +135,26 @@ public class NotificatieService {
             notificatie.handelAf();
         }
     }
+
+
+    @Transactional
+    public void handelTaakNotificatiesAf(
+            UUID gebruikerId,
+            UUID processtapId
+    ) {
+        List<Notificatie> notificaties =
+                notificatieRepository
+                        .findByOntvanger_IdAndProcesstap_IdAndTypeAndAfgehandeldOpIsNull(
+                                gebruikerId,
+                                processtapId,
+                                NotificatieType.TAAK_TOEGEWEZEN
+                        );
+
+        for (Notificatie notificatie : notificaties) {
+            notificatie.handelAf();
+        }
+    }
+
 
 
     private Notificatie vindEigenNotificatie(

@@ -12,6 +12,7 @@ import nl.outokumpu.afspraken.entity.Orderverplaatsing;
 import nl.outokumpu.afspraken.enums.AfspraakStatus;
 import nl.outokumpu.afspraken.enums.AfspraakType;
 import nl.outokumpu.afspraken.enums.BetrokkenRol;
+import nl.outokumpu.afspraken.enums.NotificatieType;
 import nl.outokumpu.afspraken.enums.UitvoeringsStatus;
 import nl.outokumpu.afspraken.mapper.AfspraakMapper;
 import nl.outokumpu.afspraken.repository.AfdelingRepository;
@@ -45,6 +46,7 @@ class AfspraakServiceTest {
     private WijzigingRepository wijzigingRepository;
 
     private AfspraakService afspraakService;
+    private NotificatieService notificatieService;
 
     @BeforeEach
     void setUp() {
@@ -64,6 +66,9 @@ class AfspraakServiceTest {
         wijzigingRepository =
                 mock(WijzigingRepository.class);
 
+
+        notificatieService = mock(NotificatieService.class);
+
         afspraakService =
                 new AfspraakService(
                         afspraakRepository,
@@ -71,8 +76,9 @@ class AfspraakServiceTest {
                         afdelingRepository,
                         wijzigingRepository,
                         afspraakMapper,
-                        mock(NotificatieService.class)
+                        notificatieService
                 );
+
     }
 
     @Test
@@ -300,6 +306,30 @@ class AfspraakServiceTest {
                 .naarDetailResponse(
                         opgeslagenAfspraak
                 );
+
+
+        verify(notificatieService).maakTaakNotificatie(
+                verantwoordelijke,
+                opgeslagenAfspraak,
+                opgeslagenAfspraak.getProcesstappen().get(0),
+                "Nieuwe processtap toegewezen: Eerste beoordeling"
+        );
+
+        verify(notificatieService).maakNotificatie(
+                betrokkene,
+                opgeslagenAfspraak,
+                NotificatieType.LEESVERZOEK,
+                "Nieuwe afspraak om te lezen: Nieuwe afspraak"
+        );
+
+        verify(notificatieService).maakNotificatie(
+                goedkeurder,
+                opgeslagenAfspraak,
+                NotificatieType.GOEDKEURING_GEVRAAGD,
+                "Goedkeuring gevraagd voor: Nieuwe afspraak"
+        );
+
+
     }
 
     @Test

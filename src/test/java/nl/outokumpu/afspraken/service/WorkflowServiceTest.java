@@ -20,6 +20,7 @@ import nl.outokumpu.afspraken.entity.Betrokkenheid;
 import nl.outokumpu.afspraken.enums.BetrokkenRol;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.test.util.ReflectionTestUtils;
 import nl.outokumpu.afspraken.enums.NotificatieType;
 
 import java.math.BigDecimal;
@@ -40,6 +41,8 @@ class WorkflowServiceTest {
     private WijzigingRepository wijzigingRepository;
     private AfspraakMapper afspraakMapper;
     private WorkflowService workflowService;
+    private NotificatieService notificatieService;
+
 
 
     @BeforeEach
@@ -63,6 +66,9 @@ class WorkflowServiceTest {
         afspraakMapper =
                 mock(AfspraakMapper.class);
 
+
+        notificatieService = mock(NotificatieService.class);
+
         workflowService =
                 new WorkflowService(
                         processtapRepository,
@@ -71,7 +77,7 @@ class WorkflowServiceTest {
                         afdelingRepository,
                         wijzigingRepository,
                         afspraakMapper,
-                        mock(NotificatieService.class)
+                        notificatieService
                 );
     }
 
@@ -315,6 +321,12 @@ class WorkflowServiceTest {
 
         processtap.start();
 
+        ReflectionTestUtils.setField(
+                processtap,
+                "id",
+                processtapId
+        );
+
         when(processtapRepository.findById(processtapId))
                 .thenReturn(Optional.of(processtap));
 
@@ -384,6 +396,11 @@ class WorkflowServiceTest {
 
         verify(afspraakMapper)
                 .naarDetailResponse(afspraak);
+
+        verify(notificatieService).handelTaakNotificatiesAf(
+                gebruikerId,
+                processtapId
+        );
     }
 
     @Test

@@ -107,33 +107,54 @@ public class WorkflowService {
      * @throws IllegalArgumentException if the process step does not exist
      * @throws IllegalStateException if the step is not in IN_UITVOERING
      */
-    public AfspraakDetailResponse rondProcesstapAf(UUID processtapId, UUID gebruikerId) {
-        Processtap processtap = processtapRepository.findById(processtapId).orElseThrow(() ->
-                new IllegalArgumentException("Processtap niet gevonden"));
 
-        Gebruiker verantwoordelijke = processtap.getVerantwoordelijke();
+    public AfspraakDetailResponse rondProcesstapAf(
+            UUID processtapId,
+            UUID gebruikerId
+    ) {
+        Processtap processtap =
+                processtapRepository.findById(processtapId)
+                        .orElseThrow(() ->
+                                new IllegalArgumentException(
+                                        "Processtap niet gevonden"
+                                )
+                        );
+
+        Gebruiker verantwoordelijke =
+                processtap.getVerantwoordelijke();
 
         controleerVerantwoordelijke(
                 gebruikerId,
                 verantwoordelijke,
-                "Alleen de verantwoordelijke kan deze processtap afronden");
+                "Alleen de verantwoordelijke kan deze processtap afronden"
+        );
 
         String oudeStatus = processtap.getStatus().name();
 
         processtap.rondAf();
 
-        Wijziging wijziging = processtap.getAfspraak().registreerWijziging(
-                verantwoordelijke,
-                "Processtapstatus: " + processtap.getNaam(),
-                oudeStatus,
-                processtap.getStatus().name());
+        Wijziging wijziging =
+                processtap.getAfspraak().registreerWijziging(
+                        verantwoordelijke,
+                        "Processtapstatus: " + processtap.getNaam(),
+                        oudeStatus,
+                        processtap.getStatus().name()
+                );
 
         processtapRepository.save(processtap);
 
         wijzigingRepository.save(wijziging);
 
-        return afspraakMapper.naarDetailResponse(processtap.getAfspraak());
+        notificatieService.handelTaakNotificatiesAf(
+                gebruikerId,
+                processtap.getId()
+        );
+
+        return afspraakMapper.naarDetailResponse(
+                processtap.getAfspraak()
+        );
     }
+
 
     /**
      * Changes the agreement status on behalf of its current responsible user and records the change.
@@ -345,21 +366,22 @@ public class WorkflowService {
         afspraakRepository.save(afspraak);
         processtapRepository.save(processtap);
 
+
         if (verantwoordelijkeGewijzigd) {
 
-            notificatieService.handelNotificatiesVoorAfspraakAf(
+            notificatieService.handelTaakNotificatiesAf(
                     huidigeVerantwoordelijke.getId(),
-                    afspraak.getId(),
-                    NotificatieType.TAAK_TOEGEWEZEN
+                    processtap.getId()
             );
 
-            notificatieService.maakNotificatie(
+            notificatieService.maakTaakNotificatie(
                     nieuweVerantwoordelijke,
                     afspraak,
-                    NotificatieType.TAAK_TOEGEWEZEN,
+                    processtap,
                     "Processtap toegewezen: " + processtap.getNaam()
             );
         }
+
 
 
         for (Gebruiker oudeBetrokkene : huidigeBetrokkenen) {

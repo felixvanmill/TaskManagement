@@ -24,6 +24,13 @@ public interface NotificatieRepository
             NotificatieType type
     );
 
+    List<Notificatie>
+    findByOntvanger_IdAndProcesstap_IdAndTypeAndAfgehandeldOpIsNull(
+            UUID ontvangerId,
+            UUID processtapId,
+            NotificatieType type
+    );
+
     long countByOntvanger_IdAndGelezenOpIsNullAndAfgehandeldOpIsNull(
             UUID ontvangerId
     );

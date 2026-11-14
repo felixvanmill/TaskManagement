@@ -19,6 +19,8 @@ import nl.outokumpu.afspraken.repository.WijzigingRepository;
 import nl.outokumpu.afspraken.dto.request.AfspraakFilterRequest;
 import nl.outokumpu.afspraken.repository.specification.AfspraakSpecificaties;
 import nl.outokumpu.afspraken.exception.ForbiddenOperationException;
+import nl.outokumpu.afspraken.enums.Beslissing;
+
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -80,11 +82,14 @@ public class AfspraakService {
 
         OperationeleAfspraak afspraak = maakAfspraakOpBasisVanType(request, initiatiefnemer);
 
-        afspraak.voegProcesstapToe(
+
+        Processtap eersteProcesstap = afspraak.voegProcesstapToe(
                 request.eersteProcesstapNaam(),
                 1,
                 request.eersteProcesstapDeadline(),
-                verantwoordelijke);
+                verantwoordelijke
+        );
+
 
         List<Gebruiker> betrokkenGebruikers = gebruikerRepository.findAllById(request.betrokkeneIds());
 
@@ -135,14 +140,14 @@ public class AfspraakService {
         OperationeleAfspraak opgeslagenAfspraak =
                 afspraakRepository.save(afspraak);
 
-// De eerste verantwoordelijke krijgt een notificatie.
-        notificatieService.maakNotificatie(
+        notificatieService.maakTaakNotificatie(
                 verantwoordelijke,
                 opgeslagenAfspraak,
-                NotificatieType.TAAK_TOEGEWEZEN,
+                eersteProcesstap,
                 "Nieuwe processtap toegewezen: "
-                        + request.eersteProcesstapNaam()
+                        + eersteProcesstap.getNaam()
         );
+
 
 
         // Betrokken gebruikers krijgen een leesverzoek.
@@ -310,8 +315,23 @@ public class AfspraakService {
             }
         }
 
+
         for (Gebruiker goedkeurder : nieuweGoedkeurders) {
-            if (!huidigeIds.contains(goedkeurder.getId())) {
+
+            boolean wasAlGoedkeurder =
+                    huidigeIds.contains(goedkeurder.getId());
+
+            boolean heeftAlBeslist =
+                    afspraak.getBevestigingen().stream()
+                            .anyMatch(bevestiging ->
+                                    Objects.equals(
+                                            bevestiging.getGebruiker().getId(),
+                                            goedkeurder.getId()
+                                    )
+                                            && bevestiging.getBeslissing() != Beslissing.GEEN
+                            );
+
+            if (!wasAlGoedkeurder && !heeftAlBeslist) {
                 notificatieService.maakNotificatie(
                         goedkeurder,
                         afspraak,
@@ -320,6 +340,7 @@ public class AfspraakService {
                 );
             }
         }
+
 
         Wijziging wijziging = afspraak.registreerWijziging(
                 initiatiefnemer,

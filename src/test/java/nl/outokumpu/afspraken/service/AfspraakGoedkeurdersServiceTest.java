@@ -7,11 +7,14 @@ import nl.outokumpu.afspraken.entity.Gebruiker;
 import nl.outokumpu.afspraken.entity.OperationeleAfspraak;
 import nl.outokumpu.afspraken.entity.Wijziging;
 import nl.outokumpu.afspraken.enums.BetrokkenRol;
+import nl.outokumpu.afspraken.enums.Beslissing;
+import nl.outokumpu.afspraken.entity.Bevestiging;
 import nl.outokumpu.afspraken.mapper.AfspraakMapper;
 import nl.outokumpu.afspraken.repository.AfdelingRepository;
 import nl.outokumpu.afspraken.repository.GebruikerRepository;
 import nl.outokumpu.afspraken.repository.OperationeleAfspraakRepository;
 import nl.outokumpu.afspraken.repository.WijzigingRepository;
+import nl.outokumpu.afspraken.enums.NotificatieType;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -34,6 +37,7 @@ class AfspraakGoedkeurdersServiceTest {
     private AfspraakMapper afspraakMapper;
 
     private AfspraakService afspraakService;
+    private NotificatieService notificatieService;
 
     @BeforeEach
     void setUp() {
@@ -53,6 +57,9 @@ class AfspraakGoedkeurdersServiceTest {
         afspraakMapper =
                 mock(AfspraakMapper.class);
 
+
+        notificatieService = mock(NotificatieService.class);
+
         afspraakService =
                 new AfspraakService(
                         afspraakRepository,
@@ -60,8 +67,9 @@ class AfspraakGoedkeurdersServiceTest {
                         afdelingRepository,
                         wijzigingRepository,
                         afspraakMapper,
-                        mock(NotificatieService.class)
+                        notificatieService
                 );
+
     }
 
     @Test
@@ -306,6 +314,26 @@ class AfspraakGoedkeurdersServiceTest {
                 .naarDetailResponse(
                         afspraak
                 );
+
+        verify(notificatieService).handelNotificatiesVoorAfspraakAf(
+                oudeGoedkeurderId,
+                afspraakId,
+                NotificatieType.GOEDKEURING_GEVRAAGD
+        );
+
+        verify(notificatieService).maakNotificatie(
+                nieuweGoedkeurder,
+                afspraak,
+                NotificatieType.GOEDKEURING_GEVRAAGD,
+                "Goedkeuring gevraagd voor: Goedkeuringstest"
+        );
+
+        verify(notificatieService).maakNotificatie(
+                betrokkene,
+                afspraak,
+                NotificatieType.GOEDKEURING_GEVRAAGD,
+                "Goedkeuring gevraagd voor: Goedkeuringstest"
+        );
     }
 
     @Test
@@ -479,7 +507,64 @@ class AfspraakGoedkeurdersServiceTest {
         verifyNoInteractions(
                 wijzigingRepository
         );
+
+        verifyNoInteractions(notificatieService);
     }
+
+
+    @Test
+    void eerderGoedgekeurdeGebruikerKrijgtGeenNieuweNotificatie() {
+
+        UUID afspraakId = UUID.randomUUID();
+        UUID initiatiefnemerId = UUID.randomUUID();
+        UUID goedkeurderId = UUID.randomUUID();
+
+        Gebruiker initiatiefnemer = gebruiker(initiatiefnemerId);
+        Gebruiker goedkeurder = gebruiker(goedkeurderId);
+
+        OperationeleAfspraak afspraak = maakAfspraak(initiatiefnemer);
+
+        Bevestiging bevestiging =
+                afspraak.voegBevestigingToe(goedkeurder);
+
+        bevestiging.registreerBeslissing(Beslissing.GOEDGEKEURD);
+
+        UpdateGoedkeurdersRequest request =
+                new UpdateGoedkeurdersRequest(
+                        List.of(goedkeurderId)
+                );
+
+        when(afspraakRepository.findById(afspraakId))
+                .thenReturn(Optional.of(afspraak));
+
+        when(gebruikerRepository.findAllById(
+                request.goedkeurderIds()
+        )).thenReturn(List.of(goedkeurder));
+
+        AfspraakDetailResponse response =
+                mock(AfspraakDetailResponse.class);
+
+        when(afspraakMapper.naarDetailResponse(afspraak))
+                .thenReturn(response);
+
+        AfspraakDetailResponse resultaat =
+                afspraakService.wijzigGoedkeurders(
+                        afspraakId,
+                        request,
+                        initiatiefnemerId
+                );
+
+        assertSame(response, resultaat);
+
+        assertEquals(1, afspraak.getBevestigingen().size());
+        assertEquals(
+                Beslissing.GOEDGEKEURD,
+                bevestiging.getBeslissing()
+        );
+
+        verifyNoInteractions(notificatieService);
+    }
+
 
     private OperationeleAfspraak maakAfspraak(
             Gebruiker initiatiefnemer
