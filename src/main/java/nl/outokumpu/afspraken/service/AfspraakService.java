@@ -22,6 +22,7 @@ import nl.outokumpu.afspraken.exception.ForbiddenOperationException;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import nl.outokumpu.afspraken.enums.NotificatieType;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -44,18 +45,21 @@ public class AfspraakService {
     private final AfdelingRepository afdelingRepository;
     private final WijzigingRepository wijzigingRepository;
     private final AfspraakMapper afspraakMapper;
+    private final NotificatieService notificatieService;
 
     public AfspraakService(
             OperationeleAfspraakRepository afspraakRepository,
             GebruikerRepository gebruikerRepository,
             AfdelingRepository afdelingRepository,
             WijzigingRepository wijzigingRepository,
-            AfspraakMapper afspraakMapper) {
+            AfspraakMapper afspraakMapper,
+            NotificatieService notificatieService) {
         this.afspraakRepository = afspraakRepository;
         this.gebruikerRepository = gebruikerRepository;
         this.afdelingRepository = afdelingRepository;
         this.wijzigingRepository = wijzigingRepository;
         this.afspraakMapper = afspraakMapper;
+        this.notificatieService = notificatieService;
     }
 
     /**
@@ -127,9 +131,21 @@ public class AfspraakService {
             afspraak.voegAfdelingToe(afdeling);
         }
 
-        OperationeleAfspraak opgeslagenAfspraak = afspraakRepository.save(afspraak);
+
+        OperationeleAfspraak opgeslagenAfspraak =
+                afspraakRepository.save(afspraak);
+
+// De eerste verantwoordelijke krijgt een notificatie.
+        notificatieService.maakNotificatie(
+                verantwoordelijke,
+                opgeslagenAfspraak,
+                NotificatieType.TAAK_TOEGEWEZEN,
+                "Nieuwe processtap toegewezen: "
+                        + request.eersteProcesstapNaam()
+        );
 
         return afspraakMapper.naarDetailResponse(opgeslagenAfspraak);
+
     }
 
     /**
