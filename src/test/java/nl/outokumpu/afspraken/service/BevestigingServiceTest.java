@@ -34,7 +34,8 @@ class BevestigingServiceTest {
         bevestigingService =
                 new BevestigingService(
                         bevestigingRepository,
-                        new AfspraakMapper()
+                        new AfspraakMapper(),
+                        mock(NotificatieService.class)
                 );
     }
 

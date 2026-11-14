@@ -95,6 +95,27 @@ public class NotificatieService {
         notificatie.handelAf();
     }
 
+
+    @Transactional
+    public void handelNotificatiesVoorAfspraakAf(
+            UUID gebruikerId,
+            UUID afspraakId,
+            NotificatieType type
+    ) {
+        List<Notificatie> notificaties =
+                notificatieRepository
+                        .findByOntvanger_IdAndAfspraak_IdAndTypeAndAfgehandeldOpIsNull(
+                                gebruikerId,
+                                afspraakId,
+                                type
+                        );
+
+        for (Notificatie notificatie : notificaties) {
+            notificatie.handelAf();
+        }
+    }
+
+
     private Notificatie vindEigenNotificatie(
             UUID notificatieId,
             UUID gebruikerId

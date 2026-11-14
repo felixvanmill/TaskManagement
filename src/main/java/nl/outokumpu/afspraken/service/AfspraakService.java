@@ -144,6 +144,30 @@ public class AfspraakService {
                         + request.eersteProcesstapNaam()
         );
 
+
+        // Betrokken gebruikers krijgen een leesverzoek.
+        for (Gebruiker betrokkene : betrokkenGebruikers) {
+            notificatieService.maakNotificatie(
+                    betrokkene,
+                    opgeslagenAfspraak,
+                    NotificatieType.LEESVERZOEK,
+                    "Nieuwe afspraak om te lezen: "
+                            + opgeslagenAfspraak.getTitel()
+            );
+        }
+
+// Goedkeurders krijgen een verzoek om de afspraak te beoordelen.
+        for (Gebruiker goedkeurder : goedkeurders) {
+            notificatieService.maakNotificatie(
+                    goedkeurder,
+                    opgeslagenAfspraak,
+                    NotificatieType.GOEDKEURING_GEVRAAGD,
+                    "Goedkeuring gevraagd voor: "
+                            + opgeslagenAfspraak.getTitel()
+            );
+        }
+
+
         return afspraakMapper.naarDetailResponse(opgeslagenAfspraak);
 
     }
@@ -275,11 +299,34 @@ public class AfspraakService {
             }
         }
 
+
+        for (Gebruiker oudeGoedkeurder : huidigeGoedkeurders) {
+            if (!nieuweGoedkeurderIds.contains(oudeGoedkeurder.getId())) {
+                notificatieService.handelNotificatiesVoorAfspraakAf(
+                        oudeGoedkeurder.getId(),
+                        afspraakId,
+                        NotificatieType.GOEDKEURING_GEVRAAGD
+                );
+            }
+        }
+
+        for (Gebruiker goedkeurder : nieuweGoedkeurders) {
+            if (!huidigeIds.contains(goedkeurder.getId())) {
+                notificatieService.maakNotificatie(
+                        goedkeurder,
+                        afspraak,
+                        NotificatieType.GOEDKEURING_GEVRAAGD,
+                        "Goedkeuring gevraagd voor: " + afspraak.getTitel()
+                );
+            }
+        }
+
         Wijziging wijziging = afspraak.registreerWijziging(
                 initiatiefnemer,
                 "Goedkeurders",
                 huidigeIds.toString(),
                 nieuweIds.toString());
+
 
         /*
          * The agreement is already managed within this transaction.

@@ -16,6 +16,7 @@ import nl.outokumpu.afspraken.repository.ProcesstapRepository;
 import nl.outokumpu.afspraken.repository.WijzigingRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import nl.outokumpu.afspraken.enums.NotificatieType;
 
 import java.util.HashSet;
 import java.util.List;
@@ -36,6 +37,7 @@ public class WorkflowService {
     private final AfdelingRepository afdelingRepository;
     private final WijzigingRepository wijzigingRepository;
     private final AfspraakMapper afspraakMapper;
+    private final NotificatieService notificatieService;
 
     public WorkflowService(
             ProcesstapRepository processtapRepository,
@@ -43,14 +45,18 @@ public class WorkflowService {
             GebruikerRepository gebruikerRepository,
             AfdelingRepository afdelingRepository,
             WijzigingRepository wijzigingRepository,
-            AfspraakMapper afspraakMapper) {
+            AfspraakMapper afspraakMapper,
+            NotificatieService notificatieService
+    ) {
         this.processtapRepository = processtapRepository;
         this.afspraakRepository = afspraakRepository;
         this.gebruikerRepository = gebruikerRepository;
         this.afdelingRepository = afdelingRepository;
         this.wijzigingRepository = wijzigingRepository;
         this.afspraakMapper = afspraakMapper;
+        this.notificatieService = notificatieService;
     }
+
 
     /**
      * Starts a not-yet-started process step on behalf of its responsible user and records the transition.
@@ -324,13 +330,76 @@ public class WorkflowService {
             }
         }
 
-        if (!Objects.equals(huidigeVerantwoordelijke.getId(), nieuweVerantwoordelijke.getId())) {
+
+
+        boolean verantwoordelijkeGewijzigd =
+                !Objects.equals(
+                        huidigeVerantwoordelijke.getId(),
+                        nieuweVerantwoordelijke.getId()
+                );
+
+        if (verantwoordelijkeGewijzigd) {
             processtap.wijzigVerantwoordelijke(nieuweVerantwoordelijke);
         }
 
         afspraakRepository.save(afspraak);
-
         processtapRepository.save(processtap);
+
+        if (verantwoordelijkeGewijzigd) {
+
+            notificatieService.handelNotificatiesVoorAfspraakAf(
+                    huidigeVerantwoordelijke.getId(),
+                    afspraak.getId(),
+                    NotificatieType.TAAK_TOEGEWEZEN
+            );
+
+            notificatieService.maakNotificatie(
+                    nieuweVerantwoordelijke,
+                    afspraak,
+                    NotificatieType.TAAK_TOEGEWEZEN,
+                    "Processtap toegewezen: " + processtap.getNaam()
+            );
+        }
+
+
+        for (Gebruiker oudeBetrokkene : huidigeBetrokkenen) {
+            if (!nieuweBetrokkeneIds.contains(oudeBetrokkene.getId())) {
+                notificatieService.handelNotificatiesVoorAfspraakAf(
+                        oudeBetrokkene.getId(),
+                        afspraakId,
+                        NotificatieType.LEESVERZOEK
+                );
+            }
+        }
+
+        for (Gebruiker nieuweBetrokkene : nieuweBetrokkenen) {
+
+            boolean wasAlBetrokken = huidigeBetrokkenen.stream()
+                    .anyMatch(betrokkene ->
+                            Objects.equals(
+                                    betrokkene.getId(),
+                                    nieuweBetrokkene.getId()
+                            )
+                    );
+
+            boolean alGezien = afspraak.getBevestigingen().stream()
+                    .anyMatch(bevestiging ->
+                            Objects.equals(
+                                    bevestiging.getGebruiker().getId(),
+                                    nieuweBetrokkene.getId()
+                            ) && bevestiging.isGezien()
+                    );
+
+            if (!wasAlBetrokken && !alGezien) {
+                notificatieService.maakNotificatie(
+                        nieuweBetrokkene,
+                        afspraak,
+                        NotificatieType.LEESVERZOEK,
+                        "Nieuwe afspraak om te lezen: " + afspraak.getTitel()
+                );
+            }
+        }
+
 
         if (!oudeToewijzing.equals(nieuweToewijzing)) {
             Wijziging wijziging = afspraak.registreerWijziging(

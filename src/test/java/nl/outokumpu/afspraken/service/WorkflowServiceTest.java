@@ -20,6 +20,7 @@ import nl.outokumpu.afspraken.entity.Betrokkenheid;
 import nl.outokumpu.afspraken.enums.BetrokkenRol;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import nl.outokumpu.afspraken.enums.NotificatieType;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -38,8 +39,8 @@ class WorkflowServiceTest {
     private AfdelingRepository afdelingRepository;
     private WijzigingRepository wijzigingRepository;
     private AfspraakMapper afspraakMapper;
-
     private WorkflowService workflowService;
+
 
     @BeforeEach
     void setUp() {
@@ -69,7 +70,8 @@ class WorkflowServiceTest {
                         gebruikerRepository,
                         afdelingRepository,
                         wijzigingRepository,
-                        afspraakMapper
+                        afspraakMapper,
+                        mock(NotificatieService.class)
                 );
     }
 

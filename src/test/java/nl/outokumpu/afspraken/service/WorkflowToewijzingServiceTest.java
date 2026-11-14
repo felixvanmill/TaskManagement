@@ -62,7 +62,8 @@ class WorkflowToewijzingServiceTest {
                         gebruikerRepository,
                         afdelingRepository,
                         wijzigingRepository,
-                        afspraakMapper
+                        afspraakMapper,
+                        mock(NotificatieService.class)
                 );
     }
 
